@@ -72,6 +72,51 @@
     (insert ?\n)))
 
 
+;; Git commands
+
+(defmacro treebund--git (&rest args)
+  `(with-temp-buffer
+     (treebund--log "COMMAND: git " (string-join (list ,@args) " "))
+     (let ((result (vc-git--call t ,@args))
+           (output (string-trim-right (buffer-string))))
+       (treebund--log output ?\n)
+       (if (= 0 result)
+           (if (string-empty-p output) t output)
+         (user-error "Git command failed.")))))
+
+(defmacro treebund--git-with-repo (repo-path &rest args)
+  `(treebund--git "-C" (expand-file-name ,repo-path) ,@args))
+
+(defun treebund--branches (repo-path)
+  (string-lines
+   (treebund--git-with-repo repo-path
+     "branch" "--format=%(refname:short)")))
+
+(defun treebund--worktree-bare (project-path)
+  "Return the bare related to PROJECT-PATH."
+  (treebund--git-with-repo project-path
+   "rev-parse" "--path-format=absolute" "--git-common-dir"))
+
+(defun treebund--worktree-remove (repo-path)
+  "Remove the worktree at PROJECT-PATH."
+  (let ((bare-path (treebund--worktree-bare repo-path)))
+    (treebund--git-with-repo bare-path
+     "worktree" "remove" (expand-file-name repo-path))))
+
+(defun treebund--worktree-add (workspace-path bare-path)
+  (let ((bare-name (treebund--bare-name bare-path))
+        (branch-name (treebund--branch-name workspace-path)))
+    (if (member branch-name (treebund--branches bare-path))
+        (treebund--git-with-repo bare-path
+          "worktree" "add" (expand-file-name bare-name workspace-path) branch-name)
+      (treebund--git-with-repo bare-path
+        "worktree" "add" (expand-file-name bare-name workspace-path) "-b" branch-name))))
+
+(defun treebund--clone (repo-url)
+  (let ((repo-name (car (last (split-string repo-url "/")))))
+    (treebund--git "clone" repo-url "--bare" (expand-file-name repo-name treebund-bare-dir))))
+
+
 ;; Internal
 
 ; Repos
@@ -122,51 +167,6 @@ BODY is evaluated with the context of a buffer in the repo-path repository"
   (when-let ((project-path (treebund--project-current)))
     (treebund--with-repo (treebund--worktree-bare project-path)
       (car (vc-git-branches)))))
-
-
-;; Git commands
-
-(defmacro treebund--git (&rest args)
-  `(with-temp-buffer
-     (treebund--log "COMMAND: git " (string-join (list ,@args) " "))
-     (let ((result (vc-git--call t ,@args))
-           (output (string-trim-right (buffer-string))))
-       (treebund--log output ?\n)
-       (if (= 0 result)
-           (if (string-empty-p output) t output)
-         (user-error "Git command failed.")))))
-
-(defmacro treebund--git-with-repo (repo-path &rest args)
-  `(treebund--git "-C" (expand-file-name ,repo-path) ,@args))
-
-(defun treebund--branches (repo-path)
-  (string-lines
-   (treebund--git-with-repo repo-path
-     "branch" "--format=%(refname:short)")))
-
-(defun treebund--worktree-bare (project-path)
-  "Return the bare related to PROJECT-PATH."
-  (treebund--git-with-repo project-path
-   "rev-parse" "--path-format=absolute" "--git-common-dir"))
-
-(defun treebund--worktree-remove (repo-path)
-  "Remove the worktree at PROJECT-PATH."
-  (let ((bare-path (treebund--worktree-bare repo-path)))
-    (treebund--git-with-repo bare-path
-     "worktree" "remove" (expand-file-name repo-path))))
-
-(defun treebund--worktree-add (workspace-path bare-path)
-  (let ((bare-name (treebund--bare-name bare-path))
-        (branch-name (treebund--branch-name workspace-path)))
-    (if (member branch-name (treebund--branches bare-path))
-        (treebund--git-with-repo bare-path
-          "worktree" "add" (expand-file-name bare-name workspace-path) branch-name)
-      (treebund--git-with-repo bare-path
-        "worktree" "add" (expand-file-name bare-name workspace-path) "-b" branch-name))))
-
-(defun treebund--clone (repo-url)
-  (let ((repo-name (car (last (split-string repo-url "/")))))
-    (treebund--git "clone" repo-url "--bare" (expand-file-name repo-name treebund-bare-dir))))
 
 
 ;; Interactive read
