@@ -117,8 +117,12 @@
         "worktree" "add" (expand-file-name bare-name workspace-path) "-b" branch-name))))
 
 (defun treebund--clone (repo-url)
-  (let ((repo-name (car (last (split-string repo-url "/")))))
-    (treebund--git "clone" repo-url "--bare" (expand-file-name repo-name treebund-bare-dir))))
+  "Clone a repository to the bare directory.
+Returns the path to the newly cloned repo."
+  (let* ((repo-name (car (last (split-string repo-url "/"))))
+         (repo-path (expand-file-name repo-name treebund-bare-dir)))
+    (treebund--git "clone" repo-url "--bare" repo-path)
+    repo-path))
 
 (defun treebund--list-worktrees (repo-path)
   (treebund--git-with-repo repo-path "worktree" "list" "-z" "--porcelain"))
@@ -202,13 +206,18 @@ BODY is evaluated with the context of a buffer in the repo-path repository"
 
 ;; Interactive read
 
-(defun treebund--read-bare (&optional prompt)
+(defun treebund--read-bare (&optional prompt can-clone)
   "Interactively find the path of a bare."
-  (let ((candidates (mapcar (lambda (bare)
-                              (cons (replace-regexp-in-string "\.git$" "" bare)
-                                    (file-name-as-directory (expand-file-name bare treebund-bare-dir))))
-                            (directory-files treebund-bare-dir nil "^[^.].*"))))
-    (cdr (assoc (completing-read (or prompt "Select project: ") candidates) candidates))))
+  (let* ((candidates (mapcar (lambda (bare)
+                               (cons (replace-regexp-in-string "\.git$" "" bare)
+                                     (file-name-as-directory (expand-file-name bare treebund-bare-dir))))
+                             (directory-files treebund-bare-dir nil "^[^.].*"))))
+    (when can-clone
+      (setq candidates (append candidates '(("[ clone ]" . clone)))))
+    (if-let ((selection (cdr (assoc (completing-read (or prompt "Select project: ") candidates) candidates))))
+        (if (equal selection 'clone)
+            (call-interactively #'treebund-clone)
+          selection))))
 
 (defun treebund--read-project (workspace-path &optional prompt)
   "Interactively find the path of a project."
@@ -259,7 +268,7 @@ BODY is evaluated with the context of a buffer in the repo-path repository"
   (interactive
    (let ((workspace-path (treebund--read-workspace)))
      (list workspace-path
-           (treebund--read-bare (format "Add project to %s: " (treebund--workspace-name workspace-path))))))
+           (treebund--read-bare (format "Add project to %s: " (treebund--workspace-name workspace-path)) t))))
   (treebund--worktree-add workspace-path bare-path))
 
 (defun treebund-project-remove (project-path)
