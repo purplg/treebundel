@@ -273,7 +273,7 @@ BODY is evaluated with the context of a buffer in the repo-path repository"
 
 (defun treebund-clone (url)
   (interactive
-   (list (read-string "URL: " (gui-selection-value))))
+   (list (read-string "URL: " (gui-get-selection 'CLIPBOARD 'STRING))))
   (treebund--clone url))
 
 (defun treebund-bare-delete (bare-path)
