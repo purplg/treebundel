@@ -116,6 +116,9 @@
   (let ((repo-name (car (last (split-string repo-url "/")))))
     (treebund--git "clone" repo-url "--bare" (expand-file-name repo-name treebund-bare-dir))))
 
+(defun treebund--list-worktrees (repo-path)
+  (treebund--git-with-repo repo-path "worktree" "list" "-z" "--porcelain"))
+
 
 ;; Internal
 
@@ -129,6 +132,14 @@ BODY is evaluated with the context of a buffer in the repo-path repository"
        (setq result ,@body))
      (kill-buffer buffer)
      result))
+
+(defun treebund--repo-worktree-count (repo-path)
+  (seq-count
+   (lambda (str) (equal "worktree" str))
+   (split-string (treebund--list-worktrees repo-path) "\\(\0\\| \\)" t)))
+
+(defun treebund--has-worktrees-p (repo-path)
+  (> (treebund--repo-worktree-count repo-path) 1))
 
 ; Bares
 (defun treebund--bare-name (bare-path)
@@ -244,6 +255,13 @@ BODY is evaluated with the context of a buffer in the repo-path repository"
   (interactive
    (list (read-string "URL: " (gui-selection-value))))
   (treebund--clone url))
+
+(defun treebund-bare-delete (bare-path)
+  (interactive
+   (list (treebund--read-bare "Select repo to delete: ")))
+  (when (treebund--has-worktrees-p bare-path)
+    (user-error "This repository has worktrees checked out."))
+  (message "delete bare"))
 
 (define-minor-mode treebund-mode
   "Exploit git-worktrees to create inter-related project workspaces."
