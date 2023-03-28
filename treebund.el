@@ -87,10 +87,13 @@
 (defmacro treebund--git-with-repo (repo-path &rest args)
   `(treebund--git "-C" (expand-file-name ,repo-path) ,@args))
 
-(defun treebund--branches (repo-path)
-  (string-lines
-   (treebund--git-with-repo repo-path
-     "branch" "--format=%(refname:short)")))
+(defun treebund--branches (repo-path &optional omit-main)
+  (let ((branches (string-lines (treebund--git-with-repo repo-path
+                                  "branch" "--format=%(refname:short)"))))
+    (if omit-main
+        (let ((main-branch (treebund--branch-main repo-path)))
+          (seq-remove (lambda (branch) (equal main-branch branch)) branches))
+      branches)))
 
 (defun treebund--worktree-bare (project-path)
   "Return the bare related to PROJECT-PATH."
@@ -119,6 +122,13 @@
 (defun treebund--list-worktrees (repo-path)
   (treebund--git-with-repo repo-path "worktree" "list" "-z" "--porcelain"))
 
+(defun treebund--rev-count (repo-path commit-a &optional commit-b)
+  "Return the number of commits between COMMIT-A and COMMIT-B at REPO-PATH."
+  (unless commit-b
+    (setq commit-b commit-a)
+    (setq commit-a (treebund--branch-main repo-path)))
+  (string-to-number (treebund--git-with-repo repo-path "rev-list" (concat commit-a ".." commit-b) "--count")))
+
 
 ;; Internal
 
@@ -141,9 +151,19 @@ BODY is evaluated with the context of a buffer in the repo-path repository"
 (defun treebund--has-worktrees-p (repo-path)
   (> (treebund--repo-worktree-count repo-path) 1))
 
+(defun treebund--unpushed-commits-p (repo-path)
+  (seq-some (lambda (branch) (> (treebund--rev-count repo-path branch) 0))
+            (treebund--branches repo-path)))
+
 ; Bares
 (defun treebund--bare-name (bare-path)
   (file-name-base (directory-file-name bare-path)))
+
+(defun treebund--bare-delete (bare-path)
+  (setq bare-path (expand-file-name bare-path))
+  (when (and (string-prefix-p (expand-file-name treebund-workspace-root) bare-path)
+             (string-suffix-p ".git/" bare-path))
+    (delete-directory bare-path t)))
 
 ; Workspaces
 (defun treebund--workspace-name (workspace-path)
@@ -174,10 +194,9 @@ BODY is evaluated with the context of a buffer in the repo-path repository"
 (defun treebund--branch-name (workspace-path)
   (concat treebund-prefix (treebund--workspace-name workspace-path)))
 
-(defun treebund--branch-main ()
-  (when-let ((project-path (treebund--project-current)))
-    (treebund--with-repo (treebund--worktree-bare project-path)
-      (car (vc-git-branches)))))
+(defun treebund--branch-main (repo-path)
+  (treebund--with-repo repo-path
+    (car (vc-git-branches))))
 
 
 ;; Interactive read
@@ -259,9 +278,11 @@ BODY is evaluated with the context of a buffer in the repo-path repository"
 (defun treebund-bare-delete (bare-path)
   (interactive
    (list (treebund--read-bare "Select repo to delete: ")))
-  (when (treebund--has-worktrees-p bare-path)
-    (user-error "This repository has worktrees checked out."))
-  (message "delete bare"))
+  (cond ((treebund--has-worktrees-p bare-path)
+         (user-error "This repository has worktrees checked out."))
+        ((and (treebund--unpushed-commits-p bare-path)
+              (not (yes-or-no-p (format "%s has unpushed commits on some branches. Delete anyway?" (treebund--bare-name bare-path))))))
+        (t (treebund--bare-delete bare-path))))
 
 (define-minor-mode treebund-mode
   "Exploit git-worktrees to create inter-related project workspaces."
