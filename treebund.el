@@ -63,6 +63,7 @@
 
 
 ;; Logging
+
 (defvar treebund--git-buffer "*treebund-git*")
 
 (defun treebund--log (&rest msg)
