@@ -1,4 +1,4 @@
-;;; treebund.el --- Group related git-worktrees together -*- lexical-binding: t; -*-
+;;; treebund.el --- Bundle related git-worktrees together -*- lexical-binding: t; -*-
 
 ;; This package is used to automate my personal workflow of creating directories
 ;; of related worktrees from multiple repositories together.
