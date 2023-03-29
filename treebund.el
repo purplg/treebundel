@@ -277,7 +277,7 @@ BODY is evaluated with the context of a buffer in the repo-path repository"
    (let ((workspace-path (treebund--read-workspace)))
      (list workspace-path
            (treebund--read-bare (format "Add project to %s: " (treebund--workspace-name workspace-path)) t))))
-  (treebund--worktree-add workspace-path bare-path))
+  (project-switch-project (treebund--worktree-add workspace-path bare-path)))
 
 (defun treebund-project-remove (project-path)
   (interactive
