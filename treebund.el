@@ -37,9 +37,11 @@
 ; 6. Edit
 
 ; USAGE
-
 (require 'subr-x)
 (require 'vc-git)
+
+
+;; Customization
 
 (defgroup treebund nil
   "Exploit git-worktrees to create inter-related project workspaces."
