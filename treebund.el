@@ -126,13 +126,13 @@
 (defun treebund--worktree-bare (project-path)
   "Return the bare related to PROJECT-PATH."
   (treebund--git-with-repo project-path
-   "rev-parse" "--path-format=absolute" "--git-common-dir"))
+    "rev-parse" "--path-format=absolute" "--git-common-dir"))
 
 (defun treebund--worktree-remove (repo-path)
   "Remove the worktree at PROJECT-PATH."
   (let ((bare-path (treebund--worktree-bare repo-path)))
     (treebund--git-with-repo bare-path
-     "worktree" "remove" (expand-file-name repo-path))))
+      "worktree" "remove" (expand-file-name repo-path))))
 
 (defun treebund--worktree-add (workspace-path bare-path)
   "Create a worktree.
@@ -285,7 +285,7 @@ BODY is evaluated with the context of a buffer in the repo-path repository"
     (if-let ((selection (cdr (assoc (completing-read (or prompt "Project: ") candidates) candidates))))
         (if (equal selection 'new)
             (treebund-project-add workspace-path
-                                (treebund--read-bare prompt))
+                                  (treebund--read-bare prompt))
           selection))))
 
 (defun treebund--read-workspace (&optional prompt)
@@ -321,7 +321,7 @@ BODY is evaluated with the context of a buffer in the repo-path repository"
   (interactive
    (list (treebund--read-workspace "Delete a workspace: ")))
   (if (and (file-exists-p workspace-path)
-             (directory-empty-p workspace-path))
+           (directory-empty-p workspace-path))
       (delete-directory workspace-path nil nil)
     (user-error "Workspace must be empty to delete.")))
 
@@ -341,8 +341,8 @@ BODY is evaluated with the context of a buffer in the repo-path repository"
    (let ((workspace-path (or (treebund--workspace-current)
                              (treebund--read-workspace))))
      (list (treebund--read-project workspace-path
-                                    (format "Remove project from %s: "
-                                            (treebund--workspace-name workspace-path))))))
+                                   (format "Remove project from %s: "
+                                           (treebund--workspace-name workspace-path))))))
   (treebund--worktree-remove project-path))
 
 ;;;###autoload
