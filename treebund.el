@@ -306,7 +306,13 @@ BODY is evaluated with the context of a buffer in the repo-path repository"
 
 (defun treebund-clone (url)
   (interactive
-   (list (read-string "URL: " (gui-get-selection 'CLIPBOARD 'STRING))))
+   (list (read-string "URL: " (let ((clipboard (gui-get-selection 'CLIPBOARD 'STRING)))
+                                ;; Does clipboard kinda look like a git url?
+                                (and (or (string-prefix-p "git@" clipboard)
+                                         (string-prefix-p "http" clipboard)
+                                         (string-prefix-p "https" clipboard))
+                                     (string-suffix-p ".git" clipboard)
+                                     clipboard)))))
   (treebund--clone url))
 
 (defun treebund-bare-delete (bare-path)
