@@ -108,13 +108,15 @@
      "worktree" "remove" (expand-file-name repo-path))))
 
 (defun treebund--worktree-add (workspace-path bare-path)
-  (let ((bare-name (treebund--bare-name bare-path))
-        (branch-name (treebund--branch-name workspace-path)))
+  (let* ((bare-name (treebund--bare-name bare-path))
+         (branch-name (treebund--branch-name workspace-path))
+         (project-path (expand-file-name bare-name workspace-path)))
     (if (member branch-name (treebund--branches bare-path))
         (treebund--git-with-repo bare-path
-          "worktree" "add" (expand-file-name bare-name workspace-path) branch-name)
+          "worktree" "add" project-path branch-name)
       (treebund--git-with-repo bare-path
-        "worktree" "add" (expand-file-name bare-name workspace-path) "-b" branch-name))))
+        "worktree" "add" project-path "-b" branch-name))
+    project-path))
 
 (defun treebund--clone (repo-url)
   "Clone a repository to the bare directory.
