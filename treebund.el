@@ -1,42 +1,78 @@
 ;;; treebund.el --- Bundle related git-worktrees together -*- lexical-binding: t; -*-
 
-;; This package is used to automate my personal workflow of creating directories
-;; of related worktrees from multiple repositories together.
+;; Package-Requires: ((emacs "26.1"))
+;; Version: 0.1.0
+;; Author: Ben Whitley
+;; Homepage: https://github.com/purplg/treebund.el
+;; SPDX-License-Identifier: MIT
 
+;;; Commentary:
+
+;  This package is used for automation the grouping of related git-worktrees
+;  from multiple repositories together. This helps switch quickly between
+;  repositories and ensure you're on the correct branch. When you're done with
+;  the feature, you can look at the repositories in the workspace and know which
+;  ones were modified to simplify the process of getting the changes merged
+;  together.
+
+;  Additionally, a single bare repository is shared between multiple
+;  workspaces. You can stash, pop, and pull changes in from the same repository
+;  in other workspaces thanks to the power of git-worktrees.
+
+;;
 ;; TERMINOLOGY
+;;
 
-; WORKSPACE: A collection of 'PROJECT's created from 'BARE's.
-; PROJECT:   A git-worktree checked out from a 'BARE' stored in a 'WORKSPACE'.
-; BARE:      A bare repository used as a source to create 'PROJECT' git-worktree.
-; PREFIX:    The string added before the name of the branch checked out for the 'WORKSPACE'.
+;  WORKSPACE: A collection of 'PROJECT's created from 'BARE's.
+;  PROJECT:   A git-worktree checked out from a 'BARE' stored in a 'WORKSPACE'.
+;  BARE:      A bare repository used as a source to create 'PROJECT' git-worktree.
+;  PREFIX:    The string added before the name of the branch checked out for the 'WORKSPACE'.
 
+;;
 ;; STRUCTURE
+;;
 
-; Workspaces are structured as such:
+;  Workspaces are structured as such:
 
-; `treebund-workspace-root' (default: "~/workspaces/")
-;    |
-;    L workspace1
-;    |    L project-one (branch: "feature/workspace1")
-;    |    L project-two (branch: "feature/workspace1")
-;    |    L project-three (branch: "feature/workspace1")
-;    |
-;    L workspace2
-;         L project-one (branch: "feature/workspace2")
-;         L project-two (branch: "feature/workspace2")
-;         L project-three (branch: "feature/workspace2")
+;  `treebund-workspace-root' (default: "~/workspaces/")
+;     |
+;     L workspace1
+;     |    L project-one   (branch: "feature/workspace1")
+;     |    L project-two   (branch: "feature/workspace1")
+;     |    L project-three (branch: "feature/workspace1")
+;     |
+;     L workspace2
+;          L project-one   (branch: "feature/workspace2")
+;          L project-two   (branch: "feature/workspace2")
+;          L project-three (branch: "feature/workspace2")
 
-;; GETTING STARTED
+;;
+;; QUICK START
+;;
 
-; 1. Create a new workspace using `treebund-workspace-new'.
-; 2. Interactively call `treebund-project-add'.
-; 3. Select the newly created workspace.
-; 4. Select '[ new ]'.
-; 5. Enter the remote URL for the repository to be added to the workspace.
-;      After this step, steps 4-5 can be skipped by just selecting the now-existing repository directly.
-; 6. Edit
+;  Assuming default configuration, the following will create a bare clone of the
+;  provided repo URL to '~/workspaces/.bare/<repo-name>.git', then create and
+;  open a worktree for a new branch called 'feature/<workspace-name>'.
 
-; USAGE
+;  1. Create a new workspace using `treebund-workspace-new'.
+;  2. Interactively call `treebund-project-add'.
+;  3. Select the newly created workspace.
+;  4. Select '[ clone ]'.
+;  5. Enter the remote URL for the repository to be added to the workspace.
+
+;;
+;; USAGE
+;;
+
+;  | Command                     | Description                       |
+;  |-----------------------------+-----------------------------------|
+;  | `treebund-open'             | Open a project in a workspace     |
+;  | `treebund-project-add'      | Add a project to a workspace      |
+;  | `treebund-project-remove'   | Remove a project from a workspace |
+;  | `treebund-workspace-new'    | Create a new workspace            |
+;  | `treebund-workspace-delete' | Delete a new workspace            |
+
+;;; Code:
 (require 'subr-x)
 (require 'vc-git)
 
