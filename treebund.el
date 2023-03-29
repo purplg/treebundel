@@ -62,17 +62,6 @@
   :type 'string)
 
 
-;; Logging
-
-(defvar treebund--git-buffer "*treebund-git*")
-
-(defun treebund--log (&rest msg)
-  (with-current-buffer (get-buffer-create treebund--git-buffer)
-    (goto-char (point-max))
-    (apply #'insert msg)
-    (insert ?\n)))
-
-
 ;; Git commands
 
 (defmacro treebund--git (&rest args)
@@ -141,6 +130,15 @@ Returns the path to the newly cloned repo."
     (setq commit-b commit-a)
     (setq commit-a (treebund--branch-main repo-path)))
   (string-to-number (treebund--git-with-repo repo-path "rev-list" (concat commit-a ".." commit-b) "--count")))
+
+; Logging
+(defvar treebund--git-buffer "*treebund-git*")
+
+(defun treebund--log (&rest msg)
+  (with-current-buffer (get-buffer-create treebund--git-buffer)
+    (goto-char (point-max))
+    (apply #'insert msg)
+    (insert ?\n)))
 
 
 ;; Internal
