@@ -262,6 +262,7 @@ BODY is evaluated with the context of a buffer in the repo-path repository"
 
 ;; User functions
 
+;;;###autoload
 (defun treebund-open (project-path)
   (interactive
    (let ((workspace-path (treebund--read-workspace "Open project in workspace: ")))
@@ -272,12 +273,14 @@ BODY is evaluated with the context of a buffer in the repo-path repository"
             t))))
   (project-switch-project project-path))
 
+;;;###autoload
 (defun treebund-workspace-new (workspace-path)
   (interactive
    (list (read-directory-name "Create a new workspace: " (expand-file-name treebund-workspace-root))))
   (unless (file-exists-p workspace-path)
     (make-directory workspace-path)))
 
+;;;###autoload
 (defun treebund-workspace-delete (workspace-path)
   (interactive
    (list (treebund--read-workspace "Delete a workspace: ")))
@@ -286,6 +289,7 @@ BODY is evaluated with the context of a buffer in the repo-path repository"
       (delete-directory workspace-path nil nil)
     (user-error "Workspace must be empty to delete.")))
 
+;;;###autoload
 (defun treebund-project-add (workspace-path bare-path)
   (interactive
    (let ((workspace-path (treebund--read-workspace)))
@@ -295,6 +299,7 @@ BODY is evaluated with the context of a buffer in the repo-path repository"
                                 (treebund--workspace-projects workspace-path)))))
   (project-switch-project (treebund--worktree-add workspace-path bare-path)))
 
+;;;###autoload
 (defun treebund-project-remove (project-path)
   (interactive
    (let ((workspace-path (or (treebund--workspace-current)
@@ -304,6 +309,7 @@ BODY is evaluated with the context of a buffer in the repo-path repository"
                                             (treebund--workspace-name workspace-path))))))
   (treebund--worktree-remove project-path))
 
+;;;###autoload
 (defun treebund-clone (url)
   (interactive
    (list (read-string "URL: " (let ((clipboard (gui-get-selection 'CLIPBOARD 'STRING)))
@@ -315,6 +321,7 @@ BODY is evaluated with the context of a buffer in the repo-path repository"
                                      clipboard)))))
   (treebund--clone url))
 
+;;;###autoload
 (defun treebund-bare-delete (bare-path)
   (interactive
    (list (treebund--read-bare "Select repo to delete: ")))
