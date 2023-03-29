@@ -108,6 +108,12 @@
      "worktree" "remove" (expand-file-name repo-path))))
 
 (defun treebund--worktree-add (workspace-path bare-path)
+  "Create a worktree.
+WORKSPACE-PATH is the directory to place the new worktree in.
+
+BARE-PATH is the main repository the worktree is being created from.
+
+Returns the path to the newly created worktree."
   (let* ((bare-name (treebund--bare-name bare-path))
          (branch-name (treebund--branch-name workspace-path))
          (project-path (expand-file-name bare-name workspace-path)))
