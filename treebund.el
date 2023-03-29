@@ -223,7 +223,7 @@ BODY is evaluated with the context of a buffer in the repo-path repository"
 
 ;; Interactive read
 
-(defun treebund--read-bare (&optional prompt can-clone omit)
+(defun treebund--read-bare (&optional prompt clone omit)
   "Interactively find the path of a bare."
   (let* ((candidates (mapcar (lambda (bare)
                                (cons (replace-regexp-in-string "\.git$" "" bare)
@@ -232,7 +232,7 @@ BODY is evaluated with the context of a buffer in the repo-path repository"
     (when omit
       (setq candidates (seq-remove (lambda (bare) (member (car bare) omit))
                                    candidates)))
-    (when can-clone
+    (when clone
       (setq candidates (append candidates '(("[ clone ]" . clone)))))
     (if-let ((selection (cdr (assoc (completing-read (or prompt "Select project: ") candidates) candidates))))
         (if (equal selection 'clone)
