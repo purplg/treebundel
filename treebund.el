@@ -178,10 +178,19 @@ BODY is evaluated with the context of a buffer in the repo-path repository"
              (string-suffix-p ".git/" bare-path))
     (delete-directory bare-path t)))
 
+(defun treebund--bare-list ()
+  (directory-files treebund-bare-dir nil "^[^.].*"))
+
 ; Workspaces
 (defun treebund--workspace-name (workspace-path)
   "Return the name of a workspace at WORKSPACE-PATH"
   (file-name-base (directory-file-name workspace-path)))
+
+(defun treebund--workspace-projects (workspace-path)
+  (directory-files workspace-path nil "^[^.].*"))
+
+(defun treebund--workspaces ()
+  (directory-files treebund-workspace-root nil "^[^.].*"))
 
 (defun treebund--workspace-current ()
   "Return the path to the current workspace"
@@ -219,7 +228,7 @@ BODY is evaluated with the context of a buffer in the repo-path repository"
   (let* ((candidates (mapcar (lambda (bare)
                                (cons (replace-regexp-in-string "\.git$" "" bare)
                                      (file-name-as-directory (expand-file-name bare treebund-bare-dir))))
-                             (directory-files treebund-bare-dir nil "^[^.].*"))))
+                             (treebund--bare-list))))
     (when can-clone
       (setq candidates (append candidates '(("[ clone ]" . clone)))))
     (if-let ((selection (cdr (assoc (completing-read (or prompt "Select project: ") candidates) candidates))))
@@ -231,7 +240,7 @@ BODY is evaluated with the context of a buffer in the repo-path repository"
   "Interactively find the path of a project."
   (let* ((candidates (mapcar (lambda (project)
                                (cons project (file-name-as-directory (expand-file-name project workspace-path))))
-                             (directory-files workspace-path nil "^[^.].*")))
+                             (treebund--workspace-projects workspace-path)))
          (candidates (append candidates '(("[ new ]" . new)))))
     (if-let ((selection (cdr (assoc (completing-read (or prompt "Project: ") candidates) candidates))))
         (if (equal selection 'new)
@@ -243,7 +252,7 @@ BODY is evaluated with the context of a buffer in the repo-path repository"
   "Interactively find the path of a workspace."
   (let ((candidates (mapcar (lambda (workspace)
                               (cons workspace (file-name-as-directory (expand-file-name workspace treebund-workspace-root))))
-                            (directory-files treebund-workspace-root nil "^[^.].*"))))
+                            (treebund--workspaces))))
     (cdr (assoc (completing-read (or prompt "Workspace: ") candidates) candidates))))
 
 
