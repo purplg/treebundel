@@ -104,10 +104,10 @@
 
 (defmacro treebund--git (&rest args)
   `(with-temp-buffer
-     (treebund--log "COMMAND: git " (string-join (list ,@args) " "))
+     (treebund--gitlog 'command (string-join (list ,@args) " "))
      (let ((result (vc-git--call t ,@args))
            (output (string-trim-right (buffer-string))))
-       (treebund--log output ?\n)
+       (treebund--gitlog 'output output)
        (if (= 0 result)
            (if (string-empty-p output) t output)
          (user-error "Git command failed. See *treebund-log*.")))))
@@ -174,13 +174,38 @@ Returns the path to the newly cloned repo."
   (string-to-number (treebund--git-with-repo repo-path "rev-list" (concat commit-a ".." commit-b) "--count")))
 
 ; Logging
-(defvar treebund--git-buffer "*treebund-git*")
+(defface treebund--gitlog-heading
+  '((t (:inherit mode-line :extend t)))
+  "Face for widget group labels in treebund's dashboard."
+  :group 'treebund)
 
-(defun treebund--log (&rest msg)
-  (with-current-buffer (get-buffer-create treebund--git-buffer)
-    (goto-char (point-max))
-    (apply #'insert msg)
-    (insert ?\n)))
+(defvar treebund--gitlog-buffer "*treebund-git*")
+
+(defun treebund--gitlog-buffer ()
+  "Return the debug buffer for treebund."
+  (or (get-buffer treebund--gitlog-buffer)
+      (let ((buf (get-buffer-create treebund--gitlog-buffer)))
+        (with-current-buffer buf
+          (read-only-mode 1)
+          (set (make-local-variable 'window-point-insertion-type) t))
+        buf)))
+
+(defun treebund--gitlog (type &rest msg)
+  "Insert a message in the treebund git log buffer.
+COMMAND is the command that was executed.
+
+OUTPUT is the output of the executed COMMAND."
+  (with-current-buffer (treebund--gitlog-buffer)
+    (let ((inhibit-read-only t))
+      (goto-char (point-max))
+      (cond ((eq 'command type)
+             (insert (propertize (string-join (append '("git") msg '("\n")) " ") 'face 'treebund--gitlog-heading)))
+            ((eq 'output type)
+             (let ((msg (apply #'format msg)))
+               (when (length= msg 0)
+                 (setq msg " "))
+               (insert msg))
+             (newline 2))))))
 
 
 ;; Internal
