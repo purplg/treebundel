@@ -151,17 +151,17 @@ Returns the path to the newly created worktree."
         "worktree" "add" project-path "-b" branch-name))
     project-path))
 
-(defun treebund--clone (repo-url)
+(defun treebund--clone (bare-url)
   "Clone a repository to the bare directory.
 Returns the path to the newly cloned repo."
-  (let* ((repo-name (car (last (split-string repo-url "/"))))
-         (repo-path (expand-file-name repo-name treebund-bare-dir)))
-    (message "Cloning %s..." repo-url)
-    (treebund--git "clone" repo-url "--bare" repo-path)
-    (treebund--git-with-repo repo-path "config" "remote.origin.fetch" "+refs/heads/*:refs/remotes/origin/*")
-    (treebund--git-with-repo repo-path "fetch")
-    (message "Finished cloning %s." (treebund--bare-name repo-path))
-    repo-path))
+  (let* ((bare-name (car (last (split-string bare-url "/"))))
+         (bare-path (expand-file-name bare-name treebund-bare-dir)))
+    (message "Cloning %s..." bare-url)
+    (treebund--git "clone" bare-url "--bare" bare-path)
+    (treebund--git-with-repo bare-path "config" "remote.origin.fetch" "+refs/heads/*:refs/remotes/origin/*")
+    (treebund--git-with-repo bare-path "fetch")
+    (message "Finished cloning %s." (treebund--bare-name bare-path))
+    bare-path))
 
 (defun treebund--list-worktrees (repo-path)
   (treebund--git-with-repo repo-path "worktree" "list" "-z" "--porcelain"))
