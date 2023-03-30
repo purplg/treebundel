@@ -151,6 +151,9 @@ Returns the path to the newly created worktree."
         "worktree" "add" project-path "-b" branch-name))
     project-path))
 
+(defun treebund--branch-delete (bare-path branch-name)
+  (treebund--git-with-repo bare-path "branch" "-D" branch-name))
+
 (defun treebund--clone (bare-url)
   "Clone a repository to the bare directory.
 Returns the path to the newly cloned repo."
