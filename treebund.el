@@ -339,7 +339,7 @@ If BRANCH is a string or list of strings, only check these local branches."
             (call-interactively #'treebund-clone)
           selection))))
 
-(defun treebund--read-project (workspace-path &optional prompt add)
+(defun treebund--read-project (workspace-path &optional prompt clone)
   "Interactively find the path of a project.
 WORKSPACE-PATH is the workspace to look for projects in.
 
@@ -351,7 +351,7 @@ that isn't in the workspace."
   (let* ((candidates (mapcar (lambda (project)
                                (cons project (file-name-as-directory (expand-file-name project workspace-path))))
                              (treebund--workspace-projects workspace-path))))
-    (when add
+    (when clone
       (setq candidates (append candidates '(("[ add ]" . add)))))
     (if-let ((selection (cdr (assoc (completing-read (or prompt "Project: ") candidates) candidates))))
         (if (equal selection 'add)
