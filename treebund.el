@@ -167,7 +167,14 @@ Returns the path to the newly cloned repo."
     bare-path))
 
 (defun treebund--list-worktrees (repo-path)
-  (treebund--git-with-repo repo-path "worktree" "list" "-z" "--porcelain"))
+  "Returns a list of worktrees for REPO-PATH."
+  (seq-map
+   (lambda (worktree)
+             (split-string worktree "\0" t))
+           (split-string (treebund--git-with-repo repo-path
+                           "worktree" "list" "-z" "--porcelain")
+                         "\0\0"
+                         t)))
 
 (defun treebund--rev-count (repo-path commit-a &optional commit-b)
   "Return the number of commits between COMMIT-A and COMMIT-B at REPO-PATH."
@@ -225,9 +232,10 @@ BODY is evaluated with the context of a buffer in the repo-path repository"
      result))
 
 (defun treebund--repo-worktree-count (repo-path)
+  "Returns the number of worktrees that exist for REPO-PATH."
   (seq-count
-   (lambda (str) (equal "worktree" str))
-   (split-string (treebund--list-worktrees repo-path) "\\(\0\\| \\)" t)))
+   (lambda (str) (not (member "bare" str)))
+   (treebund--list-worktrees repo-path)))
 
 (defun treebund--has-worktrees-p (repo-path)
   (> (treebund--repo-worktree-count repo-path) 1))
@@ -273,6 +281,14 @@ BODY is evaluated with the context of a buffer in the repo-path repository"
       (let* ((parts (split-string path "/"))
              (workspace-name (nth (- (length parts) 2) parts)))
         (expand-file-name workspace-name treebund-workspace-root)))))
+
+(defun treebund--project-bare (project-path)
+  "Return the respective bare for project at PROJECT-PATH."
+  (cadr
+   (split-string
+    (car
+     (seq-find (lambda (worktree) (member "bare" worktree))
+               (treebund--list-worktrees project-path))))))
 
 (defun treebund--project-current ()
   "Return the project path."
