@@ -158,6 +158,7 @@ Returns the path to the newly cloned repo."
          (repo-path (expand-file-name repo-name treebund-bare-dir)))
     (treebund--git "clone" repo-url "--bare" repo-path)
     (treebund--git-with-repo repo-path "config" "remote.origin.fetch" "+refs/heads/*:refs/remotes/origin/*")
+    (treebund--git-with-repo repo-path "fetch")
     repo-path))
 
 (defun treebund--list-worktrees (repo-path)
