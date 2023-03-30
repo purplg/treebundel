@@ -275,15 +275,15 @@ BODY is evaluated with the context of a buffer in the repo-path repository"
             (call-interactively #'treebund-clone)
           selection))))
 
-(defun treebund--read-project (workspace-path &optional prompt clone)
+(defun treebund--read-project (workspace-path &optional prompt add)
   "Interactively find the path of a project."
   (let* ((candidates (mapcar (lambda (project)
                                (cons project (file-name-as-directory (expand-file-name project workspace-path))))
                              (treebund--workspace-projects workspace-path))))
-    (when clone
-      (setq candidates (append candidates '(("[ new ]" . new)))))
+    (when add
+      (setq candidates (append candidates '(("[ add ]" . add)))))
     (if-let ((selection (cdr (assoc (completing-read (or prompt "Project: ") candidates) candidates))))
-        (if (equal selection 'new)
+        (if (equal selection 'add)
             (treebund-project-add workspace-path
                                   (treebund--read-bare prompt))
           selection))))
