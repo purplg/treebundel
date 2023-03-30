@@ -110,7 +110,7 @@
        (treebund--log output ?\n)
        (if (= 0 result)
            (if (string-empty-p output) t output)
-         (user-error "Git command failed.")))))
+         (user-error "Git command failed. See *treebund-log*.")))))
 
 (defmacro treebund--git-with-repo (repo-path &rest args)
   `(treebund--git "-C" (expand-file-name ,repo-path) ,@args))
@@ -156,9 +156,11 @@ Returns the path to the newly created worktree."
 Returns the path to the newly cloned repo."
   (let* ((repo-name (car (last (split-string repo-url "/"))))
          (repo-path (expand-file-name repo-name treebund-bare-dir)))
+    (message "Cloning %s..." repo-url)
     (treebund--git "clone" repo-url "--bare" repo-path)
     (treebund--git-with-repo repo-path "config" "remote.origin.fetch" "+refs/heads/*:refs/remotes/origin/*")
     (treebund--git-with-repo repo-path "fetch")
+    (message "Finished cloning %s." (treebund--bare-name repo-path))
     repo-path))
 
 (defun treebund--list-worktrees (repo-path)
