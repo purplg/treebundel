@@ -75,6 +75,7 @@
 ;;; Code:
 (require 'subr-x)
 (require 'vc-git)
+(require 'project)
 
 
 ;; Customization
