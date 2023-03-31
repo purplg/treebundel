@@ -100,6 +100,7 @@
   :group 'treebund
   :type 'string)
 
+; Hooks
 (defcustom treebund-before-project-open-hook nil
   "Hook which is run before a project is opened."
   :group 'treebund
