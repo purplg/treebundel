@@ -393,6 +393,15 @@ If BRANCH is a string or list of strings, only check these local branches."
 
 ;;;###autoload
 (defun treebund-project-add (workspace-path bare-path)
+  "Add a project to a workspace.
+This will create a worktree in WORKSPACE-PATH with a branch named
+after the workspace with `treebund-prefix' prefixed.
+
+WORKSPACE-PATH is the path to the workspace in which the worktree
+will be created.
+
+BARE-PATH is the bare git repository where the worktree is
+derived."
   (interactive
    (let ((workspace-path (treebund--read-workspace)))
      (list workspace-path
@@ -403,7 +412,21 @@ If BRANCH is a string or list of strings, only check these local branches."
 
 ;;;###autoload
 (defun treebund-project-add-detailed (workspace-path bare-path project-path project-branch)
-  "Like `treebund-project-add' but also specify a project path and branch."
+  "Like `treebund-project-add' but also specify a project path and branch.
+This will create a worktree in WORKSPACE-PATH with a branch named
+after the workspace with `treebund-prefix' prefixed.
+
+WORKSPACE-PATH is the path to the workspace in which the worktree
+will be created.
+
+BARE-PATH is the bare git repository where the worktree is
+derived.
+
+PROJECT-PATH is the path where the worktree will be created. The
+provided path should be in WORKSPACE-PATH directory.
+
+PROJECT-BRANCH is the name of the branch to be checked out for
+this project."
   (interactive
    (let* ((workspace-path (treebund--read-workspace))
           (bare-path (treebund--read-bare (format "Add project to %s: "
