@@ -447,6 +447,8 @@ this project."
 
 ;;;###autoload
 (defun treebund-project-remove (project-path)
+  "Remove project at PROJECT-PATH from a workspace.
+If there are not commits to the branch, the branch will automatically be deleted."
   (interactive
    (let ((workspace-path (or (and (not current-prefix-arg)
                                   (treebund--workspace-current))
@@ -462,6 +464,7 @@ this project."
 
 ;;;###autoload
 (defun treebund-clone (url)
+  "Clone URL to the collection of bare repos."
   (interactive
    (list (read-string "URL: " (let ((clipboard (gui-get-selection 'CLIPBOARD 'STRING)))
                                 ;; Does clipboard kinda look like a git url?
