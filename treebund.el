@@ -454,7 +454,7 @@ this project."
                                                   (treebund--workspace-name workspace-path))
                                           t
                                           (treebund--workspace-projects workspace-path)))
-          (project-path (expand-file-name (read-directory-name "Project path: " (expand-file-name workspace-path))))
+          (project-path (expand-file-name (treebund--read-project workspace-path "Project path: ") workspace-path))
           (project-branch (read-string "Branch: " (file-name-base (directory-file-name project-path)))))
      (list workspace-path bare-path project-path project-branch)))
   (project-switch-project (treebund--worktree-add workspace-path
