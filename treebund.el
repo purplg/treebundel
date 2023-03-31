@@ -151,6 +151,10 @@ Returns the path to the newly created worktree."
         "worktree" "add" project-path "-b" branch-name))
     project-path))
 
+(defun treebund--branch (repo-path)
+  "Return the branch checked out REPO-PATH."
+  (treebund--git-with-repo repo-path "branch" "--show-current"))
+
 (defun treebund--branch-delete (bare-path branch-name)
   (treebund--git-with-repo bare-path "branch" "-D" branch-name))
 
@@ -240,9 +244,17 @@ BODY is evaluated with the context of a buffer in the repo-path repository"
 (defun treebund--has-worktrees-p (repo-path)
   (> (treebund--repo-worktree-count repo-path) 1))
 
-(defun treebund--unpushed-commits-p (repo-path)
+(defun treebund--unpushed-commits-p (repo-path &optional branches)
+  "Returns if there are any unpushed commits to remote.
+
+If BRANCH is nil, check all local branches.
+
+If BRANCH is a string or list of strings, only check these local branches."
+  (when (eq 'string (type-of branches))
+    (setq branches (list branches)))
+  (setq repo-path (treebund--project-bare repo-path))
   (seq-some (lambda (branch) (> (treebund--rev-count repo-path branch) 0))
-            (treebund--branches repo-path)))
+            (or branches (treebund--branches repo-path))))
 
 ; Bares
 (defun treebund--bare-name (bare-path)
@@ -391,7 +403,11 @@ BODY is evaluated with the context of a buffer in the repo-path repository"
      (list (treebund--read-project workspace-path
                                    (format "Remove project from %s: "
                                            (treebund--workspace-name workspace-path))))))
-  (treebund--worktree-remove project-path))
+  (let ((bare-path (treebund--project-bare project-path))
+        (branch-name (treebund--branch project-path)))
+    (treebund--worktree-remove project-path)
+    (unless (treebund--unpushed-commits-p bare-path `(,branch-name))
+      (treebund--branch-delete bare-path branch-name))))
 
 ;;;###autoload
 (defun treebund-clone (url)
