@@ -373,7 +373,7 @@ minibuffer.
 When ADD is non-nil, add an option for the user to add a project
 that isn't in the workspace."
   (let* ((candidates (mapcar (lambda (project)
-                               (cons project (file-name-as-directory (expand-file-name project workspace-path))))
+                               (cons project (expand-file-name project workspace-path)))
                              (treebund--workspace-projects workspace-path))))
     (when clone
       (setq candidates (append candidates '(("[ add ]" . add)))))
@@ -386,7 +386,7 @@ that isn't in the workspace."
 (defun treebund--read-workspace (&optional prompt)
   "Interactively find the path of a workspace."
   (let ((candidates (mapcar (lambda (workspace)
-                              (cons workspace (file-name-as-directory (expand-file-name workspace treebund-workspace-root))))
+                              (cons workspace (expand-file-name workspace treebund-workspace-root)))
                             (treebund--workspaces))))
     (cdr (assoc (completing-read (or prompt "Workspace: ") candidates) candidates))))
 
