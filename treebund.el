@@ -406,14 +406,15 @@ When non-nil, the returned value URL."
 ;;;###autoload
 (defun treebund-open (project-path)
   (interactive
-   (let ((workspace-path (or (and (not current-prefix-arg)
-                                  (treebund--workspace-current))
-                             (treebund--read-workspace "Open project in workspace: "))))
-     (list (treebund--read-project
-            workspace-path
-            (format "Open project in %s: "
-                    (treebund--workspace-name workspace-path))
-            t))))
+   (let* ((workspace-path (or (and (not current-prefix-arg)
+                                   (treebund--workspace-current))
+                              (treebund--read-workspace "Open project in workspace: ")))
+          (project-path (treebund--read-project
+                         workspace-path
+                         (format "Open project in %s: "
+                                 (treebund--workspace-name workspace-path))
+                         t)))
+     (list project-path)))
   (let ((new-workspace-p (not (string= (treebund--workspace-current)
                                        (treebund--workspace-current project-path)))))
     (when new-workspace-p (run-hooks 'treebund-before-workspace-open-hook))
