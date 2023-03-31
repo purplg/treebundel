@@ -340,7 +340,14 @@ If BRANCH is a string or list of strings, only check these local branches."
           selection))))
 
 (defun treebund--read-project (workspace-path &optional prompt add)
-  "Interactively find the path of a project."
+  "Interactively find the path of a project.
+WORKSPACE-PATH is the workspace to look for projects in.
+
+PROMPT is the prompt to be presented to the user in the
+minibuffer.
+
+When ADD is non-nil, add an option for the user to add a project
+that isn't in the workspace."
   (let* ((candidates (mapcar (lambda (project)
                                (cons project (file-name-as-directory (expand-file-name project workspace-path))))
                              (treebund--workspace-projects workspace-path))))
