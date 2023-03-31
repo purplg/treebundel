@@ -305,22 +305,20 @@ If BRANCH is a string or list of strings, only check these local branches."
 (defun treebund--workspaces ()
   (directory-files treebund-workspace-root nil "^[^.].*"))
 
-(defun treebund--workspace-current (&optional project-path)
+(defun treebund--workspace-current (&optional file-path)
   "Return the path to the current workspace"
-  (when-let* ((project-path (or project-path buffer-file-name))
-              (project-path (file-name-directory project-path))
-              (file-exists-p project-path)
-              (project (project-current nil project-path)))
-    (treebund--project-workspace (project-root project))))
+  (when-let ((project-path (or (treebund--project-current file-path)
+                               file-path)))
+    (treebund--project-workspace project-path)))
 
 ; Projects
-(defun treebund--project-workspace (project-path)
+(defun treebund--project-workspace (file-path)
   "Return the workspace path of a given PROJECT-PATH."
-  (let ((path (directory-file-name project-path)))
-    (when (string-prefix-p treebund-workspace-root path)
-      (let* ((parts (split-string path "/"))
-             (workspace-name (nth (- (length parts) 2) parts)))
-        (expand-file-name workspace-name treebund-workspace-root)))))
+  (when-let* ((file-path (expand-file-name (directory-file-name file-path)))
+              ((string-prefix-p (expand-file-name treebund-workspace-root) file-path))
+              (parts (split-string file-path "/"))
+              (workspace-name (nth (- (length parts) 2) parts)))
+    (expand-file-name workspace-name treebund-workspace-root)))
 
 (defun treebund--project-bare (project-path)
   "Return the respective bare for project at PROJECT-PATH."
@@ -330,11 +328,13 @@ If BRANCH is a string or list of strings, only check these local branches."
      (seq-find (lambda (worktree) (member "bare" worktree))
                (treebund--list-worktrees project-path))))))
 
-(defun treebund--project-current ()
+(defun treebund--project-current (project-path)
   "Return the project path."
-  (when-let ((path (directory-file-name (project-root (project-current)))))
-    (when (treebund--project-workspace path)
-      path)))
+  (when-let* ((project-path (or project-path buffer-file-name))
+              (project-path (file-name-directory project-path))
+              (file-exists-p project-path)
+              (project (project-current nil project-path)))
+    (expand-file-name (project-root project))))
 
 ; Branches
 (defun treebund--branch-name (workspace-path)
