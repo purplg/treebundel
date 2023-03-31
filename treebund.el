@@ -403,7 +403,9 @@ will be created.
 BARE-PATH is the bare git repository where the worktree is
 derived."
   (interactive
-   (let ((workspace-path (treebund--read-workspace)))
+   (let ((workspace-path (or (and (not current-prefix-arg)
+                                  (treebund--workspace-current))
+                             (treebund--read-workspace "Add project to workspace: "))))
      (list workspace-path
            (treebund--read-bare (format "Add project to %s: " (treebund--workspace-name workspace-path))
                                 t
@@ -428,7 +430,9 @@ provided path should be in WORKSPACE-PATH directory.
 PROJECT-BRANCH is the name of the branch to be checked out for
 this project."
   (interactive
-   (let* ((workspace-path (treebund--read-workspace))
+   (let* ((workspace-path (or (and (not current-prefix-arg)
+                                  (treebund--workspace-current))
+                             (treebund--read-workspace "Add project to workspace: ")))
           (bare-path (treebund--read-bare (format "Add project to %s: "
                                                   (treebund--workspace-name workspace-path))
                                           t
@@ -444,8 +448,9 @@ this project."
 ;;;###autoload
 (defun treebund-project-remove (project-path)
   (interactive
-   (let ((workspace-path (or (treebund--workspace-current)
-                             (treebund--read-workspace))))
+   (let ((workspace-path (or (and (not current-prefix-arg)
+                                  (treebund--workspace-current))
+                             (treebund--read-workspace "Remove project from workspace: "))))
      (list (treebund--read-project workspace-path
                                    (format "Remove project from %s: "
                                            (treebund--workspace-name workspace-path))))))
