@@ -158,13 +158,13 @@ Returns the path to the newly created worktree."
 (defun treebund--branch-delete (bare-path branch-name)
   (treebund--git-with-repo bare-path "branch" "-D" branch-name))
 
-(defun treebund--clone (bare-url)
+(defun treebund--clone (url)
   "Clone a repository to the bare directory.
 Returns the path to the newly cloned repo."
-  (let* ((bare-name (car (last (split-string bare-url "/"))))
+  (let* ((bare-name (car (last (split-string url "/"))))
          (bare-path (expand-file-name bare-name treebund-bare-dir)))
-    (message "Cloning %s..." bare-url)
-    (treebund--git "clone" bare-url "--bare" bare-path)
+    (message "Cloning %s..." url)
+    (treebund--git "clone" url "--bare" bare-path)
     (treebund--git-with-repo bare-path "config" "remote.origin.fetch" "+refs/heads/*:refs/remotes/origin/*")
     (treebund--git-with-repo bare-path "fetch")
     (message "Finished cloning %s." (treebund--bare-name bare-path))
