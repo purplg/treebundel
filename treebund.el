@@ -390,7 +390,7 @@ that isn't in the workspace."
   (let ((candidates (mapcar (lambda (workspace)
                               (cons workspace (expand-file-name workspace treebund-workspace-root)))
                             (treebund--workspaces))))
-    (cdr (assoc (completing-read (or prompt "Workspace: ") candidates) candidates))))
+    (cdr (assoc (completing-read (or prompt "Workspace: ") candidates nil t) candidates))))
 
 
 ;; User functions
