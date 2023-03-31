@@ -432,7 +432,6 @@ If BRANCH is a string or list of strings, only check these local branches."
       (user-error "Repostitory with this name is already cloned."))
     (treebund--clone url dest)))
 
-
 ;;;###autoload
 (defun treebund-bare-delete (bare-path)
   (interactive
