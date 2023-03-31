@@ -386,12 +386,17 @@ that isn't in the workspace."
                                   (treebund--read-bare prompt))
           selection))))
 
-(defun treebund--read-workspace (&optional prompt)
+(defun treebund--read-workspace (&optional prompt new)
   "Interactively find the path of a workspace."
   (let ((candidates (mapcar (lambda (workspace)
                               (cons workspace (expand-file-name workspace treebund-workspace-root)))
                             (treebund--workspaces))))
-    (cdr (assoc (completing-read (or prompt "Workspace: ") candidates nil t) candidates))))
+    (when new
+      (setq candidates (append candidates '(("[ new ]" . new)))))
+    (if-let ((selection (cdr (assoc (completing-read (or prompt "Workspace: ") candidates nil t) candidates))))
+        (if (equal selection 'new)
+            (call-interactively #'treebund-workspace-new)
+          selection))))
 
 
 ;; User functions
@@ -411,7 +416,7 @@ When non-nil, the returned value URL."
   (interactive
    (let* ((workspace-path (or (and (not current-prefix-arg)
                                    (treebund--workspace-current))
-                              (treebund--read-workspace "Open project in workspace: ")))
+                              (treebund--read-workspace "Open project in workspace: " t)))
           (project-path (treebund--read-project
                          workspace-path
                          (format "Open project in %s: "
@@ -433,7 +438,8 @@ When non-nil, the returned value URL."
   (interactive
    (list (read-directory-name "Create a new workspace: " (expand-file-name treebund-workspace-root))))
   (unless (file-exists-p workspace-path)
-    (make-directory workspace-path)))
+    (make-directory workspace-path))
+  workspace-path)
 
 ;;;###autoload
 (defun treebund-workspace-delete (workspace-path)
