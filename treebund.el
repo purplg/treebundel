@@ -158,22 +158,19 @@ Returns the path to the newly created worktree."
 
 (defun treebund--branch-delete (bare-path branch-name)
   (treebund--git-with-repo bare-path
-    "branch" "-D" branch-name))
+                           "branch" "-D" branch-name))
 
-(defun treebund--clone (url)
-  "Clone a repository to the bare directory.
-Returns the path to the newly cloned repo."
-  (let* ((bare-name (car (last (split-string url "/"))))
-         (bare-path (expand-file-name bare-name treebund-bare-dir)))
-    (message "Cloning %s..." url)
-    (treebund--git
-      "clone" url "--bare" bare-path)
-    (treebund--git-with-repo bare-path
-      "config" "remote.origin.fetch" "+refs/heads/*:refs/remotes/origin/*")
-    (treebund--git-with-repo bare-path
-      "fetch")
-    (message "Finished cloning %s." (treebund--bare-name bare-path))
-    bare-path))
+(defun treebund--clone (url dest)
+  "Clone a repository from URL to DEST."
+  (message "Cloning %s..." url)
+  (treebund--git
+    "clone" url "--bare" dest)
+  (treebund--git-with-repo dest
+    "config" "remote.origin.fetch" "+refs/heads/*:refs/remotes/origin/*")
+  (treebund--git-with-repo dest
+    "fetch")
+  (message "Finished cloning %s." (treebund--bare-name dest))
+  t)
 
 (defun treebund--list-worktrees (repo-path)
   "Returns a list of worktrees for REPO-PATH."
@@ -429,7 +426,12 @@ If BRANCH is a string or list of strings, only check these local branches."
                                          (string-prefix-p "https" clipboard))
                                      (string-suffix-p ".git" clipboard)
                                      clipboard)))))
-  (treebund--clone url))
+  (let* ((dir-name (car (last (split-string url "/"))))
+         (dest (expand-file-name dir-name treebund-bare-dir)))
+    (when (file-exists-p dest)
+      (user-error "Repostitory with this name is already cloned."))
+    (treebund--clone url dest)))
+
 
 ;;;###autoload
 (defun treebund-bare-delete (bare-path)
