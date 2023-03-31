@@ -153,10 +153,12 @@ Returns the path to the newly created worktree."
 
 (defun treebund--branch (repo-path)
   "Return the branch checked out REPO-PATH."
-  (treebund--git-with-repo repo-path "branch" "--show-current"))
+  (treebund--git-with-repo repo-path
+    "branch" "--show-current"))
 
 (defun treebund--branch-delete (bare-path branch-name)
-  (treebund--git-with-repo bare-path "branch" "-D" branch-name))
+  (treebund--git-with-repo bare-path
+    "branch" "-D" branch-name))
 
 (defun treebund--clone (url)
   "Clone a repository to the bare directory.
@@ -164,9 +166,12 @@ Returns the path to the newly cloned repo."
   (let* ((bare-name (car (last (split-string url "/"))))
          (bare-path (expand-file-name bare-name treebund-bare-dir)))
     (message "Cloning %s..." url)
-    (treebund--git "clone" url "--bare" bare-path)
-    (treebund--git-with-repo bare-path "config" "remote.origin.fetch" "+refs/heads/*:refs/remotes/origin/*")
-    (treebund--git-with-repo bare-path "fetch")
+    (treebund--git
+      "clone" url "--bare" bare-path)
+    (treebund--git-with-repo bare-path
+      "config" "remote.origin.fetch" "+refs/heads/*:refs/remotes/origin/*")
+    (treebund--git-with-repo bare-path
+      "fetch")
     (message "Finished cloning %s." (treebund--bare-name bare-path))
     bare-path))
 
@@ -185,7 +190,9 @@ Returns the path to the newly cloned repo."
   (unless commit-b
     (setq commit-b commit-a)
     (setq commit-a (treebund--branch-main repo-path)))
-  (string-to-number (treebund--git-with-repo repo-path "rev-list" (concat commit-a ".." commit-b) "--count")))
+  (string-to-number
+   (treebund--git-with-repo repo-path
+     "rev-list" (concat commit-a ".." commit-b) "--count")))
 
 ; Logging
 (defface treebund--gitlog-heading
