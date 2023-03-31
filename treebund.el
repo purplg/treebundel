@@ -100,6 +100,26 @@
   :group 'treebund
   :type 'string)
 
+(defcustom treebund-before-project-open-hook nil
+  "Hook which is run before a project is opened."
+  :group 'treebund
+  :type 'hook)
+
+(defcustom treebund-after-project-open-hook nil
+  "Hook which is run before a project is opened."
+  :group 'treebund
+  :type 'hook)
+
+(defcustom treebund-before-workspace-open-hook nil
+  "Hook which is run before a workspace is opened."
+  :group 'treebund
+  :type 'hook)
+
+(defcustom treebund-after-workspace-open-hook nil
+  "Hook which is run before a workspace is opened."
+  :group 'treebund
+  :type 'hook)
+
 
 ;; Git commands
 
@@ -285,9 +305,12 @@ If BRANCH is a string or list of strings, only check these local branches."
 (defun treebund--workspaces ()
   (directory-files treebund-workspace-root nil "^[^.].*"))
 
-(defun treebund--workspace-current ()
+(defun treebund--workspace-current (&optional project-path)
   "Return the path to the current workspace"
-  (when-let ((project (project-current)))
+  (when-let* ((project-path (or project-path buffer-file-name))
+              (project-path (file-name-directory project-path))
+              (file-exists-p project-path)
+              (project (project-current nil project-path)))
     (treebund--project-workspace (project-root project))))
 
 ; Projects
@@ -391,7 +414,15 @@ When non-nil, the returned value URL."
             (format "Open project in %s: "
                     (treebund--workspace-name workspace-path))
             t))))
-  (project-switch-project project-path))
+  (let ((new-workspace-p (not (string= (treebund--workspace-current)
+                                       (treebund--workspace-current project-path)))))
+    (when new-workspace-p (run-hooks 'treebund-before-workspace-open-hook))
+    (run-hooks 'treebund-before-project-open-hook)
+
+    (project-switch-project project-path)
+
+    (run-hooks 'treebund-after-project-open-hook)
+    (when new-workspace-p (run-hooks 'treebund-after-workspace-open-hook))))
 
 ;;;###autoload
 (defun treebund-workspace-new (workspace-path)
@@ -428,7 +459,7 @@ derived."
            (treebund--read-bare (format "Add project to %s: " (treebund--workspace-name workspace-path))
                                 t
                                 (treebund--workspace-projects workspace-path)))))
-  (project-switch-project (treebund--worktree-add workspace-path bare-path)))
+  (treebund-open (treebund--worktree-add workspace-path bare-path)))
 
 ;;;###autoload
 (defun treebund-project-add-detailed (workspace-path bare-path project-path project-branch)
@@ -458,10 +489,10 @@ this project."
           (project-path (expand-file-name (treebund--read-project workspace-path "Project path: ") workspace-path))
           (project-branch (read-string "Branch: " (file-name-base (directory-file-name project-path)))))
      (list workspace-path bare-path project-path project-branch)))
-  (project-switch-project (treebund--worktree-add workspace-path
-                                                  bare-path
-                                                  project-path
-                                                  project-branch)))
+  (treebund-open (treebund--worktree-add workspace-path
+                                         bare-path
+                                         project-path
+                                         project-branch)))
 
 ;;;###autoload
 (defun treebund-project-remove (project-path)
