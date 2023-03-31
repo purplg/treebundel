@@ -362,6 +362,16 @@ If BRANCH is a string or list of strings, only check these local branches."
 
 ;; User functions
 
+(defun treebund--git-url-like-p (url)
+  "Return non-nil if URL looks kinda like a git-clonable URL.
+When non-nil, the returned value URL."
+  (and (or (string-prefix-p "ssh://git@" url)
+           (string-prefix-p "git@" url)
+           (string-prefix-p "http://" url)
+           (string-prefix-p "https://" url))
+       (string-suffix-p ".git" url)
+       url))
+
 ;;;###autoload
 (defun treebund-open (project-path)
   (interactive
@@ -466,14 +476,8 @@ If there are not commits to the branch, the branch will automatically be deleted
 (defun treebund-clone (url)
   "Clone URL to the collection of bare repos."
   (interactive
-   (list (read-string "URL: " (let ((clipboard (gui-get-selection 'CLIPBOARD 'STRING)))
-                                ;; Does clipboard kinda look like a git url?
-                                (and (or (string-prefix-p "ssh://git@" clipboard)
-                                         (string-prefix-p "git@" clipboard)
-                                         (string-prefix-p "http" clipboard)
-                                         (string-prefix-p "https" clipboard))
-                                     (string-suffix-p ".git" clipboard)
-                                     clipboard)))))
+   (list (read-string "URL: " (or (treebund--git-url-like-p (gui-get-selection 'CLIPBOARD 'STRING))
+                                  (treebund--git-url-like-p (gui-get-selection 'PRIMARY 'STRING))))))
   (let* ((dir-name (car (last (split-string url "/"))))
          (dest (expand-file-name dir-name treebund-bare-dir)))
     (when (file-exists-p dest)
