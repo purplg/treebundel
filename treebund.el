@@ -300,7 +300,9 @@ If BRANCH is a string or list of strings, only check these local branches."
   (file-name-base (directory-file-name workspace-path)))
 
 (defun treebund--workspace-projects (workspace-path)
-  (directory-files workspace-path nil "^[^.].*"))
+  "Returns a list of absoute paths to projects in WORKSPACE-PATH."
+  (seq-filter #'file-directory-p
+              (directory-files workspace-path t "^[^.].*")))
 
 (defun treebund--workspaces ()
   (directory-files treebund-workspace-root nil "^[^.].*"))
@@ -373,7 +375,7 @@ minibuffer.
 When ADD is non-nil, add an option for the user to add a project
 that isn't in the workspace."
   (let* ((candidates (mapcar (lambda (project)
-                               (cons project (expand-file-name project workspace-path)))
+                               (cons (file-name-base project) project))
                              (treebund--workspace-projects workspace-path))))
     (when clone
       (setq candidates (append candidates '(("[ add ]" . add)))))
