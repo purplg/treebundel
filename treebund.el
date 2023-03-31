@@ -134,7 +134,7 @@
     (treebund--git-with-repo bare-path
       "worktree" "remove" (expand-file-name repo-path))))
 
-(defun treebund--worktree-add (workspace-path bare-path)
+(defun treebund--worktree-add (workspace-path bare-path &optional project-path branch-name)
   "Create a worktree.
 WORKSPACE-PATH is the directory to place the new worktree in.
 
@@ -142,8 +142,8 @@ BARE-PATH is the main repository the worktree is being created from.
 
 Returns the path to the newly created worktree."
   (let* ((bare-name (treebund--bare-name bare-path))
-         (branch-name (treebund--branch-name workspace-path))
-         (project-path (expand-file-name bare-name workspace-path)))
+         (branch-name (or branch-name (treebund--branch-name workspace-path)))
+         (project-path (or project-path (expand-file-name bare-name workspace-path))))
     (if (member branch-name (treebund--branches bare-path))
         (treebund--git-with-repo bare-path
           "worktree" "add" project-path branch-name)
@@ -400,6 +400,23 @@ If BRANCH is a string or list of strings, only check these local branches."
                                 t
                                 (treebund--workspace-projects workspace-path)))))
   (project-switch-project (treebund--worktree-add workspace-path bare-path)))
+
+;;;###autoload
+(defun treebund-project-add-detailed (workspace-path bare-path project-path project-branch)
+  "Like `treebund-project-add' but also specify a project path and branch."
+  (interactive
+   (let* ((workspace-path (treebund--read-workspace))
+          (bare-path (treebund--read-bare (format "Add project to %s: "
+                                                  (treebund--workspace-name workspace-path))
+                                          t
+                                          (treebund--workspace-projects workspace-path)))
+          (project-path (expand-file-name (read-directory-name "Project path: " (expand-file-name workspace-path))))
+          (project-branch (read-string "Branch: " (file-name-base (directory-file-name project-path)))))
+     (list workspace-path bare-path project-path project-branch)))
+  (project-switch-project (treebund--worktree-add workspace-path
+                                                  bare-path
+                                                  project-path
+                                                  project-branch)))
 
 ;;;###autoload
 (defun treebund-project-remove (project-path)
