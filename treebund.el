@@ -403,7 +403,7 @@ that isn't in the workspace."
 
 (defun treebund--git-url-like-p (url)
   "Return non-nil if URL looks kinda like a git-clonable URL.
-When non-nil, the returned value URL."
+The URL is returned for non-nil."
   (and (or (string-prefix-p "ssh://git@" url)
            (string-prefix-p "git@" url)
            (string-prefix-p "http://" url)
