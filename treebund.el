@@ -449,8 +449,8 @@ PROJECT-BRANCH is the name of the branch to be checked out for
 this project."
   (interactive
    (let* ((workspace-path (or (and (not current-prefix-arg)
-                                  (treebund--workspace-current))
-                             (treebund--read-workspace "Add project to workspace: ")))
+                                   (treebund--workspace-current))
+                              (treebund--read-workspace "Add project to workspace: ")))
           (bare-path (treebund--read-bare (format "Add project to %s: "
                                                   (treebund--workspace-name workspace-path))
                                           t
