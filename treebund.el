@@ -414,7 +414,8 @@ If BRANCH is a string or list of strings, only check these local branches."
   (interactive
    (list (read-string "URL: " (let ((clipboard (gui-get-selection 'CLIPBOARD 'STRING)))
                                 ;; Does clipboard kinda look like a git url?
-                                (and (or (string-prefix-p "git@" clipboard)
+                                (and (or (string-prefix-p "ssh://git@" clipboard)
+                                         (string-prefix-p "git@" clipboard)
                                          (string-prefix-p "http" clipboard)
                                          (string-prefix-p "https" clipboard))
                                      (string-suffix-p ".git" clipboard)
