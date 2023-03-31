@@ -361,7 +361,9 @@ If BRANCH is a string or list of strings, only check these local branches."
 ;;;###autoload
 (defun treebund-open (project-path)
   (interactive
-   (let ((workspace-path (treebund--read-workspace "Open project in workspace: ")))
+   (let ((workspace-path (or (and (not current-prefix-arg)
+                                  (treebund--workspace-current))
+                             (treebund--read-workspace "Open project in workspace: "))))
      (list (treebund--read-project
             workspace-path
             (format "Open project in %s: "
