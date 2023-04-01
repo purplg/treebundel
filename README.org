@@ -1,0 +1,147 @@
+#+TITLE: treebund.el
+
+This package is used for automating the grouping of related git-worktrees from multiple repositories
+together. This helps switch quickly between repositories and ensure you're on the correct
+branch. When you're done with the feature, you can look at the repositories in the workspace and
+know which ones were modified to simplify the process of getting the changes merged together.
+
+Additionally, a single bare repository is shared between multiple workspaces. You can stash, pop,
+and pull changes in from the same repository in other workspaces thanks to the power of
+git-worktrees.
+
+* Contents
+:PROPERTIES:
+:TOC:      :include siblings :depth 0 :force ((nothing)) :ignore (this) :local (nothing)
+:END:
+:CONTENTS:
+- [[#terminology][Terminology]]
+- [[#structure][Structure]]
+- [[#installation][Installation]]
+- [[#usage][Usage]]
+- [[#configuration][Configuration]]
+- [[#license][License]]
+:END:
+
+* Terminology
+
+| Term        | Description                                                                       |
+|-------------+-----------------------------------------------------------------------------------|
+| *Workspace* | A collection of *project*'s created from *bare*'s.                                |
+| *Project*   | A git-worktree checked out from a *bare* stored in a *workspace*.                 |
+| *Bare*      | A bare repository used as a source to create *project* git-worktree.              |
+| *Prefix*    | The string added before the name of the branch checked out for the **workspace**. |
+
+* Structure
+
+Workspaces are structured as such:
+
+#+BEGIN_SRC
+treebund-workspace-root (default: "~/workspaces/")
+   |
+   L workspace1
+   |    L project-one   (branch: "feature/workspace1")
+   |    L project-two   (branch: "feature/workspace1")
+   |    L project-three (branch: "feature/workspace1")
+   |
+   L workspace2
+        L project-one   (branch: "feature/workspace2")
+        L project-two   (branch: "feature/workspace2")
+        L project-three (branch: "feature/workspace2")
+#+END_SRC
+
+* Installation
+
+** straight.el
+
+#+BEGIN_SRC emacs-lisp :results none
+(straight-use-package '(treebund :type git :host github :repo "purplg/treebund.el"))
+;; -- Configuration goes here --
+#+END_SRC
+
+* Usage
+
+| Command                     | Description                       |
+|-----------------------------+-----------------------------------|
+| ~treebund-open~             | Open a project in a workspace     |
+| ~treebund-project-add~      | Add a project to a workspace      |
+| ~treebund-project-remove~   | Remove a project from a workspace |
+| ~treebund-workspace-new~    | Create a new workspace            |
+| ~treebund-workspace-delete~ | Delete a new workspace            |
+
+Assuming default configuration, the following will create a bare clone of the provided repo URL to
+=~/workspaces/.bare/<repo-name>.git=, then create and open a worktree for a new branch called
+=feature/<workspace-name>=.
+
+1. Create a new workspace using ~treebund-workspace-new~.
+2. Interactively call ~treebund-project-add~.
+3. Select the newly created workspace.
+4. Select =[ clone ]=.
+5. Enter the remote URL for the repository to be added to the workspace.
+
+   You should then be prompted with your `project-switch-project` prompt to begin editing.
+
+   Whenever you need a different repository, you can call `treebund-open` and switch to and/or add a
+   new repository to your workspace.
+
+* Configuration
+
+** treebund-workspace-root
+
+*Default*:
+#+BEGIN_EXAMPLE
+"~/workspaces/"
+#+END_EXAMPLE
+
+The most important variable you probably want to configure is ~treebund-workspace-root~. This
+configures where all of the treebund workspaces are going to be located on your file system.
+
+** treebund-bare-dir
+
+*Default*:
+#+BEGIN_EXAMPLE
+treebund-workspace-root + ".bare"
+#+END_EXAMPLE
+
+This is the directory that bare repository get cloned to. The intent is for this to be mostly
+transparent, hence the =.= prefix to make it hidden by default.
+
+** treebund-prefix
+
+*Default*:
+#+BEGIN_EXAMPLE
+"feature/"
+#+END_EXAMPLE
+
+=treebund-prefix= is a string used to prefix all treebund-created branches. By default, it's
+=feature/= such that when you add a new project to a workspace, the new branch is name
+=feature/<workspace-name>=. At work, I set this to my name so that I know it won't conflict with
+another branch on remote.
+
+Eventually, I plan on having workspace-specific configuration items so that you may select a prefix
+per workspace. Then you could specify a prefix like =bugfix/= or an issue number or whatever you
+like for the whole workspace and easily relate multiple branches on different repositories together.
+
+** Hooks
+
+| Hook                                     | Description                                                    |
+|------------------------------------------+----------------------------------------------------------------|
+| ~treebund-before-project-open-functions~ | Called before a project is open with the path to the project.  |
+| ~treebund-after-project-open-functions~  | Called after a project is open with the path to the workspace. |
+| ~treebund-before-workspace-open-hook~    | Called before a workspace is open.                             |
+| ~treebund-after-workspace-open-hook~     | Called after a workspace is open.                              |
+
+For my own config, I use the hooks to create a new tab for every project I open:
+
+#+BEGIN_SRC emacs-lisp
+(with-eval-after-load 'tab-bar
+  (add-hook 'treebund-before-project-open-functions
+            (lambda (project-path)
+              (tab-bar-select-tab-by-name
+               (format "%s/%s"
+                       (treebund--workspace-name (treebund--workspace-current project-path))
+                       (treebund--bare-name (treebund--project-bare project-path)))))))
+#+END_SRC
+
+* License
+
+MIT
