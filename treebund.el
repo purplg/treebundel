@@ -335,19 +335,15 @@ This will check to see if BARE-PATH exists within
 (defun treebund--workspace-current (&optional file-path)
   "Return the path to the current workspace.
 If FILE-PATH is non-nil, use the current buffer instead."
-  (when-let ((project-path (or (treebund--project-current file-path)
-                               file-path)))
-    (treebund--project-workspace project-path)))
+  (when-let* ((file-path (expand-file-name (or file-path buffer-file-name)))
+              (workspace-root (expand-file-name treebund-workspace-root))
+              ((string-prefix-p workspace-root file-path))
+              (workspace-name (car (split-string (string-remove-prefix workspace-root
+                                                                       file-path)
+                                                 "/"))))
+    (expand-file-name workspace-name workspace-root)))
 
 ; Projects
-(defun treebund--project-workspace (file-path)
-  "Return the workspace path of a given FILE-PATH."
-  (when-let* ((file-path (expand-file-name (directory-file-name file-path)))
-              ((string-prefix-p (expand-file-name treebund-workspace-root) file-path))
-              (parts (split-string file-path "/"))
-              (workspace-name (nth (- (length parts) 2) parts)))
-    (expand-file-name workspace-name treebund-workspace-root)))
-
 (defun treebund--project-bare (project-path)
   "Return the respective bare for project at PROJECT-PATH."
   (cadr
@@ -359,11 +355,13 @@ If FILE-PATH is non-nil, use the current buffer instead."
 (defun treebund--project-current (&optional file-path)
   "Return the project path of FILE-PATH.
 If FILE-PATH is non-nil, use the current buffer."
-  (when-let* ((file-path (or file-path buffer-file-name))
-              (file-path (file-name-directory file-path))
-              (file-exists-p file-path)
-              (project (project-current nil file-path)))
-    (expand-file-name (project-root project))))
+  (when-let* ((file-path (expand-file-name (or file-path buffer-file-name)))
+              ((file-exists-p file-path))
+              ((treebund--workspace-current file-path))
+              (workspace-path (treebund--workspace-current file-path))
+              (project-name (cadr (string-split (string-remove-prefix workspace-path file-path) "/"))))
+    (unless (string-empty-p project-name)
+      (expand-file-name project-name workspace-path))))
 
 ; Branches
 (defun treebund--branch-name (workspace-path)
