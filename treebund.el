@@ -407,7 +407,7 @@ excluded from the candidates."
             (call-interactively #'treebund-clone)
           selection))))
 
-(defun treebund--read-project (workspace-path &optional prompt add)
+(defun treebund--read-project (workspace-path &optional prompt add initial)
   "Interactively find the path of a project.
 WORKSPACE-PATH is the workspace to look for projects in.
 
@@ -421,7 +421,7 @@ that isn't in the workspace."
                              (treebund--workspace-projects workspace-path))))
     (when add
       (setq candidates (append candidates '(("[ add ]" . add)))))
-    (if-let ((selection (cdr (assoc (completing-read (or prompt "Project: ") candidates) candidates))))
+    (if-let ((selection (cdr (assoc (completing-read (or prompt "Project: ") candidates nil nil initial) candidates))))
         (if (equal selection 'add)
             (treebund-project-add workspace-path
                                   (treebund--read-bare prompt))
@@ -555,8 +555,8 @@ this project."
                                                   (treebund--workspace-name workspace-path))
                                           t
                                           (treebund--workspace-projects workspace-path)))
-          (project-path (expand-file-name (treebund--read-project workspace-path "Project name: ") workspace-path))
-          (project-branch (read-string "Branch: " (file-name-base (directory-file-name project-path)))))
+          (project-branch (completing-read "Branch: " (treebund--branches bare-path)))
+          (project-path (expand-file-name (treebund--read-project workspace-path "Project name: " nil project-branch) workspace-path)))
      (list workspace-path bare-path project-path project-branch)))
   (treebund-open workspace-path
                  (treebund--worktree-add workspace-path
