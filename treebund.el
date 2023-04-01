@@ -285,7 +285,7 @@ BODY is evaluated with the context of a buffer in the REPO-PATH repository"
 
 (defun treebund--has-worktrees-p (repo-path)
   "Return t if REPO-PATH has any worktrees."
-  (> (treebund--repo-worktree-count repo-path) 1))
+  (> (treebund--repo-worktree-count repo-path) 0))
 
 (defun treebund--unpushed-commits-p (repo-path &optional branches)
   "Return if there are any unpushed commits to remote.
