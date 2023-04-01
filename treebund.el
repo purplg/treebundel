@@ -134,7 +134,7 @@ ARGS are the arguements passed to git."
        (treebund--gitlog 'output output)
        (if (= 0 result)
            (if (string-empty-p output) t output)
-         (user-error "Git command failed. See *treebund-log*.")))))
+         (user-error "Git command failed.  See *treebund-log*")))))
 
 (defmacro treebund--git-with-repo (repo-path &rest args)
   "Run a command on a specific git repositorys.
@@ -501,7 +501,7 @@ and project."
   (if (and (file-exists-p workspace-path)
            (directory-empty-p workspace-path))
       (delete-directory workspace-path nil nil)
-    (user-error "Workspace must be empty to delete.?")))
+    (user-error "Workspace must be empty to delete")))
 
 ;;;###autoload
 (defun treebund-project-add (workspace-path bare-path)
@@ -583,7 +583,7 @@ If there are not commits to the branch, the branch will automatically be deleted
   (let* ((dir-name (car (last (split-string url "/"))))
          (dest (expand-file-name dir-name treebund-bare-dir)))
     (when (file-exists-p dest)
-      (user-error "Repostitory with this name is already cloned."))
+      (user-error "Repostitory with this name is already cloned"))
     (treebund--clone url dest)))
 
 ;;;###autoload
@@ -594,7 +594,7 @@ deletion."
   (interactive
    (list (treebund--read-bare "Select repo to delete: ")))
   (cond ((treebund--has-worktrees-p bare-path)
-         (user-error "This repository has worktrees checked out."))
+         (user-error "This repository has worktrees checked out"))
         ((and (treebund--unpushed-commits-p bare-path)
               (not (yes-or-no-p (format "%s has unpushed commits on some branches.  Delete anyway?" (treebund--bare-name bare-path))))))
         (t (treebund--bare-delete bare-path))))
