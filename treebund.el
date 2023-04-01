@@ -556,7 +556,8 @@ this project."
           (project-path (expand-file-name (treebund--read-project workspace-path "Project name: ") workspace-path))
           (project-branch (read-string "Branch: " (file-name-base (directory-file-name project-path)))))
      (list workspace-path bare-path project-path project-branch)))
-  (treebund-open (treebund--worktree-add workspace-path
+  (treebund-open workspace-path
+                 (treebund--worktree-add workspace-path
                                          bare-path
                                          project-path
                                          project-branch)))
