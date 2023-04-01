@@ -28,7 +28,7 @@ git-worktrees.
 |-------------+-----------------------------------------------------------------------------------|
 | *Workspace* | A collection of *project*'s created from *bare*'s.                                |
 | *Project*   | A git-worktree checked out from a *bare* stored in a *workspace*.                 |
-| *Bare*      | A bare repository used as a source to create *project* git-worktree.              |
+| *Bare*      | A bare repository used as a source to create a *project*'s git-worktree.          |
 | *Prefix*    | The string added before the name of the branch checked out for the **workspace**. |
 
 * Structure

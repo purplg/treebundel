@@ -25,7 +25,7 @@
 
 ;  WORKSPACE: A collection of 'PROJECT's created from 'BARE's.
 ;  PROJECT:   A git-worktree checked out from a 'BARE' stored in a 'WORKSPACE'.
-;  BARE:      A bare repository used as a source to create 'PROJECT' git-worktree.
+;  BARE:      A bare repository used as a source to create a 'PROJECT's git-worktree.
 ;  PREFIX:    The string added before the name of the branch checked out for the 'WORKSPACE'.
 
 ;;
