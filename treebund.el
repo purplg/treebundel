@@ -101,20 +101,24 @@
   :type 'string)
 
 ; Hooks
-(defcustom treebund-before-project-open-hook nil
-  "Hook which is run before a project is opened."
+(defcustom treebund-before-project-open-functions nil
+  "Hook which is run before a project is opened.
+A single argument is passed which is the path to the project to
+be opened."
   :group 'treebund
-  :type 'hook)
+  :type '(list function))
 
 (defcustom treebund-after-project-open-hook nil
   "Hook which is run after a project is opened."
   :group 'treebund
   :type 'hook)
 
-(defcustom treebund-before-workspace-open-hook nil
-  "Hook which is run before a workspace is opened."
+(defcustom treebund-before-workspace-open-functions nil
+  "Hook which is run before a workspace is opened.
+A single argument is passed which is the path to the workspace to
+be opened."
   :group 'treebund
-  :type 'hook)
+  :type '(list function))
 
 (defcustom treebund-after-workspace-open-hook nil
   "Hook which is run after a workspace is opened."
@@ -451,7 +455,7 @@ The URL is returned for non-nil."
        url))
 
 ;;;###autoload
-(defun treebund-open (project-path)
+(defun treebund-open (workspace-path project-path)
   "Open a project in some treebund workspace.
 PROJECT-PATH is the project to be opened.
 
@@ -471,11 +475,10 @@ and project."
                          (format "Open project in %s: "
                                  (treebund--workspace-name workspace-path))
                          t)))
-     (list project-path)))
-  (let ((new-workspace-p (not (string= (treebund--workspace-current)
-                                       (treebund--workspace-current project-path)))))
-    (when new-workspace-p (run-hooks 'treebund-before-workspace-open-hook))
-    (run-hooks 'treebund-before-project-open-hook)
+     (list workspace-path project-path)))
+  (let ((new-workspace-p (not (string= (treebund--workspace-current) workspace-path))))
+    (when new-workspace-p (run-hook-with-args 'treebund-before-workspace-open-functions workspace-path))
+    (run-hook-with-args 'treebund-before-project-open-functions project-path)
 
     (project-switch-project project-path)
 
