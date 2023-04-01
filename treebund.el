@@ -9,14 +9,14 @@
 ;;; Commentary:
 
 ;  This package is used for automation the grouping of related git-worktrees
-;  from multiple repositories together. This helps switch quickly between
-;  repositories and ensure you're on the correct branch. When you're done with
+;  from multiple repositories together.  This helps switch quickly between
+;  repositories and ensure you're on the correct branch.  When you're done with
 ;  the feature, you can look at the repositories in the workspace and know which
 ;  ones were modified to simplify the process of getting the changes merged
 ;  together.
 
 ;  Additionally, a single bare repository is shared between multiple
-;  workspaces. You can stash, pop, and pull changes in from the same repository
+;  workspaces.  You can stash, pop, and pull changes in from the same repository
 ;  in other workspaces thanks to the power of git-worktrees.
 
 ;;
@@ -91,7 +91,7 @@
   :type 'string)
 
 (defcustom treebund-workspace-root "~/workspaces/"
-  "The path the root of all workspaces are stored."
+  "The path where all workspaces are stored."
   :group 'treebund
   :type 'string)
 
@@ -107,7 +107,7 @@
   :type 'hook)
 
 (defcustom treebund-after-project-open-hook nil
-  "Hook which is run before a project is opened."
+  "Hook which is run after a project is opened."
   :group 'treebund
   :type 'hook)
 
@@ -117,7 +117,7 @@
   :type 'hook)
 
 (defcustom treebund-after-workspace-open-hook nil
-  "Hook which is run before a workspace is opened."
+  "Hook which is run after a workspace is opened."
   :group 'treebund
   :type 'hook)
 
@@ -125,6 +125,8 @@
 ;; Git commands
 
 (defmacro treebund--git (&rest args)
+  "Base macro for all treebund git commands.
+ARGS are the arguements passed to git."
   `(with-temp-buffer
      (treebund--gitlog 'command (string-join (list ,@args) " "))
      (let ((result (vc-git--call t ,@args))
@@ -135,9 +137,15 @@
          (user-error "Git command failed. See *treebund-log*.")))))
 
 (defmacro treebund--git-with-repo (repo-path &rest args)
+  "Run a command on a specific git repositorys.
+REPO-PATH is the repository to pass to git with the '-C' switch.
+
+ARGS are the arguments passed to git."
   `(treebund--git "-C" (expand-file-name ,repo-path) ,@args))
 
 (defun treebund--branches (repo-path &optional omit-main)
+  "Return a list of branches for repository at REPO-PATH.
+When OMIT-MAIN is non-nil, exclude the default branch."
   (let ((branches (string-lines (treebund--git-with-repo repo-path
                                   "branch" "--format=%(refname:short)"))))
     (if omit-main
@@ -151,7 +159,7 @@
     "rev-parse" "--path-format=absolute" "--git-common-dir"))
 
 (defun treebund--worktree-remove (repo-path)
-  "Remove the worktree at PROJECT-PATH."
+  "Remove the worktree at REPO-PATH."
   (let ((bare-path (treebund--worktree-bare repo-path)))
     (treebund--git-with-repo bare-path
       "worktree" "remove" (expand-file-name repo-path))))
@@ -161,6 +169,10 @@
 WORKSPACE-PATH is the directory to place the new worktree in.
 
 BARE-PATH is the main repository the worktree is being created from.
+
+PROJECT-PATH is the path where the new worktree will be created.
+
+BRANCH-NAME is the name of branch to be created and checked out at PROJECT-PATH.
 
 Returns the path to the newly created worktree."
   (let* ((bare-name (treebund--bare-name bare-path))
@@ -179,6 +191,10 @@ Returns the path to the newly created worktree."
     "branch" "--show-current"))
 
 (defun treebund--branch-delete (bare-path branch-name)
+  "Delete a branch in a git repository.
+BARE-PATH is the bare git repository to be acted on.
+
+BRANCH-NAME is the branch to be deleted within this repository."
   (treebund--git-with-repo bare-path
                            "branch" "-D" branch-name))
 
@@ -195,7 +211,7 @@ Returns the path to the newly created worktree."
   t)
 
 (defun treebund--list-worktrees (repo-path)
-  "Returns a list of worktrees for REPO-PATH."
+  "Return a list of worktrees for REPO-PATH."
   (seq-map
    (lambda (worktree)
              (split-string worktree "\0" t))
@@ -222,7 +238,7 @@ Returns the path to the newly created worktree."
 (defvar treebund--gitlog-buffer "*treebund-git*")
 
 (defun treebund--gitlog-buffer ()
-  "Return the debug buffer for treebund."
+  "Return the git history log buffer for treebund."
   (or (get-buffer treebund--gitlog-buffer)
       (let ((buf (get-buffer-create treebund--gitlog-buffer)))
         (with-current-buffer buf
@@ -232,9 +248,9 @@ Returns the path to the newly created worktree."
 
 (defun treebund--gitlog (type &rest msg)
   "Insert a message in the treebund git log buffer.
-COMMAND is the command that was executed.
+TYPE is the type of log message.  Can be either 'command or 'output.
 
-OUTPUT is the output of the executed COMMAND."
+MSG is the text to be inserted into the log."
   (with-current-buffer (treebund--gitlog-buffer)
     (let ((inhibit-read-only t))
       (goto-char (point-max))
@@ -253,7 +269,7 @@ OUTPUT is the output of the executed COMMAND."
 ; Repos
 (defmacro treebund--with-repo (repo-path &rest body)
   "Run BODY in the context of a buffer in REPOSITORY-PATH.
-BODY is evaluated with the context of a buffer in the repo-path repository"
+BODY is evaluated with the context of a buffer in the REPO-PATH repository"
   `(let* ((buffer (find-file-noselect ,repo-path))
           (result nil))
      (with-current-buffer buffer
@@ -262,18 +278,20 @@ BODY is evaluated with the context of a buffer in the repo-path repository"
      result))
 
 (defun treebund--repo-worktree-count (repo-path)
-  "Returns the number of worktrees that exist for REPO-PATH."
+  "Return the number of worktrees that exist for REPO-PATH."
   (seq-count
    (lambda (str) (not (member "bare" str)))
    (treebund--list-worktrees repo-path)))
 
 (defun treebund--has-worktrees-p (repo-path)
+  "Return t if REPO-PATH has any worktrees."
   (> (treebund--repo-worktree-count repo-path) 1))
 
 (defun treebund--unpushed-commits-p (repo-path &optional branches)
-  "Returns if there are any unpushed commits to remote.
+  "Return if there are any unpushed commits to remote.
+REPO-PATH is the repository to be acted on.
 
-If BRANCH is nil, check all local branches.
+If BRANCH is nil, check all local BRANCHES.
 
 If BRANCH is a string or list of strings, only check these local branches."
   (when (eq 'string (type-of branches))
@@ -284,39 +302,46 @@ If BRANCH is a string or list of strings, only check these local branches."
 
 ; Bares
 (defun treebund--bare-name (bare-path)
+  "Return the name of bare repository at BARE-PATH."
   (file-name-base (directory-file-name bare-path)))
 
 (defun treebund--bare-delete (bare-path)
+  "Delete the bare repository at BARE-PATH.
+This will check to see if BARE-PATH exists within
+`treebund-workspace-root' before deleting."
   (setq bare-path (expand-file-name bare-path))
   (when (and (string-prefix-p (expand-file-name treebund-workspace-root) bare-path)
              (string-suffix-p ".git/" bare-path))
     (delete-directory bare-path t)))
 
 (defun treebund--bare-list ()
+  "Return a list of all existing bare repository directory names."
   (directory-files treebund-bare-dir nil "^[^.].*"))
 
 ; Workspaces
 (defun treebund--workspace-name (workspace-path)
-  "Return the name of a workspace at WORKSPACE-PATH"
+  "Return the name of a workspace at WORKSPACE-PATH."
   (file-name-base (directory-file-name workspace-path)))
 
 (defun treebund--workspace-projects (workspace-path)
-  "Returns a list of absoute paths to projects in WORKSPACE-PATH."
+  "Return a list of absoute paths to projects in WORKSPACE-PATH."
   (seq-filter #'file-directory-p
               (directory-files workspace-path t "^[^.].*")))
 
 (defun treebund--workspaces ()
+  "Return a list of all existing workspace names."
   (directory-files treebund-workspace-root nil "^[^.].*"))
 
 (defun treebund--workspace-current (&optional file-path)
-  "Return the path to the current workspace"
+  "Return the path to the current workspace.
+If FILE-PATH is non-nil, use the current buffer instead."
   (when-let ((project-path (or (treebund--project-current file-path)
                                file-path)))
     (treebund--project-workspace project-path)))
 
 ; Projects
 (defun treebund--project-workspace (file-path)
-  "Return the workspace path of a given PROJECT-PATH."
+  "Return the workspace path of a given FILE-PATH."
   (when-let* ((file-path (expand-file-name (directory-file-name file-path)))
               ((string-prefix-p (expand-file-name treebund-workspace-root) file-path))
               (parts (split-string file-path "/"))
@@ -331,19 +356,22 @@ If BRANCH is a string or list of strings, only check these local branches."
      (seq-find (lambda (worktree) (member "bare" worktree))
                (treebund--list-worktrees project-path))))))
 
-(defun treebund--project-current (project-path)
-  "Return the project path."
-  (when-let* ((project-path (or project-path buffer-file-name))
-              (project-path (file-name-directory project-path))
-              (file-exists-p project-path)
-              (project (project-current nil project-path)))
+(defun treebund--project-current (&optional file-path)
+  "Return the project path of FILE-PATH.
+If FILE-PATH is non-nil, use the current buffer."
+  (when-let* ((file-path (or file-path buffer-file-name))
+              (file-path (file-name-directory file-path))
+              (file-exists-p file-path)
+              (project (project-current nil file-path)))
     (expand-file-name (project-root project))))
 
 ; Branches
 (defun treebund--branch-name (workspace-path)
+  "Generate a branch name for WORKSPACE-PATH."
   (concat treebund-prefix (treebund--workspace-name workspace-path)))
 
 (defun treebund--branch-main (repo-path)
+  "Return the default branch at REPO-PATH."
   (treebund--with-repo repo-path
     (car (vc-git-branches))))
 
@@ -351,7 +379,15 @@ If BRANCH is a string or list of strings, only check these local branches."
 ;; Interactive read
 
 (defun treebund--read-bare (&optional prompt clone omit)
-  "Interactively find the path of a bare."
+  "Interactively find the path of a bare.
+PROMPT is the text prompt presented to the user in the minibuffer.
+
+When CLONE is non-nil, add a completion candidate named this
+'[ clone ]' which will prompt the user to clone a new repository
+instead.
+
+When OMIT is non-nil, it should be a list of a candidates to be
+excluded from the candidates."
   (let* ((candidates (mapcar (lambda (bare)
                                (cons (replace-regexp-in-string "\.git$" "" bare)
                                      (file-name-as-directory (expand-file-name bare treebund-bare-dir))))
@@ -366,7 +402,7 @@ If BRANCH is a string or list of strings, only check these local branches."
             (call-interactively #'treebund-clone)
           selection))))
 
-(defun treebund--read-project (workspace-path &optional prompt clone)
+(defun treebund--read-project (workspace-path &optional prompt add)
   "Interactively find the path of a project.
 WORKSPACE-PATH is the workspace to look for projects in.
 
@@ -378,7 +414,7 @@ that isn't in the workspace."
   (let* ((candidates (mapcar (lambda (project)
                                (cons (file-name-base project) project))
                              (treebund--workspace-projects workspace-path))))
-    (when clone
+    (when add
       (setq candidates (append candidates '(("[ add ]" . add)))))
     (if-let ((selection (cdr (assoc (completing-read (or prompt "Project: ") candidates) candidates))))
         (if (equal selection 'add)
@@ -387,7 +423,12 @@ that isn't in the workspace."
           selection))))
 
 (defun treebund--read-workspace (&optional prompt new)
-  "Interactively find the path of a workspace."
+  "Interactively find the path of a workspace.
+PROMPT is the prompt to be presented to the user in the
+minibuffer.
+
+When NEW is non-nil, add an option for the user to create a new
+workspace instead."
   (let ((candidates (mapcar (lambda (workspace)
                               (cons workspace (expand-file-name workspace treebund-workspace-root)))
                             (treebund--workspaces))))
@@ -402,7 +443,7 @@ that isn't in the workspace."
 ;; User functions
 
 (defun treebund--git-url-like-p (url)
-  "Return non-nil if URL looks kinda like a git-clonable URL.
+  "Return non-nil if URL seems like a git-clonable URL.
 The URL is returned for non-nil."
   (and (or (string-prefix-p "ssh://git@" url)
            (string-prefix-p "git@" url)
@@ -413,6 +454,16 @@ The URL is returned for non-nil."
 
 ;;;###autoload
 (defun treebund-open (project-path)
+  "Open a project in some treebund workspace.
+PROJECT-PATH is the project to be opened.
+
+When called interactively and the a treebund project buffer is
+currently focused, the user will be prompted to open a project
+within the same workspace.
+
+When a prefix argument is passed or a trebund project buffer is
+not currently focused, the user will be prompted for a workspace
+and project."
   (interactive
    (let* ((workspace-path (or (and (not current-prefix-arg)
                                    (treebund--workspace-current))
@@ -435,6 +486,7 @@ The URL is returned for non-nil."
 
 ;;;###autoload
 (defun treebund-workspace-new (workspace-path)
+  "Create a new workspace at WORKSPACE-PATH."
   (interactive
    (list (read-directory-name "Create a new workspace: " (expand-file-name treebund-workspace-root))))
   (unless (file-exists-p workspace-path)
@@ -443,12 +495,13 @@ The URL is returned for non-nil."
 
 ;;;###autoload
 (defun treebund-workspace-delete (workspace-path)
+  "Delete workspace at WORKSPACE-PATH."
   (interactive
    (list (treebund--read-workspace "Delete a workspace: ")))
   (if (and (file-exists-p workspace-path)
            (directory-empty-p workspace-path))
       (delete-directory workspace-path nil nil)
-    (user-error "Workspace must be empty to delete.")))
+    (user-error "Workspace must be empty to delete.?")))
 
 ;;;###autoload
 (defun treebund-project-add (workspace-path bare-path)
@@ -483,7 +536,7 @@ will be created.
 BARE-PATH is the bare git repository where the worktree is
 derived.
 
-PROJECT-PATH is the path where the worktree will be created. The
+PROJECT-PATH is the path where the worktree will be created.  The
 provided path should be in WORKSPACE-PATH directory.
 
 PROJECT-BRANCH is the name of the branch to be checked out for
@@ -535,12 +588,15 @@ If there are not commits to the branch, the branch will automatically be deleted
 
 ;;;###autoload
 (defun treebund-bare-delete (bare-path)
+  "Delete a bare repository at BARE-PATH.
+Existing worktrees or uncommitted changes will be checked before
+deletion."
   (interactive
    (list (treebund--read-bare "Select repo to delete: ")))
   (cond ((treebund--has-worktrees-p bare-path)
          (user-error "This repository has worktrees checked out."))
         ((and (treebund--unpushed-commits-p bare-path)
-              (not (yes-or-no-p (format "%s has unpushed commits on some branches. Delete anyway?" (treebund--bare-name bare-path))))))
+              (not (yes-or-no-p (format "%s has unpushed commits on some branches.  Delete anyway?" (treebund--bare-name bare-path))))))
         (t (treebund--bare-delete bare-path))))
 
 (define-minor-mode treebund-mode
@@ -550,3 +606,5 @@ If there are not commits to the branch, the branch will automatically be deleted
   :interactive t)
 
 (provide 'treebund)
+
+;;; treebund.el ends here
