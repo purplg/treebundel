@@ -7,7 +7,7 @@ to simplify the process of getting the changes merged in together.
 
 Additionally, git metadata (the =.git= directory) is shared between all projects. You can stash,
 pop, and pull changes in from the same repository in other workspaces thanks to the power of
-git-worktrees.
+[[https://git-scm.com/docs/git-worktree][git-worktrees]].
 
 * Contents
 :PROPERTIES:
