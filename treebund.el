@@ -526,7 +526,9 @@ derived."
            (treebund--read-bare (format "Add project to %s: " (treebund--workspace-name workspace-path))
                                 t
                                 (treebund--workspace-projects workspace-path)))))
-  (treebund-open (treebund--worktree-add workspace-path bare-path)))
+  (let ((project-path (treebund--worktree-add workspace-path bare-path)))
+    (treebund-open project-path)
+    project-path))
 
 ;;;###autoload
 (defun treebund-project-add-detailed (workspace-path bare-path project-path project-branch)
