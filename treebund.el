@@ -208,7 +208,7 @@ BRANCH-NAME is the branch to be deleted within this repository."
   (treebund--git-with-repo dest
     "fetch")
   (message "Finished cloning %s." (treebund--bare-name dest))
-  t)
+  dest)
 
 (defun treebund--list-worktrees (repo-path)
   "Return a list of worktrees for REPO-PATH."
