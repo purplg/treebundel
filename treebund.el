@@ -99,6 +99,11 @@
   :group 'treebund
   :type 'string)
 
+(defcustom treebund-project-open-function #'project-switch-project
+  "Function called to switch to a new project."
+  :group 'treebund
+  :type 'function)
+
 ; Hooks
 (defcustom treebund-before-project-open-functions nil
   "Hook which is run before a project is opened.
@@ -479,7 +484,7 @@ and project."
     (when new-workspace-p (run-hook-with-args 'treebund-before-workspace-open-functions workspace-path))
     (run-hook-with-args 'treebund-before-project-open-functions project-path)
 
-    (project-switch-project project-path)
+    (funcall treebund-project-open-function project-path)
 
     (run-hooks 'treebund-after-project-open-hook)
     (when new-workspace-p (run-hooks 'treebund-after-workspace-open-hook))))
