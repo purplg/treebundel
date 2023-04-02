@@ -64,17 +64,17 @@ treebund-workspace-root (default: "~/workspaces/")
 |-----------------------------+---------------------------------------------|
 | ~treebund-open~             | Open a project in a workspace               |
 | ~treebund-open-project~     | Open other project within current workspace |
-| ~treebund-project-add~      | Add a project to a workspace                |
-| ~treebund-project-remove~   | Remove a project from a workspace           |
-| ~treebund-workspace-new~    | Create a new workspace                      |
-| ~treebund-workspace-delete~ | Delete a workspace                          |
+| ~treebund-add-project~      | Add a project to a workspace                |
+| ~treebund-remove-project~   | Remove a project from a workspace           |
+| ~treebund-new-workspace~    | Create a new workspace                      |
+| ~treebund-delete-workspace~ | Delete a workspace                          |
 
 Assuming default configuration, the following will create a bare clone of the provided repo URL to
 =~/workspaces/.bare/<repo-name>.git=, then create and open a worktree for a new branch called
 =feature/<workspace-name>=.
 
-1. Create a new workspace using ~treebund-workspace-new~.
-2. Interactively call ~treebund-project-add~.
+1. Create a new workspace using ~treebund-new-workspace~.
+2. Interactively call ~treebund-add-project~.
 3. Select the newly created workspace.
 4. Select =[ clone ]=.
 5. Enter the remote URL for the repository to be added to the workspace.
@@ -113,7 +113,7 @@ transparent, hence the =.= prefix to make it hidden by default.
 "feature/"
 #+END_EXAMPLE
 
-=treebund-prefix= is a string used to prefix all treebund-created branches. By default, it's
+~treebund-prefix~ is a string used to prefix all treebund-created branches. By default, it's
 =feature/= such that when you add a new project to a workspace, the new branch is name
 =feature/<workspace-name>=. At work, I set this to my name so that I know it won't conflict with
 another branch on remote.

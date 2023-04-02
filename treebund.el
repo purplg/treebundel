@@ -53,8 +53,8 @@
 ;  provided repo URL to '~/workspaces/.bare/<repo-name>.git', then create and
 ;  open a worktree for a new branch called 'feature/<workspace-name>'.
 
-;  1. Create a new workspace using `treebund-workspace-new'.
-;  2. Interactively call `treebund-project-add'.
+;  1. Create a new workspace using `treebund-new-workspace'.
+;  2. Interactively call `treebund-add-project'.
 ;  3. Select the newly created workspace.
 ;  4. Select '[ clone ]'.
 ;  5. Enter the remote URL for the repository to be added to the workspace.
@@ -425,7 +425,7 @@ that isn't in the workspace."
     (let* ((selection (completing-read (or prompt "Project: ") candidates nil nil initial))
            (existing (cdr (assoc selection candidates))))
       (if (equal existing 'add)
-          (treebund-project-add workspace-path (treebund--read-bare prompt))
+          (treebund-add-project workspace-path (treebund--read-bare prompt))
         (or existing
             (expand-file-name selection workspace-path))))))
 
@@ -443,7 +443,7 @@ workspace instead."
       (setq candidates (append candidates '(("[ new ]" . new)))))
     (if-let ((selection (cdr (assoc (completing-read (or prompt "Workspace: ") candidates nil t) candidates))))
         (if (equal selection 'new)
-            (call-interactively #'treebund-workspace-new)
+            (call-interactively #'treebund-new-workspace)
           selection))))
 
 
@@ -498,7 +498,7 @@ current buffer is in one."
        (treebund--read-workspace "Workspace: " t))))
 
 ;;;###autoload
-(defun treebund-workspace-new (workspace-path)
+(defun treebund-new-workspace (workspace-path)
   "Create a new workspace at WORKSPACE-PATH."
   (interactive
    (list (read-directory-name "Create a new workspace: " (expand-file-name treebund-workspace-root))))
@@ -507,7 +507,7 @@ current buffer is in one."
   workspace-path)
 
 ;;;###autoload
-(defun treebund-workspace-delete (workspace-path)
+(defun treebund-delete-workspace (workspace-path)
   "Delete workspace at WORKSPACE-PATH."
   (interactive
    (list (treebund--read-workspace "Delete a workspace: ")))
@@ -517,7 +517,7 @@ current buffer is in one."
     (user-error "Workspace must be empty to delete")))
 
 ;;;###autoload
-(defun treebund-project-add (workspace-path bare-path)
+(defun treebund-add-project (workspace-path bare-path)
   "Add a project to a workspace.
 This will create a worktree in WORKSPACE-PATH with a branch named
 after the workspace with `treebund-prefix' prefixed.
@@ -540,8 +540,8 @@ derived."
     project-path))
 
 ;;;###autoload
-(defun treebund-project-add-detailed (workspace-path bare-path project-path project-branch)
-  "Like `treebund-project-add' but also specify a project path and branch.
+(defun treebund-add-project-detailed (workspace-path bare-path project-path project-branch)
+  "Like `treebund-add-project' but also specify a project path and branch.
 This will create a worktree in WORKSPACE-PATH with a branch named
 after the workspace with `treebund-prefix' prefixed.
 
@@ -573,7 +573,7 @@ this project."
                                          project-branch)))
 
 ;;;###autoload
-(defun treebund-project-remove (project-path)
+(defun treebund-remove-project (project-path)
   "Remove project at PROJECT-PATH from a workspace.
 If there are not commits to the branch, the branch will automatically be deleted."
   (interactive
@@ -602,7 +602,7 @@ If there are not commits to the branch, the branch will automatically be deleted
     (treebund--clone url dest)))
 
 ;;;###autoload
-(defun treebund-bare-delete (bare-path)
+(defun treebund-delete-bare (bare-path)
   "Delete a bare repository at BARE-PATH.
 Existing worktrees or uncommitted changes will be checked before
 deletion."
