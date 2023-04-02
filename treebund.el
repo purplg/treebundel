@@ -206,27 +206,26 @@ BRANCH-NAME is the branch to be deleted within this repository."
   (treebund--git-with-repo bare-path
                            "branch" "-D" branch-name))
 
-(defun treebund--clone (url dest)
+(defun treebund--clone (url)
   "Clone a repository from URL to DEST."
-  (message "Cloning %s..." url)
-  (treebund--git
-    "clone" url "--bare" dest)
-  (treebund--git-with-repo dest
-    "config" "remote.origin.fetch" "+refs/heads/*:refs/remotes/origin/*")
-  (treebund--git-with-repo dest
-    "fetch")
-  (message "Finished cloning %s." (treebund--bare-name dest))
-  dest)
+  (let* ((dest (expand-file-name (car (last (split-string url "/")))
+                                 treebund-bare-dir)))
+    (when (file-exists-p dest)
+      (user-error "Repostitory with this name is already cloned"))
+    (treebund--git "clone" url "--bare" dest)
+    (treebund--git-with-repo dest "config" "remote.origin.fetch" "+refs/heads/*:refs/remotes/origin/*")
+    (treebund--git-with-repo dest "fetch")
+    dest))
 
 (defun treebund--list-worktrees (repo-path)
   "Return a list of worktrees for REPO-PATH."
   (seq-map
    (lambda (worktree)
-             (split-string worktree "\0" t))
-           (split-string (treebund--git-with-repo repo-path
-                           "worktree" "list" "-z" "--porcelain")
-                         "\0\0"
-                         t)))
+     (split-string worktree "\0" t))
+   (split-string (treebund--git-with-repo repo-path
+                                          "worktree" "list" "-z" "--porcelain")
+                 "\0\0"
+                 t)))
 
 (defun treebund--rev-count (repo-path commit-a &optional commit-b)
   "Return the number of commits between COMMIT-A and COMMIT-B at REPO-PATH."
@@ -597,11 +596,8 @@ If there are not commits to the branch, the branch will automatically be deleted
   (interactive
    (list (read-string "URL: " (or (treebund--git-url-like-p (gui-get-selection 'CLIPBOARD 'STRING))
                                   (treebund--git-url-like-p (gui-get-selection 'PRIMARY 'STRING))))))
-  (let* ((dir-name (car (last (split-string url "/"))))
-         (dest (expand-file-name dir-name treebund-bare-dir)))
-    (when (file-exists-p dest)
-      (user-error "Repostitory with this name is already cloned"))
-    (treebund--clone url dest)))
+  (message "Cloning %s..." url)
+  (message "Finished cloning %s." (treebund--bare-name (treebund--clone url))))
 
 ;;;###autoload
 (defun treebund-delete-bare (bare-path)
