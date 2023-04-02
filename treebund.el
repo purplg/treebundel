@@ -338,7 +338,9 @@ This will check to see if BARE-PATH exists within
 
 (defun treebund--workspaces ()
   "Return a list of all existing workspace names."
-  (directory-files treebund-workspace-root nil "^[^.].*"))
+  (seq-map #'file-name-base
+           (seq-filter #'file-directory-p
+                       (directory-files treebund-workspace-root t "^[^.].*"))))
 
 (defun treebund--workspace-current (&optional file-path)
   "Return the path to the current workspace.
