@@ -464,13 +464,14 @@ The URL is returned for non-nil."
   "Open a project in some treebund workspace.
 PROJECT-PATH is the project to be opened."
   (let* ((workspace-path (treebund--workspace-current project-path))
-         (new-workspace-p (not (string= (treebund--workspace-current) workspace-path))))
+         (new-workspace-p (not (string= (treebund--workspace-current) workspace-path)))
+         (new-project-p (not (string= (treebund--project-current) project-path))))
     (when new-workspace-p (run-hook-with-args 'treebund-before-workspace-open-functions workspace-path))
-    (run-hook-with-args 'treebund-before-project-open-functions project-path)
+    (when new-project-p (run-hook-with-args 'treebund-before-project-open-functions project-path))
 
     (funcall treebund-project-open-function project-path)
 
-    (run-hooks 'treebund-after-project-open-hook)
+    (when new-project-p (run-hooks 'treebund-after-project-open-hook))
     (when new-workspace-p (run-hooks 'treebund-after-workspace-open-hook))))
 
 (defun treebund--open-workspace (workspace-path)
