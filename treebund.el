@@ -458,28 +458,9 @@ The URL is returned for non-nil."
        (string-suffix-p ".git" url)
        url))
 
-;;;###autoload
-(defun treebund-open (project-path)
+(defun treebund--open (project-path)
   "Open a project in some treebund workspace.
-PROJECT-PATH is the project to be opened.
-
-When called interactively and the a treebund project buffer is
-currently focused, the user will be prompted to open a project
-within the same workspace.
-
-When a prefix argument is passed or a trebund project buffer is
-not currently focused, the user will be prompted for a workspace
-and project."
-  (interactive
-   (let* ((workspace-path (or (and (not current-prefix-arg)
-                                   (treebund--workspace-current))
-                              (treebund--read-workspace "Open project in workspace: " t)))
-          (project-path (treebund--read-project
-                         workspace-path
-                         (format "Open project in %s: "
-                                 (treebund--workspace-name workspace-path))
-                         t)))
-     (list project-path)))
+PROJECT-PATH is the project to be opened."
   (let* ((workspace-path (treebund--workspace-current project-path))
          (new-workspace-p (not (string= (treebund--workspace-current) workspace-path))))
     (when new-workspace-p (run-hook-with-args 'treebund-before-workspace-open-functions workspace-path))
@@ -489,6 +470,31 @@ and project."
 
     (run-hooks 'treebund-after-project-open-hook)
     (when new-workspace-p (run-hooks 'treebund-after-workspace-open-hook))))
+
+(defun treebund--workspace-open (workspace-path)
+  (treebund--open
+   (treebund--read-project workspace-path
+                           (format "%s project: " (treebund--workspace-name workspace-path))
+                           t)))
+
+;;;###autoload
+(defun treebund-open ()
+  "Open a project in some treebund workspace.
+This will always prompt for a workspace. If you want to prefer
+your current workspace, use `treebund-project-open'."
+  (interactive)
+  (treebund--workspace-open
+   (treebund--read-workspace "Workspace: " t)))
+
+;;;###autoload
+(defun treebund-project-open ()
+  "Open a project in some treebund workspace.
+This function will try to use your current workspace first if the
+current buffer is in one."
+  (interactive)
+  (treebund--workspace-open
+   (or (treebund--workspace-current)
+       (treebund--read-workspace "Workspace: " t))))
 
 ;;;###autoload
 (defun treebund-workspace-new (workspace-path)
@@ -521,15 +527,15 @@ will be created.
 BARE-PATH is the bare git repository where the worktree is
 derived."
   (interactive
-   (let ((workspace-path (or (and (not current-prefix-arg)
-                                  (treebund--workspace-current))
-                             (treebund--read-workspace "Add project to workspace: "))))
-     (list workspace-path
-           (treebund--read-bare (format "Add project to %s: " (treebund--workspace-name workspace-path))
-                                t
-                                (treebund--workspace-projects workspace-path)))))
+   (let* ((workspace-path (or (and (not current-prefix-arg)
+                                   (treebund--workspace-current))
+                              (treebund--read-workspace "Add project to workspace: ")))
+          (bare-path (treebund--read-bare (format "Add project to %s: " (treebund--workspace-name workspace-path))
+                                          t
+                                          (treebund--workspace-projects workspace-path))))
+     (list workspace-path bare-path)))
   (let ((project-path (treebund--worktree-add workspace-path bare-path)))
-    (treebund-open project-path)
+    (treebund--open project-path)
     project-path))
 
 ;;;###autoload
