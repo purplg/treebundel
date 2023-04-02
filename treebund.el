@@ -423,6 +423,7 @@ that isn't in the workspace."
                                (cons (file-name-base project) project))
                              (treebund--workspace-projects workspace-path))))
     (when add (setq candidates (append candidates '(("[ add ]" . add)))))
+    (when (length= candidates 0) (user-error "No projects in this workspace"))
     (let* ((selection (completing-read (or prompt "Project: ") candidates nil nil initial))
            (existing (cdr (assoc selection candidates))))
       (if (equal existing 'add)
