@@ -425,28 +425,22 @@ that isn't in the workspace."
     (when add (setq candidates (append candidates '(("[ add ]" . add)))))
     (when (length= candidates 0) (user-error "No projects in this workspace"))
     (let* ((selection (completing-read (or prompt "Project: ") candidates nil nil initial))
-           (existing (cdr (assoc selection candidates))))
-      (if (equal existing 'add)
+           (value (cdr (assoc selection candidates))))
+      (if (equal value 'add)
           (treebund-add-project workspace-path (treebund--read-bare prompt))
-        (or existing
-            (expand-file-name selection workspace-path))))))
+        (expand-file-name value workspace-path)))))
 
-(defun treebund--read-workspace (&optional prompt new)
+(defun treebund--read-workspace (&optional prompt)
   "Interactively find the path of a workspace.
 PROMPT is the prompt to be presented to the user in the
-minibuffer.
-
-When NEW is non-nil, add an option for the user to create a new
-workspace instead."
+minibuffer."
   (let ((candidates (mapcar (lambda (workspace)
                               (cons workspace (expand-file-name workspace treebund-workspace-root)))
                             (treebund--workspaces))))
-    (when new
-      (setq candidates (append candidates '(("[ new ]" . new)))))
-    (if-let ((selection (cdr (assoc (completing-read (or prompt "Workspace: ") candidates nil t) candidates))))
-        (if (equal selection 'new)
-            (call-interactively #'treebund-new-workspace)
-          selection))))
+    (let ((selection (completing-read (or prompt "Workspace: ") candidates)))
+      (if-let ((existing (cdr (assoc selection candidates))))
+          existing
+        (expand-file-name selection treebund-workspace-root)))))
 
 
 ;; User functions
@@ -483,12 +477,14 @@ PROJECT-PATH is the project to be opened."
 
 ;;;###autoload
 (defun treebund-open ()
-  "Open a project in some treebund workspace.
+  "Open or create a workspace and a project within it.
 This will always prompt for a workspace. If you want to prefer
 your current workspace, use `treebund-open-project'."
   (interactive)
-  (treebund--open-workspace
-   (treebund--read-workspace "Workspace: " t)))
+  (let ((workspace-path (treebund--read-workspace "Workspace: ")))
+    (unless (file-exists-p workspace-path)
+      (make-directory workspace-path))
+    (treebund--open-workspace workspace-path)))
 
 ;;;###autoload
 (defun treebund-open-project ()
@@ -499,15 +495,6 @@ current buffer is in one."
   (treebund--open-workspace
    (or (treebund--workspace-current)
        (treebund--read-workspace "Workspace: " t))))
-
-;;;###autoload
-(defun treebund-new-workspace (workspace-path)
-  "Create a new workspace at WORKSPACE-PATH."
-  (interactive
-   (list (read-directory-name "Create a new workspace: " (expand-file-name treebund-workspace-root))))
-  (unless (file-exists-p workspace-path)
-    (make-directory workspace-path))
-  workspace-path)
 
 ;;;###autoload
 (defun treebund-delete-workspace (workspace-path)
