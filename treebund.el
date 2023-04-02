@@ -356,11 +356,9 @@ If FILE-PATH is non-nil, use the current buffer instead."
 ; Projects
 (defun treebund--project-bare (project-path)
   "Return the respective bare for project at PROJECT-PATH."
-  (cadr
-   (split-string
-    (car
-     (seq-find (lambda (worktree) (member "bare" worktree))
-               (treebund--list-worktrees project-path))))))
+  (when-let ((worktrees (seq-find (lambda (worktree) (member "bare" worktree))
+                                  (treebund--list-worktrees project-path))))
+    (cadr (split-string (car worktrees)))))
 
 (defun treebund--project-current (&optional file-path)
   "Return the project path of FILE-PATH.
