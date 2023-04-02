@@ -342,7 +342,8 @@ This will check to see if BARE-PATH exists within
 (defun treebund--workspace-current (&optional file-path)
   "Return the path to the current workspace.
 If FILE-PATH is non-nil, use the current buffer instead."
-  (when-let* ((file-path (expand-file-name (or file-path buffer-file-name)))
+  (when-let* ((file-path (or file-path buffer-file-name))
+              (file-path (expand-file-name (or file-path buffer-file-name)))
               (workspace-root (expand-file-name treebund-workspace-root))
               ((string-prefix-p workspace-root file-path))
               (workspace-name (car (split-string (string-remove-prefix workspace-root
