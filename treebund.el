@@ -420,13 +420,13 @@ that isn't in the workspace."
   (let* ((candidates (mapcar (lambda (project)
                                (cons (file-name-base project) project))
                              (treebund--workspace-projects workspace-path))))
-    (when add
-      (setq candidates (append candidates '(("[ add ]" . add)))))
-    (if-let ((selection (cdr (assoc (completing-read (or prompt "Project: ") candidates nil nil initial) candidates))))
-        (if (equal selection 'add)
-            (treebund-project-add workspace-path
-                                  (treebund--read-bare prompt))
-          selection))))
+    (when add (setq candidates (append candidates '(("[ add ]" . add)))))
+    (let* ((selection (completing-read (or prompt "Project: ") candidates nil nil initial))
+           (existing (cdr (assoc selection candidates))))
+      (if (equal existing 'add)
+          (treebund-project-add workspace-path (treebund--read-bare prompt))
+        (or existing
+            (expand-file-name selection workspace-path))))))
 
 (defun treebund--read-workspace (&optional prompt new)
   "Interactively find the path of a workspace.
