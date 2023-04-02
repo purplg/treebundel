@@ -79,9 +79,9 @@ Assuming default configuration, the following will create a bare clone of the pr
 4. Select =[ clone ]=.
 5. Enter the remote URL for the repository to be added to the workspace.
 
-   You should then be prompted with your `project-switch-project` prompt to begin editing.
+   You should then be prompted with your ~project-switch-project~ prompt to begin editing.
 
-   Whenever you need a different repository, you can call `treebund-open` and switch to and/or add a
+   Whenever you need a different repository, you can call ~treebund-open~ and switch to and/or add a
    new repository to your workspace.
 
 * Configuration
