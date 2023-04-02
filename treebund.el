@@ -459,7 +459,7 @@ The URL is returned for non-nil."
        url))
 
 ;;;###autoload
-(defun treebund-open (workspace-path project-path)
+(defun treebund-open (project-path)
   "Open a project in some treebund workspace.
 PROJECT-PATH is the project to be opened.
 
@@ -479,8 +479,9 @@ and project."
                          (format "Open project in %s: "
                                  (treebund--workspace-name workspace-path))
                          t)))
-     (list workspace-path project-path)))
-  (let ((new-workspace-p (not (string= (treebund--workspace-current) workspace-path))))
+     (list project-path)))
+  (let* ((workspace-path (treebund--workspace-current project-path))
+         (new-workspace-p (not (string= (treebund--workspace-current) workspace-path))))
     (when new-workspace-p (run-hook-with-args 'treebund-before-workspace-open-functions workspace-path))
     (run-hook-with-args 'treebund-before-project-open-functions project-path)
 
@@ -559,8 +560,7 @@ this project."
           (project-branch (completing-read "Branch: " (treebund--branches bare-path)))
           (project-path (expand-file-name (treebund--read-project workspace-path "Project name: " nil project-branch) workspace-path)))
      (list workspace-path bare-path project-path project-branch)))
-  (treebund-open workspace-path
-                 (treebund--worktree-add workspace-path
+  (treebund-open (treebund--worktree-add workspace-path
                                          bare-path
                                          project-path
                                          project-branch)))
