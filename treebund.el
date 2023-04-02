@@ -63,13 +63,14 @@
 ;; USAGE
 ;;
 
-;  | Command                     | Description                       |
-;  |-----------------------------+-----------------------------------|
-;  | `treebund-open'             | Open a project in a workspace     |
-;  | `treebund-project-add'      | Add a project to a workspace      |
-;  | `treebund-project-remove'   | Remove a project from a workspace |
-;  | `treebund-workspace-new'    | Create a new workspace            |
-;  | `treebund-workspace-delete' | Delete a new workspace            |
+;  | Command                     | Description                                 |
+;  |-----------------------------+---------------------------------------------|
+;  | ~treebund-open~             | Open a project in a workspace               |
+;  | ~treebund-open-project~     | Open other project within current workspace |
+;  | ~treebund-project-add~      | Add a project to a workspace                |
+;  | ~treebund-project-remove~   | Remove a project from a workspace           |
+;  | ~treebund-workspace-new~    | Create a new workspace                      |
+;  | ~treebund-workspace-delete~ | Delete a workspace                          |
 
 ;;; Code:
 (require 'subr-x)
@@ -471,7 +472,7 @@ PROJECT-PATH is the project to be opened."
     (run-hooks 'treebund-after-project-open-hook)
     (when new-workspace-p (run-hooks 'treebund-after-workspace-open-hook))))
 
-(defun treebund--workspace-open (workspace-path)
+(defun treebund--open-workspace (workspace-path)
   (treebund--open
    (treebund--read-project workspace-path
                            (format "%s project: " (treebund--workspace-name workspace-path))
@@ -481,18 +482,18 @@ PROJECT-PATH is the project to be opened."
 (defun treebund-open ()
   "Open a project in some treebund workspace.
 This will always prompt for a workspace. If you want to prefer
-your current workspace, use `treebund-project-open'."
+your current workspace, use `treebund-open-project'."
   (interactive)
-  (treebund--workspace-open
+  (treebund--open-workspace
    (treebund--read-workspace "Workspace: " t)))
 
 ;;;###autoload
-(defun treebund-project-open ()
+(defun treebund-open-project ()
   "Open a project in some treebund workspace.
 This function will try to use your current workspace first if the
 current buffer is in one."
   (interactive)
-  (treebund--workspace-open
+  (treebund--open-workspace
    (or (treebund--workspace-current)
        (treebund--read-workspace "Workspace: " t))))
 
