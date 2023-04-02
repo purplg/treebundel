@@ -370,7 +370,7 @@ If FILE-PATH is non-nil, use the current buffer."
               ((file-exists-p file-path))
               ((treebund--workspace-current file-path))
               (workspace-path (treebund--workspace-current file-path))
-              (project-name (cadr (string-split (string-remove-prefix workspace-path file-path) "/"))))
+              (project-name (cadr (file-name-split (string-remove-prefix workspace-path file-path)))))
     (unless (string-empty-p project-name)
       (expand-file-name project-name workspace-path))))
 
