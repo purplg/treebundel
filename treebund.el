@@ -157,7 +157,7 @@ When OMIT-MAIN is non-nil, exclude the default branch."
   (let ((branches (string-lines (treebund--git-with-repo repo-path
                                   "branch" "--format=%(refname:short)"))))
     (if omit-main
-        (let ((main-branch (treebund--branch-main repo-path)))
+        (let ((main-branch (treebund--branch-default repo-path)))
           (seq-remove (lambda (branch) (equal main-branch branch)) branches))
       branches)))
 
@@ -231,7 +231,7 @@ BRANCH-NAME is the branch to be deleted within this repository."
   "Return the number of commits between COMMIT-A and COMMIT-B at REPO-PATH."
   (unless commit-b
     (setq commit-b commit-a)
-    (setq commit-a (treebund--branch-main repo-path)))
+    (setq commit-a (treebund--branch-default repo-path)))
   (string-to-number
    (treebund--git-with-repo repo-path
      "rev-list" (concat commit-a ".." commit-b) "--count")))
@@ -378,7 +378,7 @@ If FILE-PATH is non-nil, use the current buffer."
   "Generate a branch name for WORKSPACE-PATH."
   (concat treebund-prefix (treebund--workspace-name workspace-path)))
 
-(defun treebund--branch-main (repo-path)
+(defun treebund--branch-default (repo-path)
   "Return the default branch at REPO-PATH."
   (treebund--with-repo repo-path
     (car (vc-git-branches))))
