@@ -365,7 +365,8 @@ If FILE-PATH is non-nil, use the current buffer instead."
 (defun treebund--project-current (&optional file-path)
   "Return the project path of FILE-PATH.
 If FILE-PATH is non-nil, use the current buffer."
-  (when-let* ((file-path (expand-file-name (or file-path buffer-file-name)))
+  (when-let* ((file-path (or file-path buffer-file-name))
+              (file-path (expand-file-name file-path))
               ((file-exists-p file-path))
               ((treebund--workspace-current file-path))
               (workspace-path (treebund--workspace-current file-path))
