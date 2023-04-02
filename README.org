@@ -119,7 +119,7 @@ transparent, hence the =.= prefix to make it hidden by default.
 another branch on remote.
 
 Eventually, I plan on having workspace-specific configuration items so that you may select a prefix
-per workspace. Then you could specify a prefix like =bugfix/= or an issue number or whatever you
+per workspace. Then you could specify a prefix like =bugfix/=, an issue number, or whatever you
 like for the whole workspace and easily relate multiple branches on different repositories together.
 
 ** Hooks
