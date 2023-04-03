@@ -439,7 +439,9 @@ minibuffer."
     (let ((selection (completing-read (or prompt "Workspace: ") candidates)))
       (if-let ((existing (cdr (assoc selection candidates))))
           existing
-        (expand-file-name selection treebund-workspace-root)))))
+        (let ((workspace-path (expand-file-name selection treebund-workspace-root)))
+          (make-directory workspace-path)
+          workspace-path)))))
 
 
 ;; User functions
@@ -481,8 +483,6 @@ This will always prompt for a workspace. If you want to prefer
 your current workspace, use `treebund-open-project'."
   (interactive)
   (let ((workspace-path (treebund--read-workspace "Workspace: ")))
-    (unless (file-exists-p workspace-path)
-      (make-directory workspace-path))
     (treebund--open-workspace workspace-path)))
 
 ;;;###autoload
