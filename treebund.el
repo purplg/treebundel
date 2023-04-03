@@ -493,7 +493,7 @@ current buffer is in one."
   (interactive)
   (treebund--open-workspace
    (or (treebund--workspace-current)
-       (treebund--read-workspace "Workspace: " t))))
+       (treebund--read-workspace "Workspace: "))))
 
 ;;;###autoload
 (defun treebund-delete-workspace (workspace-path)
