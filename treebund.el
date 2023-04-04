@@ -470,7 +470,7 @@ that isn't in the workspace."
            (value (cdr (assoc selection candidates))))
       (if (equal value 'add)
           (treebund--worktree-add workspace-path (treebund--read-bare prompt t))
-        (expand-file-name value workspace-path)))))
+        (expand-file-name selection workspace-path)))))
 
 (defun treebund--read-workspace (&optional prompt)
   "Interactively find the path of a workspace.
