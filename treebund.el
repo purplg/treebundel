@@ -8,76 +8,110 @@
 
 ;;; Commentary:
 
-;  This package is used for bundling related git-worktrees from multiple
-;  repositories together. This helps switch quickly between repositories and
-;  ensure you're on the correct branch. When you're done with your changes, you
-;  can use the repositories in the workspace and know which ones were modified
-;  to simplify the process of getting the changes merged in together.
-
-;  Additionally, git metadata (the =.git= directory) is shared between all
-;  projects. You can stash, pop, and pull changes in from the same repository in
-;  other workspaces thanks to the power of git-worktrees.
-
+;; This package is used for bundling related git-worktrees from multiple
+;; repositories together. This helps switch quickly between repositories and
+;; ensure you're on the correct branch. When you're done with your changes, you
+;; can use the repositories in the workspace and know which ones were modified
+;; to simplify the process of getting the changes merged in together.
 ;;
-;; TERMINOLOGY
+;; Additionally, git metadata (the =.git= directory) is shared between all
+;; projects. You can stash, pop, and pull changes in from the same repository in
+;; other workspaces thanks to the power of git-worktrees.
+
+
+;;;; Terminology:
+
+;; Workspace
+;;   A collection of 'PROJECT's created from 'BARE's.
 ;;
-
-;  WORKSPACE: A collection of 'PROJECT's created from 'BARE's.
-;  PROJECT:   A git-worktree checked out from a 'BARE' stored in a 'WORKSPACE'.
-;  BARE:      A bare repository used as a source to create a 'PROJECT's git-worktree.
-;  PREFIX:    The string added before the name of the branch checked out for the 'WORKSPACE'.
-
+;; Project
+;;   A git-worktree checked out from a 'BARE' stored in a 'WORKSPACE'.
 ;;
-;; STRUCTURE
+;; Bare
+;;   A bare repository used as a source to create a 'PROJECT's git-worktree.
+
+
+;;;; Structure:
+
+;; The workspaces directory is structured as such:
 ;;
+;; `treebund-workspace-root' (default: "~/workspaces/")
+;;    |
+;;    L workspace1
+;;    |    L project-one   (branch: "feature/workspace1")
+;;    |    L project-two   (branch: "feature/workspace1")
+;;    |    L project-three (branch: "feature/workspace1")
+;;    |
+;;    L workspace2
+;;         L project-one   (branch: "feature/workspace2")
+;;         L project-two   (branch: "feature/workspace2")
+;;         L project-three (branch: "feature/workspace2")
 
-;  Workspaces are structured as such:
 
-;  `treebund-workspace-root' (default: "~/workspaces/")
-;     |
-;     L workspace1
-;     |    L project-one   (branch: "feature/workspace1")
-;     |    L project-two   (branch: "feature/workspace1")
-;     |    L project-three (branch: "feature/workspace1")
-;     |
-;     L workspace2
-;          L project-one   (branch: "feature/workspace2")
-;          L project-two   (branch: "feature/workspace2")
-;          L project-three (branch: "feature/workspace2")
+;;;; Quick start:
 
+;; Assuming default configuration, the following will create a bare clone of the
+;; provided repo URL to '~/workspaces/.bare/<repo-name>.git', then create and
+;; open a worktree for a new branch called 'feature/<workspace-name>'.
 ;;
-;; QUICK START
+;; 1. Create a new workspace using `treebund-new-workspace'.
+;; 2. Interactively call `treebund-add-project'.
+;; 3. Select the newly created workspace.
+;; 4. Select '[ clone ]'.
+;; 5. Enter the remote URL for the repository to be added to the workspace.
+
+
+;;;; Configuration:
+
+;; `treebund-prefix'
+;;  Default: 'feature/'
 ;;
+;; This is probably the most subjective variable you'd want to customize. With
+;; it's default value, when you add a project to a workspace named, for example,
+;; 'new-protocol', the new project will be checked out to a new branch called
+;; 'feature/new-protocol'. Eventually, I'd like to make the prefix
+;; workspace-specific, then this would variable just provide the default.
 
-;  Assuming default configuration, the following will create a bare clone of the
-;  provided repo URL to '~/workspaces/.bare/<repo-name>.git', then create and
-;  open a worktree for a new branch called 'feature/<workspace-name>'.
-
-;  1. Create a new workspace using `treebund-new-workspace'.
-;  2. Interactively call `treebund-add-project'.
-;  3. Select the newly created workspace.
-;  4. Select '[ clone ]'.
-;  5. Enter the remote URL for the repository to be added to the workspace.
-
+;; `treebund-workspace-root'
+;;  Default: '~/workspaces/'
 ;;
-;; USAGE
-;;
+;; This one is also very subjective. It's where all of your workspaces will
+;; exist on your file-system.
 
-;  | Command                     | Description                                 |
-;  |-----------------------------+---------------------------------------------|
-;  | ~treebund-open~             | Open a project in a workspace               |
-;  | ~treebund-open-project~     | Open other project within current workspace |
-;  | ~treebund-project-add~      | Add a project to a workspace                |
-;  | ~treebund-project-remove~   | Remove a project from a workspace           |
-;  | ~treebund-workspace-new~    | Create a new workspace                      |
-;  | ~treebund-workspace-delete~ | Delete a workspace                          |
+;; `treebund-project-open-function'
+;;  Default: `project-switch-project'
+;;
+;; This is the function called when a project is opened. You could also just
+;; make this `find-file' to just open the file instantly or any other function
+;; that takes a file path.
+
+;; `treebund-before-project-open-functions'
+;; `treebund-after-project-open-hook'
+;; `treebund-before-workspace-open-functions'
+;; `treebund-after-workspace-open-hook'
+;;
+;; These hooks are called before or after a project or workspace is opened. The
+;; `-functions'-suffixed hooks take a single argument, which is the path to the
+;; project directory or workspace directory to be opened.
+
+
+;;;; Usage:
+
+;; | Command                     | Description                                 |
+;; |-----------------------------+---------------------------------------------|
+;; | ~treebund-open~             | Open a project in a workspace               |
+;; | ~treebund-open-project~     | Open other project within current workspace |
+;; | ~treebund-project-add~      | Add a project to a workspace                |
+;; | ~treebund-project-remove~   | Remove a project from a workspace           |
+;; | ~treebund-workspace-new~    | Create a new workspace                      |
+;; | ~treebund-workspace-delete~ | Delete a workspace                          |
 
 ;;; Code:
 (require 'subr-x)
 (require 'vc-git)
 
 
-;; Customization
+;;; Customization
 
 (defgroup treebund nil
   "Exploit git-worktrees to create inter-related project workspaces."
@@ -104,7 +138,7 @@
   :group 'treebund
   :type 'function)
 
-; Hooks
+;; Hooks
 (defcustom treebund-before-project-open-functions nil
   "Hook which is run before a project is opened.
 A single argument is passed which is the path to the project to
@@ -130,7 +164,11 @@ be opened."
   :type 'hook)
 
 
-;; Git commands
+;;; Git operations
+
+;; Fundamental functions to performing fundamental git operations. The two macros
+;; should be used only by the rest of the functions in this section. The rest
+;; functions parse the git output into something more useful for this package.
 
 (defmacro treebund--git (&rest args)
   "Base macro for all treebund git commands.
@@ -236,7 +274,7 @@ BRANCH-NAME is the branch to be deleted within this repository."
    (treebund--git-with-repo repo-path
      "rev-list" (concat commit-a ".." commit-b) "--count")))
 
-; Logging
+;; Logging
 (defface treebund--gitlog-heading
   '((t (:inherit mode-line :extend t)))
   "Face for widget group labels in treebund's dashboard."
@@ -271,9 +309,12 @@ MSG is the text to be inserted into the log."
              (newline 2))))))
 
 
-;; Internal
+;;; Internal
 
-; Repos
+;; These functions provide useful functions for and the rules to enforce the
+;; definitions of the terminology at the top of this package.
+
+;; Repos
 (defmacro treebund--with-repo (repo-path &rest body)
   "Run BODY in the context of a buffer in REPOSITORY-PATH.
 BODY is evaluated with the context of a buffer in the REPO-PATH repository"
@@ -307,7 +348,7 @@ If BRANCH is a string or list of strings, only check these local branches."
   (seq-some (lambda (branch) (> (treebund--rev-count repo-path branch) 0))
             (or branches (treebund--branches repo-path))))
 
-; Bares
+;; Bares
 (defun treebund--bare-name (bare-path)
   "Return the name of bare repository at BARE-PATH."
   (file-name-base (directory-file-name bare-path)))
@@ -325,7 +366,7 @@ This will check to see if BARE-PATH exists within
   "Return a list of all existing bare repository directory names."
   (directory-files treebund-bare-dir nil "^[^.].*"))
 
-; Workspaces
+;; Workspaces
 (defun treebund--workspace-name (workspace-path)
   "Return the name of a workspace at WORKSPACE-PATH."
   (file-name-base (directory-file-name workspace-path)))
@@ -353,7 +394,7 @@ If FILE-PATH is non-nil, use the current buffer instead."
                                                  "/"))))
     (expand-file-name workspace-name workspace-root)))
 
-; Projects
+;; Projects
 (defun treebund--project-bare (project-path)
   "Return the respective bare for project at PROJECT-PATH."
   (when-let ((worktrees (seq-find (lambda (worktree) (member "bare" worktree))
@@ -372,7 +413,7 @@ If FILE-PATH is non-nil, use the current buffer."
     (unless (string-empty-p project-name)
       (expand-file-name project-name workspace-path))))
 
-; Branches
+;; Branches
 (defun treebund--branch-name (workspace-path)
   "Generate a branch name for WORKSPACE-PATH."
   (concat treebund-prefix (treebund--workspace-name workspace-path)))
@@ -383,7 +424,7 @@ If FILE-PATH is non-nil, use the current buffer."
     (car (vc-git-branches))))
 
 
-;; Interactive read
+;;; Interactive read
 
 (defun treebund--read-bare (&optional prompt clone omit)
   "Interactively find the path of a bare.
@@ -444,7 +485,10 @@ minibuffer."
           workspace-path)))))
 
 
-;; User functions
+;;; User functions
+
+;; This section provides the stable user interface to use the rest of the
+;; package.
 
 (defun treebund--git-url-like-p (url)
   "Return non-nil if URL seems like a git-clonable URL.
