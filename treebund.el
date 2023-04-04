@@ -595,10 +595,10 @@ this project."
           (project-branch (completing-read "Branch: " (treebund--branches bare-path)))
           (project-path (expand-file-name (treebund--read-project workspace-path "Project name: " nil project-branch) workspace-path)))
      (list workspace-path bare-path project-path project-branch)))
-  (treebund-open (treebund--worktree-add workspace-path
-                                         bare-path
-                                         project-path
-                                         project-branch)))
+  (treebund--open (treebund--worktree-add workspace-path
+                                          bare-path
+                                          project-path
+                                          project-branch)))
 
 ;;;###autoload
 (defun treebund-remove-project (project-path)
