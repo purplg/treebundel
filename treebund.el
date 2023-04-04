@@ -390,6 +390,21 @@ If FILE-PATH is non-nil, use the current buffer instead."
     (expand-file-name workspace-name workspace-root)))
 
 ;; Projects
+(defun treebund--project-add (workspace-path bare-path &optional branch-name project-name)
+  "Add a project to a workspace.
+This function defines the way project worktrees are added and named in workspaces.
+
+WORKSPACE-PATH is the directory to place the new worktree in.
+
+BARE-PATH is the main repository the worktree is being created from.
+
+BRANCH-NAME is the name of branch to be created and checked out in the workspace.
+
+PROJECT-NAME is the name of the worktrees' directory in the workspace."
+  (treebund--worktree-add bare-path
+                          (expand-file-name (or project-name (treebund--bare-name bare-path)) workspace-path)
+                          (or branch-name (treebund--branch-name workspace-path))))
+
 (defun treebund--project-bare (project-path)
   "Return the respective bare for project at PROJECT-PATH."
   (when-let ((worktrees (seq-find (lambda (worktree) (member "bare" worktree))
@@ -460,14 +475,13 @@ that isn't in the workspace."
                                (cons (file-name-nondirectory project) project))
                              (treebund--workspace-projects workspace-path))))
     (when add (setq candidates (append candidates '(("[ add ]" . add)))))
-    (when (length= candidates 0) (user-error "No projects in this workspace"))
     (let* ((selection (completing-read (or prompt "Project: ") candidates nil nil initial))
            (value (cdr (assoc selection candidates))))
       (if (equal value 'add)
           (let ((bare-path (treebund--read-bare prompt t)))
-            (treebund--worktree-add bare-path
-                                    (expand-file-name (treebund--bare-name bare-path) workspace-path)
-                                    (treebund--branch-name workspace-path)))
+            (treebund--project-add workspace-path
+                                   bare-path
+                                   (treebund--branch-name workspace-path)))
         (expand-file-name selection workspace-path)))))
 
 (defun treebund--read-workspace (&optional prompt)
@@ -562,9 +576,9 @@ derived."
                                           t
                                           (treebund--workspace-projects workspace-path))))
      (list workspace-path bare-path)))
-  (treebund--open (treebund--worktree-add bare-path
-                                          (expand-file-name (treebund--bare-name bare-path) workspace-path)
-                                          (treebund--branch-name workspace-path))))
+  (treebund--open (treebund--project-add workspace-path
+                                         bare-path
+                                         (treebund--branch-name workspace-path))))
 
 ;;;###autoload
 (defun treebund-add-project-detailed (workspace-path bare-path project-path project-branch)
@@ -594,9 +608,10 @@ this project."
           (project-branch (completing-read "Branch: " (treebund--branches bare-path)))
           (project-path (expand-file-name (treebund--read-project workspace-path "Project name: " nil project-branch) workspace-path)))
      (list workspace-path bare-path project-path project-branch)))
-  (treebund--open (treebund--worktree-add bare-path
-                                          project-path
-                                          project-branch)))
+  (treebund--open (treebund--project-add workspace-path
+                                         bare-path
+                                         project-branch
+                                         project-path)))
 
 ;;;###autoload
 (defun treebund-remove-project (project-path)
