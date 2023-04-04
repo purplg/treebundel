@@ -469,7 +469,7 @@ that isn't in the workspace."
     (let* ((selection (completing-read (or prompt "Project: ") candidates nil nil initial))
            (value (cdr (assoc selection candidates))))
       (if (equal value 'add)
-          (treebund--worktree-add workspace-path (treebund--read-bare prompt))
+          (treebund--worktree-add workspace-path (treebund--read-bare prompt t))
         (expand-file-name value workspace-path)))))
 
 (defun treebund--read-workspace (&optional prompt)
