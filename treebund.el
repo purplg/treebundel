@@ -401,6 +401,8 @@ BARE-PATH is the main repository the worktree is being created from.
 BRANCH-NAME is the name of branch to be created and checked out in the workspace.
 
 PROJECT-NAME is the name of the worktrees' directory in the workspace."
+  (when (seq-contains-p project-name ?\/)
+    (user-error "Project name cannot contain `/'"))
   (treebund--worktree-add bare-path
                           (expand-file-name (or project-name (treebund--bare-name bare-path)) workspace-path)
                           (or branch-name (treebund--branch-name workspace-path))))
