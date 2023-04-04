@@ -424,7 +424,9 @@ If FILE-PATH is non-nil, use the current buffer."
     (car (vc-git-branches))))
 
 
-;;; Interactive read
+;;; User functions
+
+;; This section provides the stable user interface.
 
 (defun treebund--read-bare (&optional prompt clone omit)
   "Interactively find the path of a bare.
@@ -483,12 +485,6 @@ minibuffer."
         (let ((workspace-path (expand-file-name selection treebund-workspace-root)))
           (make-directory workspace-path)
           workspace-path)))))
-
-
-;;; User functions
-
-;; This section provides the stable user interface to use the rest of the
-;; package.
 
 (defun treebund--git-url-like-p (url)
   "Return non-nil if URL seems like a git-clonable URL.
