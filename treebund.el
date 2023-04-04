@@ -462,7 +462,7 @@ minibuffer.
 When ADD is non-nil, add an option for the user to add a project
 that isn't in the workspace."
   (let* ((candidates (mapcar (lambda (project)
-                               (cons (file-name-base project) project))
+                               (cons (file-name-nondirectory project) project))
                              (treebund--workspace-projects workspace-path))))
     (when add (setq candidates (append candidates '(("[ add ]" . add)))))
     (when (length= candidates 0) (user-error "No projects in this workspace"))
