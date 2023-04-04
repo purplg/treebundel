@@ -564,9 +564,8 @@ derived."
                                           t
                                           (treebund--workspace-projects workspace-path))))
      (list workspace-path bare-path)))
-  (let ((project-path (treebund--worktree-add workspace-path bare-path)))
-    (treebund--open project-path)
-    project-path))
+  (treebund--open (treebund--worktree-add workspace-path
+                                          bare-path)))
 
 ;;;###autoload
 (defun treebund-add-project-detailed (workspace-path bare-path project-path project-branch)
