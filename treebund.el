@@ -608,7 +608,7 @@ this project."
                                           t
                                           (treebund--workspace-projects workspace-path)))
           (project-branch (completing-read "Branch: " (treebund--branches bare-path)))
-          (project-path (expand-file-name (treebund--read-project workspace-path "Project name: " nil project-branch) workspace-path)))
+          (project-path (expand-file-name (treebund--read-project workspace-path "Project name: " nil (treebund--bare-name bare-path)) workspace-path)))
      (list workspace-path bare-path project-path project-branch)))
   (treebund--open (treebund--project-add workspace-path
                                          bare-path
