@@ -210,26 +210,21 @@ When OMIT-MAIN is non-nil, exclude the default branch."
     (treebund--git-with-repo bare-path
       "worktree" "remove" (expand-file-name repo-path))))
 
-(defun treebund--worktree-add (workspace-path bare-path &optional project-path branch-name)
+(defun treebund--worktree-add (bare-path worktree-path branch-name)
   "Create a worktree.
-WORKSPACE-PATH is the directory to place the new worktree in.
-
 BARE-PATH is the main repository the worktree is being created from.
 
-PROJECT-PATH is the path where the new worktree will be created.
+WORKTREE-PATH is the path where the new worktree will be created.
 
 BRANCH-NAME is the name of branch to be created and checked out at PROJECT-PATH.
 
 Returns the path to the newly created worktree."
-  (let* ((bare-name (treebund--bare-name bare-path))
-         (branch-name (or branch-name (treebund--branch-name workspace-path)))
-         (project-path (or project-path (expand-file-name bare-name workspace-path))))
-    (if (member branch-name (treebund--branches bare-path))
-        (treebund--git-with-repo bare-path
-          "worktree" "add" project-path branch-name)
+  (if (member branch-name (treebund--branches bare-path))
       (treebund--git-with-repo bare-path
-        "worktree" "add" project-path "-b" branch-name))
-    project-path))
+        "worktree" "add" worktree-path branch-name)
+    (treebund--git-with-repo bare-path
+      "worktree" "add" worktree-path "-b" branch-name))
+  worktree-path)
 
 (defun treebund--branch (repo-path)
   "Return the branch checked out REPO-PATH."
@@ -469,7 +464,10 @@ that isn't in the workspace."
     (let* ((selection (completing-read (or prompt "Project: ") candidates nil nil initial))
            (value (cdr (assoc selection candidates))))
       (if (equal value 'add)
-          (treebund--worktree-add workspace-path (treebund--read-bare prompt t))
+          (let ((bare-path (treebund--read-bare prompt t)))
+            (treebund--worktree-add bare-path
+                                    (expand-file-name (treebund--bare-name bare-path) workspace-path)
+                                    (treebund--branch-name workspace-path)))
         (expand-file-name selection workspace-path)))))
 
 (defun treebund--read-workspace (&optional prompt)
@@ -564,8 +562,9 @@ derived."
                                           t
                                           (treebund--workspace-projects workspace-path))))
      (list workspace-path bare-path)))
-  (treebund--open (treebund--worktree-add workspace-path
-                                          bare-path)))
+  (treebund--open (treebund--worktree-add bare-path
+                                          (expand-file-name (treebund--bare-name bare-path) workspace-path)
+                                          (treebund--branch-name workspace-path))))
 
 ;;;###autoload
 (defun treebund-add-project-detailed (workspace-path bare-path project-path project-branch)
@@ -595,8 +594,7 @@ this project."
           (project-branch (completing-read "Branch: " (treebund--branches bare-path)))
           (project-path (expand-file-name (treebund--read-project workspace-path "Project name: " nil project-branch) workspace-path)))
      (list workspace-path bare-path project-path project-branch)))
-  (treebund--open (treebund--worktree-add workspace-path
-                                          bare-path
+  (treebund--open (treebund--worktree-add bare-path
                                           project-path
                                           project-branch)))
 
