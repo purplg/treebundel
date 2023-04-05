@@ -173,6 +173,7 @@ be opened."
 (defmacro treebund--git (&rest args)
   "Base macro for all treebund git commands.
 ARGS are the arguements passed to git."
+  (declare (indent defun))
   `(with-temp-buffer
      (treebund--gitlog 'command (string-join (list ,@args) " "))
      (let ((result (vc-git--call t ,@args))
@@ -187,6 +188,7 @@ ARGS are the arguements passed to git."
 REPO-PATH is the repository to pass to git with the '-C' switch.
 
 ARGS are the arguments passed to git."
+  (declare (indent defun))
   `(treebund--git "-C" (expand-file-name ,repo-path) ,@args))
 
 (defun treebund--branches (repo-path &optional omit-main)
@@ -237,7 +239,7 @@ BARE-PATH is the bare git repository to be acted on.
 
 BRANCH-NAME is the branch to be deleted within this repository."
   (treebund--git-with-repo bare-path
-                           "branch" "-D" branch-name))
+    "branch" "-D" branch-name))
 
 (defun treebund--clone (url)
   "Clone a repository from URL to DEST."
@@ -256,7 +258,7 @@ BRANCH-NAME is the branch to be deleted within this repository."
    (lambda (worktree)
      (split-string worktree "\0" t))
    (split-string (treebund--git-with-repo repo-path
-                                          "worktree" "list" "-z" "--porcelain")
+                   "worktree" "list" "-z" "--porcelain")
                  "\0\0"
                  t)))
 
