@@ -178,9 +178,9 @@ ARGS are the arguements passed to git."
      (let ((result (vc-git--call t ,@args))
            (output (string-trim-right (buffer-string))))
        (treebund--gitlog 'output output)
-       (if (= 0 result)
-           (if (string-empty-p output) t output)
-         (user-error "Git command failed.  See *treebund-log*")))))
+       (when (> result 0)
+         (user-error "Git command failed with error %s.  See *treebund-log*" result))
+       output)))
 
 (defmacro treebund--git-with-repo (repo-path &rest args)
   "Run a command on a specific git repositorys.
