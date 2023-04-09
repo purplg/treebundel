@@ -389,10 +389,10 @@ If FILE-PATH is non-nil, use the current buffer instead."
               (workspace-name (car (split-string (string-remove-prefix workspace-root
                                                                        file-path)
                                                  "/"))))
-    (expand-file-name workspace-name workspace-root)))
+    (file-name-as-directory (expand-file-name workspace-name workspace-root))))
 
 ;; Projects
-(defun treebund--project-add (workspace-path bare-path &optional branch-name project-name)
+(defun treebund--project-add (workspace-path bare-path &optional branch-name project-path)
   "Add a project to a workspace.
 This function defines the way project worktrees are added and named in workspaces.
 
@@ -402,11 +402,12 @@ BARE-PATH is the main repository the worktree is being created from.
 
 BRANCH-NAME is the name of branch to be created and checked out in the workspace.
 
-PROJECT-NAME is the name of the worktrees' directory in the workspace."
-  (when (seq-contains-p project-name ?\/)
-    (user-error "Project name cannot contain `/'"))
+PROJECT-PATH is the name of the worktrees' directory in the workspace."
+  (when-let ((err (and project-path
+                       (treebund--project-path-errors project-path))))
+    (user-error err))
   (treebund--worktree-add bare-path
-                          (expand-file-name (or project-name (treebund--bare-name bare-path)) workspace-path)
+                          (expand-file-name (or project-path (treebund--bare-name bare-path)) workspace-path)
                           (or branch-name (treebund--branch-name workspace-path))))
 
 (defun treebund--project-bare (project-path)
@@ -426,6 +427,15 @@ If FILE-PATH is non-nil, use the current buffer."
               (project-name (cadr (file-name-split (string-remove-prefix workspace-path file-path)))))
     (unless (string-empty-p project-name)
       (expand-file-name project-name workspace-path))))
+
+(defun treebund--project-path-errors (project-path)
+  "Returns error string if error found, nil if no errors found."
+  (when-let* ((project-path (directory-file-name (expand-file-name project-path)))
+              (workspace-path (treebund--workspace-current project-path))
+              ((message "workspace-path: %s" workspace-path))
+              (relative-project-path (string-remove-prefix workspace-path project-path))
+              ((seq-contains-p relative-project-path ?\/)))
+    "Project name cannot contain `/'"))
 
 ;; Branches
 (defun treebund--branch-name (workspace-path)
