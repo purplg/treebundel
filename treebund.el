@@ -180,7 +180,7 @@ ARGS are the arguements passed to git."
            (output (string-trim-right (buffer-string))))
        (treebund--gitlog 'output output)
        (when (> result 0)
-         (user-error "Git command failed with error %s.  See *treebund-log*" result))
+         (user-error "Git command failed with error %s.  See %s" result treebund--gitlog-buffer))
        output)))
 
 (defmacro treebund--git-with-repo (repo-path &rest args)
