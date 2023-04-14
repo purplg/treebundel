@@ -196,10 +196,11 @@ ARGS are the arguments passed to git."
 When OMIT-MAIN is non-nil, exclude the default branch."
   (let ((branches (string-lines (treebund--git-with-repo repo-path
                                   "branch" "--format=%(refname:short)"))))
-    (if omit-main
-        (let ((main-branch (treebund--branch-default repo-path)))
-          (seq-remove (lambda (branch) (equal main-branch branch)) branches))
-      branches)))
+    (seq-remove #'string-empty-p
+                (if omit-main
+                    (let ((main-branch (treebund--branch-default repo-path)))
+                      (seq-remove (lambda (branch) (equal main-branch branch)) branches))
+                  branches))))
 
 (defun treebund--worktree-bare (project-path)
   "Return the bare related to PROJECT-PATH."
