@@ -306,8 +306,13 @@ MSG is the text to be inserted into the log."
                (insert msg))
              (newline 2))))))
 
+(defun treebund--error (format &rest args)
+  (signal 'treebund-error (list (apply #'format-message format args))))
+
 
 ;;; Internal
+
+(define-error 'treebund-error "treebund error")
 
 ;; These functions provide useful functions for and the rules to enforce the
 ;; definitions of the terminology at the top of this package.
@@ -355,10 +360,12 @@ If BRANCH is a string or list of strings, only check these local branches."
   "Delete the bare repository at BARE-PATH.
 This will check to see if BARE-PATH exists within
 `treebund-workspace-root' before deleting."
-  (setq bare-path (expand-file-name bare-path))
-  (when (and (string-prefix-p (expand-file-name treebund-workspace-root) bare-path)
-             (string-suffix-p ".git/" bare-path))
-    (delete-directory bare-path t)))
+  (setq bare-path (file-name-as-directory (expand-file-name bare-path)))
+  (unless (string-prefix-p (expand-file-name treebund-workspace-root) bare-path)
+    (treebund--error "Bare not within workspace root"))
+  (unless (string-suffix-p ".git/" bare-path)
+    (treebund--error "Bare repository does not end in .git"))
+  (delete-directory bare-path t))
 
 (defun treebund--bare-list ()
   "Return a list of all existing bare repository directory names."
@@ -406,7 +413,7 @@ BRANCH-NAME is the name of branch to be created and checked out in the workspace
 PROJECT-PATH is the name of the worktrees' directory in the workspace."
   (when-let ((err (and project-path
                        (treebund--project-path-errors project-path))))
-    (user-error err))
+    (treebund--error err))
   (treebund--worktree-add bare-path
                           (expand-file-name (or project-path (treebund--bare-name bare-path)) workspace-path)
                           (or branch-name (treebund--branch-name workspace-path))))
