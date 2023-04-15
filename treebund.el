@@ -111,7 +111,7 @@
 (require 'vc-git)
 
 
-;;; Customization
+;;;; Customization
 
 (defgroup treebund nil
   "Exploit git-worktrees to create inter-related project workspaces."
@@ -164,7 +164,7 @@ be opened."
   :type 'hook)
 
 
-;;; Git operations
+;;;; Git operations
 
 ;; Fundamental functions to performing fundamental git operations. The two macros
 ;; should be used only by the rest of the functions in this section. The rest
@@ -310,7 +310,7 @@ MSG is the text to be inserted into the log."
   (signal 'treebund-error (list (apply #'format-message format args))))
 
 
-;;; Internal
+;;;; Internal
 
 (define-error 'treebund-error "treebund error")
 
@@ -456,7 +456,7 @@ If FILE-PATH is non-nil, use the current buffer."
     (car (vc-git-branches))))
 
 
-;;; User functions
+;;;; User functions
 
 ;; This section provides the stable user interface.
 
