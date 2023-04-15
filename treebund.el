@@ -229,6 +229,16 @@ Returns the path to the newly created worktree."
       "worktree" "add" worktree-path "-b" branch-name))
   worktree-path)
 
+(defun treebund--worktree-list (repo-path)
+  "Return a list of worktrees for REPO-PATH."
+  (seq-map
+   (lambda (worktree)
+     (split-string worktree "\0" t))
+   (split-string (treebund--git-with-repo repo-path
+                   "worktree" "list" "-z" "--porcelain")
+                 "\0\0"
+                 t)))
+
 (defun treebund--branch (repo-path)
   "Return the branch checked out REPO-PATH."
   (treebund--git-with-repo repo-path
@@ -252,16 +262,6 @@ BRANCH-NAME is the branch to be deleted within this repository."
     (treebund--git-with-repo dest "config" "remote.origin.fetch" "+refs/heads/*:refs/remotes/origin/*")
     (treebund--git-with-repo dest "fetch")
     dest))
-
-(defun treebund--list-worktrees (repo-path)
-  "Return a list of worktrees for REPO-PATH."
-  (seq-map
-   (lambda (worktree)
-     (split-string worktree "\0" t))
-   (split-string (treebund--git-with-repo repo-path
-                   "worktree" "list" "-z" "--porcelain")
-                 "\0\0"
-                 t)))
 
 (defun treebund--rev-count (repo-path commit-a &optional commit-b)
   "Return the number of commits between COMMIT-A and COMMIT-B at REPO-PATH."
@@ -327,7 +327,7 @@ BODY is evaluated with the context of a buffer in the REPO-PATH repository"
   "Return the number of worktrees that exist for REPO-PATH."
   (seq-count
    (lambda (str) (not (member "bare" str)))
-   (treebund--list-worktrees repo-path)))
+   (treebund--worktree-list repo-path)))
 
 (defun treebund--has-worktrees-p (repo-path)
   "Return t if REPO-PATH has any worktrees."
@@ -414,7 +414,7 @@ PROJECT-PATH is the name of the worktrees' directory in the workspace."
 (defun treebund--project-bare (project-path)
   "Return the respective bare for project at PROJECT-PATH."
   (when-let ((worktrees (seq-find (lambda (worktree) (member "bare" worktree))
-                                  (treebund--list-worktrees project-path))))
+                                  (treebund--worktree-list project-path))))
     (cadr (split-string (car worktrees)))))
 
 (defun treebund--project-current (&optional file-path)
