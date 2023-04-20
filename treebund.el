@@ -374,7 +374,7 @@ This will check to see if BARE-PATH exists within
 ;; Workspaces
 (defun treebund--workspace-name (workspace-path)
   "Return the name of a workspace at WORKSPACE-PATH."
-  (file-name-base (directory-file-name workspace-path)))
+  (file-name-nondirectory (directory-file-name workspace-path)))
 
 (defun treebund--workspace-projects (workspace-path)
   "Return a list of absoute paths to projects in WORKSPACE-PATH."
