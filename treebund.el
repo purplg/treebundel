@@ -513,7 +513,12 @@ minibuffer."
   (let ((candidates (mapcar (lambda (workspace)
                               (cons workspace (expand-file-name workspace treebund-workspace-root)))
                             (treebund--workspaces))))
-    (let ((selection (completing-read (or prompt "Workspace: ") candidates)))
+    (let ((selection (completing-read (or prompt "Workspace: ")
+                                      candidates
+                                      nil
+                                      nil
+                                      (when-let ((workspace-path (treebund--workspace-current)))
+                                        (treebund--workspace-name workspace-path)))))
       (if-let ((existing (cdr (assoc selection candidates))))
           existing
         (let ((workspace-path (expand-file-name selection treebund-workspace-root)))
@@ -591,9 +596,7 @@ will be created.
 BARE-PATH is the bare git repository where the worktree is
 derived."
   (interactive
-   (let* ((workspace-path (or (and (not current-prefix-arg)
-                                   (treebund--workspace-current))
-                              (treebund--read-workspace "Add project to workspace: ")))
+   (let* ((workspace-path (treebund--read-workspace "Add project to workspace: "))
           (bare-path (treebund--read-bare (format "Add project to %s: " (treebund--workspace-name workspace-path))
                                           t
                                           (treebund--workspace-projects workspace-path))))
@@ -620,9 +623,7 @@ provided path should be in WORKSPACE-PATH directory.
 PROJECT-BRANCH is the name of the branch to be checked out for
 this project."
   (interactive
-   (let* ((workspace-path (or (and (not current-prefix-arg)
-                                   (treebund--workspace-current))
-                              (treebund--read-workspace "Add project to workspace: ")))
+   (let* ((workspace-path (treebund--read-workspace "Add project to workspace: "))
           (bare-path (treebund--read-bare (format "Add project to %s: "
                                                   (treebund--workspace-name workspace-path))
                                           t
