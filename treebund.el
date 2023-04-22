@@ -321,6 +321,7 @@ MSG is the text to be inserted into the log."
 (defmacro treebund--with-repo (repo-path &rest body)
   "Run BODY in the context of a buffer in REPOSITORY-PATH.
 BODY is evaluated with the context of a buffer in the REPO-PATH repository"
+  (declare (indent defun))
   `(let* ((buffer (find-file-noselect ,repo-path))
           (result nil))
      (with-current-buffer buffer
