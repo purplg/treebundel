@@ -647,7 +647,9 @@ If there are not commits to the branch, the branch will automatically be deleted
    (list (read-string "URL: " (or (treebund--git-url-like-p (gui-get-selection 'CLIPBOARD 'STRING))
                                   (treebund--git-url-like-p (gui-get-selection 'PRIMARY 'STRING))))))
   (message "Cloning %s..." url)
-  (message "Finished cloning %s." (treebund--bare-name (treebund--clone url))))
+  (let ((bare-path (treebund--clone url)))
+    (message "Finished cloning %s." (treebund--bare-name bare-path))
+    bare-path))
 
 ;;;###autoload
 (defun treebund-delete-bare (bare-path)
