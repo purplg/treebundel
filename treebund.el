@@ -397,7 +397,8 @@ If FILE-PATH is non-nil, use the current buffer instead."
               ((string-prefix-p workspace-root file-path))
               (workspace-name (car (split-string (string-remove-prefix workspace-root
                                                                        file-path)
-                                                 "/"))))
+                                                 "/")))
+              ((not (string-empty-p workspace-name))))
     (file-name-as-directory (expand-file-name workspace-name workspace-root))))
 
 ;; Projects
