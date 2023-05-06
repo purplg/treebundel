@@ -511,24 +511,23 @@ that isn't in the workspace."
                                    (treebund--branch-name workspace-path)))
         (expand-file-name selection workspace-path)))))
 
-(defun treebund--read-workspace (&optional prompt)
+(defun treebund--read-workspace ()
   "Interactively find the path of a workspace.
 PROMPT is the prompt to be presented to the user in the
 minibuffer."
-  (let ((candidates (mapcar (lambda (workspace)
-                              (cons workspace (expand-file-name workspace treebund-workspace-root)))
-                            (treebund--workspaces))))
-    (let ((selection (completing-read (or prompt "Workspace: ")
-                                      candidates
-                                      nil
-                                      nil
-                                      (when-let ((workspace-path (treebund--workspace-current)))
-                                        (treebund--workspace-name workspace-path)))))
-      (if-let ((existing (cdr (assoc selection candidates))))
-          existing
-        (let ((workspace-path (expand-file-name selection treebund-workspace-root)))
-          (make-directory workspace-path)
-          workspace-path)))))
+  (let* ((candidates (mapcar (lambda (workspace)
+                               (cons workspace
+                                     (expand-file-name workspace treebund-workspace-root)))
+                             (treebund--workspaces)))
+         (default (when-let ((workspace-path (treebund--workspace-current)))
+                    (treebund--workspace-name workspace-path)))
+         (prompt (if default (format "Workspace [%s]: " default) "Workspace: "))
+         (selection (completing-read prompt candidates nil t nil nil default)))
+    (if-let ((existing (cdr (assoc selection candidates))))
+        existing
+      (let ((workspace-path (expand-file-name selection treebund-workspace-root)))
+        (make-directory workspace-path)
+        workspace-path))))
 
 (defun treebund--git-url-like-p (url)
   "Return non-nil if URL seems like a git-clonable URL.
@@ -566,7 +565,7 @@ PROJECT-PATH is the project to be opened."
 This will always prompt for a workspace. If you want to prefer
 your current workspace, use `treebund-open-project'."
   (interactive)
-  (let ((workspace-path (treebund--read-workspace "Workspace: ")))
+  (let ((workspace-path (treebund--read-workspace)))
     (treebund--open-workspace workspace-path)))
 
 ;;;###autoload
@@ -577,13 +576,13 @@ current buffer is in one."
   (interactive)
   (treebund--open-workspace
    (or (treebund--workspace-current)
-       (treebund--read-workspace "Workspace: "))))
+       (treebund--read-workspace))))
 
 ;;;###autoload
 (defun treebund-delete-workspace (workspace-path)
   "Delete workspace at WORKSPACE-PATH."
   (interactive
-   (list (treebund--read-workspace "Delete a workspace: ")))
+   (list (treebund--read-workspace)))
   (if (and (file-exists-p workspace-path)
            (directory-empty-p workspace-path))
       (delete-directory workspace-path nil nil)
