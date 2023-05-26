@@ -21,6 +21,7 @@ pop, and pull changes in from the same repository in other workspaces thanks to 
 - [[#installation][Installation]]
 - [[#usage][Usage]]
 - [[#configuration][Configuration]]
+- [[#example-snippets][Example snippets]]
 - [[#license][License]]
 :END:
 
@@ -133,7 +134,14 @@ like for the whole workspace and easily relate multiple branches on different re
 | ~treebund-before-workspace-open-hook~    | Called before a workspace is open.                             |
 | ~treebund-after-workspace-open-hook~     | Called after a workspace is open.                              |
 
-For my own config, I use the hooks to create a new tab for every project I open:
+See the [[#Project tabs][Project tabs]] example to see an example on how to use
+=treebund-before-project-open-functions= to create a new tab for every project.
+
+* Example snippets
+
+** Project tabs
+
+To the hooks to create a new tab for every project I open:
 
 #+BEGIN_SRC emacs-lisp
 (with-eval-after-load 'tab-bar
@@ -145,6 +153,23 @@ For my own config, I use the hooks to create a new tab for every project I open:
                    (format "%s/%s"
                            (treebund--workspace-name workspace-path)
                            (treebund--bare-name bare-path)))))))
+#+END_SRC
+
+** Project notes
+
+This snippet will open a file within a =projects= directory in your =org-directory= an org file with the name of your workspace.
+
+#+BEGIN_SRC emacs-lisp
+(defun my/open-project-notes ()
+    (interactive)
+    (if-let ((workspace-path (or (treebund--workspace-current)
+                                 (treebund--read-workspace))))
+        (find-file-other-window
+         ;; e.g. ~/.org/projects/some-feature.org
+         (file-name-concat org-directory
+                           "projects"
+                           (file-name-with-extension (treebund--workspace-name workspace-path) "org")))
+      (user-error "Not in a workspace")))
 #+END_SRC
 
 * License
