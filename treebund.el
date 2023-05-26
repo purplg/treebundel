@@ -452,7 +452,6 @@ If FILE-PATH is non-nil, use the current buffer."
   "Returns error string if error found, nil if no errors found."
   (when-let* ((project-path (directory-file-name project-path))
               (workspace-path (treebund--workspace-current project-path))
-              ((message "workspace-path: %s" workspace-path))
               (relative-project-path (string-remove-prefix workspace-path project-path))
               ((seq-contains-p relative-project-path ?\/)))
     "Project name cannot contain `/'"))
