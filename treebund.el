@@ -67,7 +67,7 @@
 ;;  Default: 'feature/'
 ;;
 ;; This is probably the most subjective variable you'd want to customize. With
-;; it's default value, when you add a project to a workspace named, for example,
+;; its default value, when you add a project to a workspace named, for example,
 ;; 'new-protocol', the new project will be checked out to a new branch called
 ;; 'feature/new-protocol'. Eventually, I'd like to make the prefix
 ;; workspace-specific, then this would variable just provide the default.
