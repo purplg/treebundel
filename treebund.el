@@ -559,20 +559,16 @@ PROJECT-PATH is the project to be opened."
     (when new-project-p (run-hooks 'treebund-after-project-open-hook))
     (when new-workspace-p (run-hooks 'treebund-after-workspace-open-hook))))
 
-(defun treebund--open-workspace (workspace-path)
+;;;###autoload
+(defun treebund-open (workspace-path)
+  "Open or create a workspace and a project within it.
+This will always prompt for a workspace. If you want to prefer
+your current workspace, use `treebund-open-project'."
+  (interactive (list (treebund--read-workspace)))
   (treebund--open
    (treebund--read-project workspace-path
                            (format "%s project: " (treebund--workspace-name workspace-path))
                            t)))
-
-;;;###autoload
-(defun treebund-open ()
-  "Open or create a workspace and a project within it.
-This will always prompt for a workspace. If you want to prefer
-your current workspace, use `treebund-open-project'."
-  (interactive)
-  (let ((workspace-path (treebund--read-workspace)))
-    (treebund--open-workspace workspace-path)))
 
 ;;;###autoload
 (defun treebund-open-project ()
@@ -580,7 +576,7 @@ your current workspace, use `treebund-open-project'."
 This function will try to use your current workspace first if the
 current buffer is in one."
   (interactive)
-  (treebund--open-workspace
+  (treebund-open
    (or (treebund--workspace-current)
        (treebund--read-workspace))))
 
