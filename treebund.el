@@ -454,6 +454,12 @@ If FILE-PATH is non-nil, use the current buffer."
               ((seq-contains-p relative-project-path ?\/)))
     "Project name cannot contain `/'"))
 
+(defun treebund--project-name (file-path)
+  "Return the name of project at PROJECT-PATH."
+  (when-let (((string-prefix-p treebund-workspace-root file-path))
+             (project-path (treebund--project-current file-path)))
+    (file-name-nondirectory (directory-file-name file-path))))
+
 ;; Branches
 (defun treebund--branch-name (workspace-path)
   "Generate a branch name for WORKSPACE-PATH."
