@@ -441,10 +441,9 @@ If FILE-PATH is non-nil, use the current buffer."
   (when-let* ((file-path (or file-path buffer-file-name))
               (file-path (expand-file-name file-path))
               ((file-exists-p file-path))
-              ((treebund-current-workspace file-path))
               (workspace-path (treebund-current-workspace file-path))
-              (project-name (cadr (file-name-split (string-remove-prefix workspace-path file-path)))))
-    (unless (string-empty-p project-name)
+              (project-parts (file-name-split (string-remove-prefix workspace-path file-path))))
+    (when-let ((project-name (pop project-parts)))
       (file-name-concat workspace-path project-name))))
 
 (defun treebund--project-path-errors (project-path)
