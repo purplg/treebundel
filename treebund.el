@@ -654,16 +654,18 @@ If there are not commits to the branch, the branch will automatically be deleted
     bare-path))
 
 ;;;###autoload
-(defun treebund-delete-bare (bare-path)
+(defun treebund-delete-bare (bare-path &optional interactive)
   "Delete a bare repository at BARE-PATH.
 Existing worktrees or uncommitted changes will be checked before
 deletion."
   (interactive
-   (list (treebund--read-bare "Select repo to delete: ")))
+   (list (treebund--read-bare "Select repo to delete: ") t))
   (cond ((treebund--has-worktrees-p bare-path)
-         (user-error "This repository has worktrees checked out"))
+         (treebund--error "This repository has worktrees checked out"))
         ((and (treebund--unpushed-commits-p bare-path)
-              (not (yes-or-no-p (format "%s has unpushed commits on some branches.  Delete anyway?" (treebund--bare-name bare-path))))))
+              (not (if interactive
+                       (yes-or-no-p (format "%s has unpushed commits on some branches.  Delete anyway?" (treebund--bare-name bare-path)))
+                     (treebund--error (format "%s has unpushed commits on some branches." (treebund--bare-name bare-path)))))))
         (t (treebund--bare-delete bare-path))))
 
 (provide 'treebund)
