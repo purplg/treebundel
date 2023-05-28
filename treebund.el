@@ -391,7 +391,7 @@ This will check to see if BARE-PATH exists within
            (seq-filter #'file-directory-p
                        (directory-files treebund-workspace-root t "^[^.].*"))))
 
-(defun treebund--workspace-current (&optional file-path)
+(defun treebund-current-workspace (&optional file-path)
   "Return the path to the current workspace.
 If FILE-PATH is non-nil, use the current buffer instead."
   (when-let* ((file-path (or file-path buffer-file-name))
@@ -441,8 +441,8 @@ If FILE-PATH is non-nil, use the current buffer."
   (when-let* ((file-path (or file-path buffer-file-name))
               (file-path (expand-file-name file-path))
               ((file-exists-p file-path))
-              ((treebund--workspace-current file-path))
-              (workspace-path (treebund--workspace-current file-path))
+              ((treebund-current-workspace file-path))
+              (workspace-path (treebund-current-workspace file-path))
               (project-name (cadr (file-name-split (string-remove-prefix workspace-path file-path)))))
     (unless (string-empty-p project-name)
       (file-name-concat workspace-path project-name))))
@@ -450,7 +450,7 @@ If FILE-PATH is non-nil, use the current buffer."
 (defun treebund--project-path-errors (project-path)
   "Returns error string if error found, nil if no errors found."
   (when-let* ((project-path (directory-file-name project-path))
-              (workspace-path (treebund--workspace-current project-path))
+              (workspace-path (treebund-current-workspace project-path))
               (relative-project-path (string-remove-prefix workspace-path project-path))
               ((seq-contains-p relative-project-path ?\/)))
     "Project name cannot contain `/'"))
@@ -524,7 +524,7 @@ minibuffer."
                                (cons workspace
                                      (expand-file-name workspace treebund-workspace-root)))
                              (treebund--workspaces)))
-         (default (when-let ((workspace-path (treebund--workspace-current)))
+         (default (when-let ((workspace-path (treebund-current-workspace)))
                     (treebund--workspace-name workspace-path)))
          (prompt (if default (format "%s [%s]: " (or prompt "Workspace") default) "Workspace: "))
          (selection (completing-read prompt candidates nil require-match nil nil default)))
@@ -547,8 +547,8 @@ The URL is returned for non-nil."
 (defun treebund--open (project-path)
   "Open a project in some treebund workspace.
 PROJECT-PATH is the project to be opened."
-  (let* ((workspace-path (treebund--workspace-current project-path))
-         (new-workspace-p (not (string= (treebund--workspace-current) workspace-path)))
+  (let* ((workspace-path (treebund-current-workspace project-path))
+         (new-workspace-p (not (string= (treebund-current-workspace) workspace-path)))
          (new-project-p (not (string= (treebund--project-current) project-path))))
     (when new-workspace-p (run-hook-with-args 'treebund-before-workspace-open-functions workspace-path))
     (when new-project-p (run-hook-with-args 'treebund-before-project-open-functions project-path))
@@ -576,7 +576,7 @@ This function will try to use your current workspace first if the
 current buffer is in one."
   (interactive)
   (treebund-open
-   (or (treebund--workspace-current)
+   (or (treebund-current-workspace)
        (treebund--read-workspace))))
 
 ;;;###autoload
@@ -632,7 +632,7 @@ this project."
 If there are not commits to the branch, the branch will automatically be deleted."
   (interactive
    (let ((workspace-path (or (and (not current-prefix-arg)
-                                  (treebund--workspace-current))
+                                  (treebund-current-workspace))
                              (treebund--read-workspace "Remove project from" t))))
      (list (treebund--read-project workspace-path
                                    (format "Remove project from %s: "
