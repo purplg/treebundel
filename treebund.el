@@ -517,7 +517,7 @@ that isn't in the workspace."
                                    (treebund--branch-name workspace-path)))
         (expand-file-name selection workspace-path)))))
 
-(defun treebund--read-workspace ()
+(defun treebund--read-workspace (&optional prompt require-match)
   "Interactively find the path of a workspace.
 PROMPT is the prompt to be presented to the user in the
 minibuffer."
@@ -527,8 +527,8 @@ minibuffer."
                              (treebund--workspaces)))
          (default (when-let ((workspace-path (treebund--workspace-current)))
                     (treebund--workspace-name workspace-path)))
-         (prompt (if default (format "Workspace [%s]: " default) "Workspace: "))
-         (selection (completing-read prompt candidates nil t nil nil default)))
+         (prompt (if default (format "%s [%s]: " (or prompt "Workspace") default) "Workspace: "))
+         (selection (completing-read prompt candidates nil require-match nil nil default)))
     (if-let ((existing (cdr (assoc selection candidates))))
         existing
       (let ((workspace-path (file-name-concat treebund-workspace-root selection)))
@@ -564,10 +564,10 @@ PROJECT-PATH is the project to be opened."
   "Open or create a workspace and a project within it.
 This will always prompt for a workspace. If you want to prefer
 your current workspace, use `treebund-open-project'."
-  (interactive (list (treebund--read-workspace)))
+  (interactive (list (treebund--read-workspace "Open workspace")))
   (treebund--open
    (treebund--read-project workspace-path
-                           (format "%s project: " (treebund--workspace-name workspace-path))
+                           (format "Open project in %s: " (treebund--workspace-name workspace-path))
                            t)))
 
 ;;;###autoload
@@ -584,7 +584,7 @@ current buffer is in one."
 (defun treebund-delete-workspace (workspace-path)
   "Delete workspace at WORKSPACE-PATH."
   (interactive
-   (list (treebund--read-workspace)))
+   (list (treebund--read-workspace "Delete workspace" t)))
   (if (and (file-exists-p workspace-path)
            (directory-empty-p workspace-path))
       (delete-directory workspace-path nil nil)
@@ -608,7 +608,7 @@ provided path should be in WORKSPACE-PATH directory.
 PROJECT-BRANCH is the name of the branch to be checked out for
 this project."
   (interactive
-   (let* ((workspace-path (treebund--read-workspace))
+   (let* ((workspace-path (treebund--read-workspace "Add project to"))
           (bare-path (treebund--read-bare (format "Add project to %s: "
                                                   (treebund--workspace-name workspace-path))
                                           t
@@ -634,7 +634,7 @@ If there are not commits to the branch, the branch will automatically be deleted
   (interactive
    (let ((workspace-path (or (and (not current-prefix-arg)
                                   (treebund--workspace-current))
-                             (treebund--read-workspace))))
+                             (treebund--read-workspace "Remove project from" t))))
      (list (treebund--read-project workspace-path
                                    (format "Remove project from %s: "
                                            (treebund--workspace-name workspace-path))))))
