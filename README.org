@@ -140,7 +140,7 @@ See the [[#Project tabs][Project tabs]] example to see an example on how to use
 
 ** Project tabs
 
-To the hooks to create a new tab for every project I open:
+To create a new tab for every project opened with treebund:
 
 #+BEGIN_SRC emacs-lisp
 (with-eval-after-load 'tab-bar
