@@ -667,12 +667,6 @@ deletion."
               (not (yes-or-no-p (format "%s has unpushed commits on some branches.  Delete anyway?" (treebund--bare-name bare-path))))))
         (t (treebund--bare-delete bare-path))))
 
-(define-minor-mode treebund-mode
-  "Exploit git-worktrees to create inter-related project workspaces."
-  :group 'treebund
-  :global t
-  :interactive t)
-
 (provide 'treebund)
 
 ;;; treebund.el ends here
