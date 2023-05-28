@@ -69,7 +69,6 @@ treebund-workspace-root (default: "~/workspaces/")
 | ~treebund-open-project~     | Open other project within current workspace |
 | ~treebund-add-project~      | Add a project to a workspace                |
 | ~treebund-remove-project~   | Remove a project from a workspace           |
-| ~treebund-new-workspace~    | Create a new workspace                      |
 | ~treebund-delete-workspace~ | Delete a workspace                          |
 
 Assuming default configuration, the following will create a bare clone of the provided repo URL to

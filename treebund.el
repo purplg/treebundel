@@ -101,10 +101,9 @@
 ;; |-----------------------------+---------------------------------------------|
 ;; | ~treebund-open~             | Open a project in a workspace               |
 ;; | ~treebund-open-project~     | Open other project within current workspace |
-;; | ~treebund-project-add~      | Add a project to a workspace                |
-;; | ~treebund-project-remove~   | Remove a project from a workspace           |
-;; | ~treebund-workspace-new~    | Create a new workspace                      |
-;; | ~treebund-workspace-delete~ | Delete a workspace                          |
+;; | ~treebund-add-project~      | Add a project to a workspace                |
+;; | ~treebund-remove-project~   | Remove a project from a workspace           |
+;; | ~treebund-delete-workspace~ | Delete a workspace                          |
 
 ;;; Code:
 (require 'subr-x)
