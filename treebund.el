@@ -357,7 +357,8 @@ If BRANCH is a string or list of strings, only check these local branches."
 ;; Bares
 (defun treebund--bare-name (bare-path)
   "Return the name of bare repository at BARE-PATH."
-  (file-name-base (directory-file-name bare-path)))
+  (when (string-prefix-p treebund-bare-dir bare-path)
+    (file-name-base (directory-file-name bare-path))))
 
 (defun treebund--bare-delete (bare-path)
   "Delete the bare repository at BARE-PATH.
