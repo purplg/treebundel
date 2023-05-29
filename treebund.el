@@ -167,6 +167,44 @@ be opened."
   :type 'hook)
 
 
+;;;; Logging
+(defface treebund--gitlog-heading
+  '((t (:inherit mode-line :extend t)))
+  "Face for widget group labels in treebund's dashboard."
+  :group 'treebund)
+
+(defvar treebund--gitlog-buffer "*treebund-git*")
+
+(defun treebund--gitlog-buffer ()
+  "Return the git history log buffer for treebund."
+  (or (get-buffer treebund--gitlog-buffer)
+      (let ((buf (get-buffer-create treebund--gitlog-buffer)))
+        (with-current-buffer buf
+          (read-only-mode 1)
+          (set (make-local-variable 'window-point-insertion-type) t))
+        buf)))
+
+(defun treebund--gitlog (type &rest msg)
+  "Insert a message in the treebund git log buffer.
+TYPE is the type of log message.  Can be either 'command or 'output.
+
+MSG is the text to be inserted into the log."
+  (with-current-buffer (treebund--gitlog-buffer)
+    (let ((inhibit-read-only t))
+      (goto-char (point-max))
+      (cond ((eq 'command type)
+             (insert (propertize (string-join (append '("git") msg '("\n")) " ") 'face 'treebund--gitlog-heading)))
+            ((eq 'output type)
+             (let ((msg (apply #'format msg)))
+               (when (length= msg 0)
+                 (setq msg " "))
+               (insert msg))
+             (newline 2))))))
+
+(defun treebund--error (format &rest args)
+  (signal 'treebund-error (list (apply #'format-message format args))))
+
+
 ;;;; Git operations
 
 ;; Fundamental functions to performing fundamental git operations. The two macros
@@ -274,43 +312,6 @@ BRANCH-NAME is the branch to be deleted within this repository."
   (string-to-number
    (treebund--git-with-repo repo-path
      "rev-list" (concat commit-a ".." commit-b) "--count")))
-
-;; Logging
-(defface treebund--gitlog-heading
-  '((t (:inherit mode-line :extend t)))
-  "Face for widget group labels in treebund's dashboard."
-  :group 'treebund)
-
-(defvar treebund--gitlog-buffer "*treebund-git*")
-
-(defun treebund--gitlog-buffer ()
-  "Return the git history log buffer for treebund."
-  (or (get-buffer treebund--gitlog-buffer)
-      (let ((buf (get-buffer-create treebund--gitlog-buffer)))
-        (with-current-buffer buf
-          (read-only-mode 1)
-          (set (make-local-variable 'window-point-insertion-type) t))
-        buf)))
-
-(defun treebund--gitlog (type &rest msg)
-  "Insert a message in the treebund git log buffer.
-TYPE is the type of log message.  Can be either 'command or 'output.
-
-MSG is the text to be inserted into the log."
-  (with-current-buffer (treebund--gitlog-buffer)
-    (let ((inhibit-read-only t))
-      (goto-char (point-max))
-      (cond ((eq 'command type)
-             (insert (propertize (string-join (append '("git") msg '("\n")) " ") 'face 'treebund--gitlog-heading)))
-            ((eq 'output type)
-             (let ((msg (apply #'format msg)))
-               (when (length= msg 0)
-                 (setq msg " "))
-               (insert msg))
-             (newline 2))))))
-
-(defun treebund--error (format &rest args)
-  (signal 'treebund-error (list (apply #'format-message format args))))
 
 
 ;;;; Internal
