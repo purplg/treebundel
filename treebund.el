@@ -134,7 +134,11 @@
 (defcustom treebund-bare-dir (file-name-concat treebund-workspace-root ".bare")
   "The path where bare repositories are stored."
   :group 'treebund
-  :type 'string)
+  :type 'string
+  :set (lambda (option value)
+         (set option (expand-file-name
+                      (file-name-as-directory
+                       value)))))
 
 (defcustom treebund-project-open-function #'project-switch-project
   "Function called to switch to a new project."
