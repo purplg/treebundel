@@ -97,14 +97,18 @@ Each created branch will have 2 commits."
   (make-directory treebund-workspace-root)
   (make-directory treebund-remote--dir)
 
-  (while-let ((remote (pop remotes)))
-    (treebund-test--setup-remote (car remote)
-                                 (cdr remote)))
+  (let ((remote (pop remotes)))
+    (while remote
+      (treebund-test--setup-remote (car remote)
+                                   (cdr remote))
+      (setq remote (pop remotes))))
 
-  (while-let ((project (pop projects)))
-    (let* ((worktree-path (pop project))
-           (remote-branch (string-split (pop project) "/")))
-      (treebund-test--setup-project worktree-path (pop remote-branch) (pop remote-branch)))))
+  (let ((project (pop projects)))
+    (while project
+      (let* ((worktree-path (pop project))
+             (remote-branch (string-split (pop project) "/")))
+        (treebund-test--setup-project worktree-path (pop remote-branch) (pop remote-branch)))
+      (setq project (pop projects)))))
 
 (defmacro treebund-deftest (name test-args &rest body)
   "Wrapper around `ert-deftest' to ensure correct tmp directories
