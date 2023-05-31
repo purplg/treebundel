@@ -239,8 +239,9 @@ ARGS are the arguments passed to git."
 (defun treebund--branches (repo-path &optional omit-main)
   "Return a list of branches for repository at REPO-PATH.
 When OMIT-MAIN is non-nil, exclude the default branch."
-  (let ((branches (string-lines (treebund--git-with-repo repo-path
-                                  "branch" "--format=%(refname:short)"))))
+  (let ((branches (split-string (treebund--git-with-repo repo-path
+                                  "branch" "--format=%(refname:short)")
+                                "\n")))
     (seq-remove #'string-empty-p
                 (if omit-main
                     (let ((main-branch (treebund--branch-default repo-path)))
