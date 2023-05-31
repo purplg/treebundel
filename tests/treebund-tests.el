@@ -71,12 +71,12 @@ BRANCHES is a list of branch names to be created in this
 remote. Each branch will have 2 commits added."
   ;; Clone the repo if it hasn't been cloned from simulated-remote yet
   (let ((bare-path (concat (file-name-as-directory treebund-bare-dir)
-                           (file-name-with-extension remote-name "git")))
+                           (concat remote-name ".git")))
         (worktree-path (concat (file-name-as-directory treebund-workspace-root) worktree-path)))
     (make-directory worktree-path t)
     (unless (file-exists-p bare-path)
       (treebund--clone (concat (file-name-as-directory treebund-remote--dir)
-                               (file-name-with-extension remote-name "git"))))
+                               (concat remote-name ".git"))))
     (treebund--worktree-add bare-path worktree-path branch)))
 
 (defun treebund-test--setup (remotes projects)
