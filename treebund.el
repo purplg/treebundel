@@ -131,7 +131,7 @@
                       (file-name-as-directory
                        value)))))
 
-(defcustom treebund-bare-dir (file-name-concat treebund-workspace-root ".bare")
+(defcustom treebund-bare-dir (concat (file-name-as-directory treebund-workspace-root) ".bare")
   "The path where bare repositories are stored."
   :group 'treebund
   :type 'string
@@ -299,8 +299,8 @@ BRANCH-NAME is the branch to be deleted within this repository."
 
 (defun treebund--clone (url)
   "Clone a repository from URL to DEST."
-  (let* ((dest (file-name-concat treebund-bare-dir
-                                 (car (last (split-string url "/"))))))
+  (let* ((dest (concat (file-name-as-directory treebund-bare-dir)
+                       (car (last (split-string url "/"))))))
     (when (file-exists-p dest)
       (user-error "Repostitory with this name is already cloned"))
     (treebund--git "clone" url "--bare" dest)
@@ -410,7 +410,7 @@ If FILE-PATH is non-nil, use the current buffer instead."
                                                  "/")))
               ;; Ensure workspace name is not empty
               ((not (string-empty-p workspace-name))))
-    (file-name-as-directory (file-name-concat workspace-root workspace-name))))
+    (concat (file-name-as-directory workspace-root) workspace-name)))
 
 ;; Projects
 (defun treebund--project-add (workspace-path bare-path &optional branch-name project-path)
@@ -429,7 +429,7 @@ PROJECT-PATH is the name of the worktrees' directory in the workspace."
     (treebund--error err))
   (treebund--worktree-add bare-path
                           (or project-path
-                              (file-name-concat workspace-path
+                              (concat (file-name-as-directory workspace-path)
                                                 (treebund--bare-name bare-path)))
                           (or branch-name
                               (treebund--branch-name workspace-path))))
@@ -449,7 +449,7 @@ If FILE-PATH is non-nil, use the current buffer."
               (workspace-path (treebund-current-workspace file-path))
               (project-parts (file-name-split (string-remove-prefix workspace-path file-path))))
     (when-let ((project-name (pop project-parts)))
-      (file-name-concat workspace-path project-name))))
+      (concat (file-name-as-directory workspace-path) project-name))))
 
 (defun treebund--project-path-errors (project-path)
   "Returns error string if error found, nil if no errors found."
@@ -492,7 +492,7 @@ When OMIT is non-nil, it should be a list of a candidates to be
 excluded from the candidates."
   (let* ((candidates (mapcar (lambda (bare)
                                (cons (replace-regexp-in-string "\.git$" "" bare)
-                                     (file-name-as-directory (file-name-concat treebund-bare-dir bare))))
+                                     (concat (file-name-as-directory treebund-bare-dir) bare)))
                              (treebund--bare-list))))
     (when omit
       (setq candidates (seq-remove (lambda (bare) (member (car bare) omit))
@@ -540,7 +540,7 @@ minibuffer."
          (selection (completing-read prompt candidates nil require-match nil nil default)))
     (if-let ((existing (cdr (assoc selection candidates))))
         existing
-      (let ((workspace-path (file-name-concat treebund-workspace-root selection)))
+      (let ((workspace-path (concat (file-name-as-directory treebund-workspace-root) selection)))
         (make-directory workspace-path)
         workspace-path))))
 

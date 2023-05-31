@@ -32,7 +32,7 @@
 
 ;;; Environment:
 (setq treebund-test--dir (expand-file-name "treebund-tests" temporary-file-directory))
-(setq treebund-remote--dir (file-name-concat treebund-test--dir "simulated-remote"))
+(setq treebund-remote--dir (concat (file-name-as-directory treebund-test--dir) "simulated-remote"))
 
 (defun treebund-test--setup-branch (name origin-path &optional num-commits)
   (let ((worktree-path (expand-file-name name treebund-remote--dir)))
@@ -70,11 +70,13 @@ NAME is the name of the remote repository.
 BRANCHES is a list of branch names to be created in this
 remote. Each branch will have 2 commits added."
   ;; Clone the repo if it hasn't been cloned from simulated-remote yet
-  (let ((bare-path (file-name-concat treebund-bare-dir (concat remote-name ".git")))
-        (worktree-path (file-name-concat treebund-workspace-root worktree-path)))
+  (let ((bare-path (concat (file-name-as-directory treebund-bare-dir)
+                           (file-name-with-extension remote-name "git")))
+        (worktree-path (concat (file-name-as-directory treebund-workspace-root) worktree-path)))
     (make-directory worktree-path t)
     (unless (file-exists-p bare-path)
-      (treebund--clone (file-name-concat treebund-remote--dir (concat remote-name ".git"))))
+      (treebund--clone (concat (file-name-as-directory treebund-remote--dir)
+                               (file-name-with-extension remote-name "git"))))
     (treebund--worktree-add bare-path worktree-path branch)))
 
 (defun treebund-test--setup (remotes projects)
@@ -113,8 +115,8 @@ are used for all tests."
      ,(when (stringp (car body))
         (pop body))
      (let* ((inhibit-message nil)
-            (treebund-workspace-root (file-name-concat treebund-test--dir "workspaces"))
-            (treebund-bare-dir (file-name-concat treebund-workspace-root ".bare"))
+            (treebund-workspace-root (concat (file-name-as-directory treebund-test--dir) "workspaces"))
+            (treebund-bare-dir (concat (file-name-as-directory treebund-workspace-root) ".bare"))
             (treebund-project-open-function (lambda (&rest _)))
             (treebund-prefix "test/"))
        (treebund-test--setup
@@ -147,10 +149,10 @@ are used for all tests."
     (should (member "branch-one" (treebund--branches origin)))
     (should (member "branch-two" (treebund--branches origin))))
 
-  (let* ((workspace (file-name-concat treebund-workspace-root "some-workspace"))
-         (project-two-one (file-name-concat workspace "project-two-one"))
-         (project-three-one (file-name-concat workspace "project-three-one"))
-         (project-three-two (file-name-concat workspace "project-three-two")))
+  (let* ((workspace (concat (file-name-as-directory treebund-workspace-root) "some-workspace"))
+         (project-two-one (concat (file-name-as-directory workspace) "project-two-one"))
+         (project-three-one (concat (file-name-as-directory workspace) "project-three-one"))
+         (project-three-two (concat (file-name-as-directory workspace) "project-three-two")))
     (should (file-directory-p workspace))
     (should (file-directory-p project-two-one))
     (should (file-directory-p project-three-one))
@@ -287,13 +289,13 @@ are used for all tests."
   ( :remotes (("origin" . ("master" "other-branch")))
     :projects (("some-feature/master" . ("origin/master"))
                ("some-feature/other" . ("origin/other"))))
-  (let ((master-path (file-name-concat treebund-workspace-root "some-feature/master"))
-        (other-path (file-name-concat treebund-workspace-root "some-feature/other")))
+  (let ((master-path (concat (file-name-as-directory treebund-workspace-root) "some-feature/master"))
+        (other-path (concat (file-name-as-directory treebund-workspace-root) "some-feature/other")))
     ;; A freshly clone repository should not be dirty.
     (should-not (treebund--unpushed-commits-p master-path))
 
     ;; Create and commit an empty file
-    (let ((test-file (file-name-concat master-path "unpushed")))
+    (let ((test-file (concat (file-name-as-directory master-path) "unpushed")))
       (with-temp-buffer (write-file test-file))
       (treebund--git-with-repo master-path "add" test-file)
       (treebund--git-with-repo master-path "commit" "-m" "unpushed-commit"))
@@ -311,9 +313,9 @@ are used for all tests."
 (treebund-deftest bare-name
   ( :remotes (("origin" . ("master")))
     :projects (("some-feature/feature" "origin/master")))
-  (let* ((remote-path (file-name-concat treebund-remote--dir "origin.git"))
-         (bare-path (file-name-concat treebund-bare-dir "origin.git"))
-         (project-path (file-name-concat treebund-workspace-root "some-feature/feature")))
+  (let* ((remote-path (concat (file-name-as-directory treebund-remote--dir) "origin.git"))
+         (bare-path (concat (file-name-as-directory treebund-bare-dir) "origin.git"))
+         (project-path (concat (file-name-as-directory treebund-workspace-root) "some-feature/feature")))
     (should (string= "origin" (treebund--bare-name bare-path)))))
 
 (treebund-deftest do-not-delete-with-worktrees
@@ -321,16 +323,16 @@ are used for all tests."
     :projects (("some-feature/some-branch" "remote/master")))
   (should (string= "This repository has worktrees checked out"
                    (cadr (should-error
-                          (treebund-delete-bare (file-name-concat treebund-bare-dir "remote.git"))
+                          (treebund-delete-bare (concat (file-name-as-directory treebund-bare-dir) "remote.git"))
                           :type 'treebund-error)))))
 
 (treebund-deftest do-not-delete-with-unpushed-changes
   ( :remotes (("remote" . ("master")))
     :projects (("some-feature/some-branch" "remote/master")))
-  (let* ((bare-path (file-name-concat treebund-bare-dir "remote.git"))
-         (project-path (file-name-concat treebund-workspace-root "some-feature/some-branch")))
+  (let* ((bare-path (concat (file-name-as-directory treebund-bare-dir) "remote.git"))
+         (project-path (concat (file-name-as-directory treebund-workspace-root) "some-feature/some-branch")))
     ;; Create and commit an empty file
-    (let ((test-file (file-name-concat project-path "unpushed")))
+    (let ((test-file (concat (file-name-as-directory project-path) "unpushed")))
       (with-temp-buffer (write-file test-file))
       (treebund--git-with-repo project-path "add" test-file)
       (treebund--git-with-repo project-path "commit" "-m" "unpushed-commit"))
@@ -341,7 +343,7 @@ are used for all tests."
                             :type 'treebund-error))))))
 
 (treebund-deftest do-not-delete-outside-workspace-root ()
-  (let ((project-path (file-name-concat treebund-test--dir "test-project.git")))
+  (let ((project-path (concat (file-name-as-directory treebund-test--dir) "test-project.git")))
     (make-directory project-path t)
     (treebund--git-with-repo project-path "init" "--bare")
     (should (string= "Bare not within workspace root"
@@ -352,7 +354,7 @@ are used for all tests."
 (treebund-deftest current-workspace
   ( :remotes (("remote" . ("master")))
     :projects (("some-workspace/some-project" "remote/master")))
-  (make-directory (file-name-concat treebund-workspace-root "test-project"))
+  (make-directory (concat (file-name-as-directory treebund-workspace-root) "test-project"))
   (with-temp-buffer
     (let ((buffer-file-name (expand-file-name "../" treebund-workspace-root)))
       (should-not (treebund-current-workspace)))
@@ -360,11 +362,11 @@ are used for all tests."
     (let ((buffer-file-name treebund-workspace-root))
       (should-not (treebund-current-workspace)))
 
-    (let ((buffer-file-name (file-name-concat treebund-workspace-root "some-workspace")))
-      (should (string= (file-name-concat treebund-test--dir "workspaces/some-workspace/")
+    (let ((buffer-file-name (concat (file-name-as-directory treebund-workspace-root) "some-workspace")))
+      (should (string= (concat (file-name-as-directory treebund-test--dir) "workspaces/some-workspace")
                        (treebund-current-workspace))))
-    (let ((buffer-file-name (file-name-concat treebund-workspace-root "some-workspace/some-project")))
-      (should (string= (file-name-concat treebund-test--dir "workspaces/some-workspace/")
+    (let ((buffer-file-name (concat (file-name-as-directory treebund-workspace-root) "some-workspace/some-project")))
+      (should (string= (concat (file-name-as-directory treebund-test--dir) "workspaces/some-workspace")
                        (treebund-current-workspace))))))
 
 (provide 'treebund-tests)
