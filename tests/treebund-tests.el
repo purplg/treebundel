@@ -23,7 +23,7 @@
              (insert "==> git " (string-join msg " ") ?\n))
             ((eq 'output type)
              (let ((msg (apply #'format msg)))
-               (when (length= msg 0)
+               (when (= (length msg) 0)
                  (setq msg " "))
                (insert msg))
              (newline 2)))
@@ -144,12 +144,12 @@ are used for all tests."
 
   (let ((origin (expand-file-name "remote-two.git" treebund-remote--dir)))
     (should (file-directory-p origin))
-    (should (length= (treebund--branches origin) 1))
+    (should (= (length (treebund--branches origin)) 1))
     (should (member "branch-one" (treebund--branches origin))))
 
   (let ((origin (expand-file-name "remote-three.git" treebund-remote--dir)))
     (should (file-directory-p origin))
-    (should (length= (treebund--branches origin) 2))
+    (should (= (length (treebund--branches origin)) 2))
     (should (member "branch-one" (treebund--branches origin)))
     (should (member "branch-two" (treebund--branches origin))))
 
@@ -170,20 +170,20 @@ are used for all tests."
          (bare-path (treebund--clone remote)))
 
     ; Check bare repository branches
-    (should (length= (treebund--branches bare-path) 2))
+    (should (= (length (treebund--branches bare-path)) 2))
     (should (member "test/branches" (treebund--branches remote)))
     (should (member "test/branches-two" (treebund--branches remote)))
 
     ; Check worktree branches
     (let ((project-path (treebund--project-add workspace-path bare-path)))
-      (should (length= (treebund--branches project-path) 2))
+      (should (= (length (treebund--branches project-path)) 2))
       (should (member "test/branches" (treebund--branches project-path)))
       (should (member "test/branches-two" (treebund--branches project-path)))))
 
   ; Ensure nil is returned when no branches exist.
   (let* ((remote (expand-file-name "empty-remote.git" treebund-remote--dir))
          (bare-path (treebund--clone remote)))
-    (should (length= (treebund--branches bare-path) 0))))
+    (should (= (length (treebund--branches bare-path)) 0))))
 
 (treebund-deftest worktree-bare
   (:remotes (("remote" . ("test/worktree-bare"))))
@@ -224,11 +224,11 @@ are used for all tests."
          (remote (expand-file-name "remote.git" treebund-remote--dir))
          (bare-path (treebund--clone remote))
          (project-path (treebund--project-add workspace-path bare-path)))
-    (should (length= (treebund--branches bare-path) 4))
+    (should (= (length (treebund--branches bare-path)) 4))
     (treebund--branch-delete bare-path "branch-one")
-    (should (length= (treebund--branches bare-path) 3))
+    (should (= (length (treebund--branches bare-path)) 3))
     (treebund--branch-delete project-path "branch-two")
-    (should (length= (treebund--branches bare-path) 2))))
+    (should (= (length (treebund--branches bare-path)) 2))))
 
 (treebund-deftest clone
   (:remotes (("remote" . ("master" "other-branch"))))
@@ -236,7 +236,7 @@ are used for all tests."
          (remote (expand-file-name "remote.git" treebund-remote--dir))
          (bare-path (treebund--clone remote)))
     (should (file-directory-p bare-path))
-    (should (length= (treebund--branches bare-path) 2))
+    (should (= (length (treebund--branches bare-path)) 2))
     (should (member "master" (treebund--branches bare-path)))
     (should (member "other-branch" (treebund--branches bare-path)))))
 
@@ -244,19 +244,19 @@ are used for all tests."
   (:remotes (("remote" . ("master"))))
   (let* ((remote (expand-file-name "remote.git" treebund-remote--dir))
          (bare-path (treebund--clone remote)))
-    (should (length= (treebund--worktree-list bare-path) 1))
+    (should (= (length (treebund--worktree-list bare-path)) 1))
     (should (member "bare" (car (treebund--worktree-list bare-path))))
 
     (let ((worktree (treebund--project-add
                          (expand-file-name "worktree-list-one" treebund-workspace-root)
                          bare-path)))
-      (should (length= (treebund--worktree-list worktree) 2))
+      (should (= (length (treebund--worktree-list worktree)) 2))
       (should-not (member "bare" (cadr (treebund--worktree-list bare-path)))))
 
     (let ((worktree (treebund--project-add
                          (expand-file-name "worktree-list-two" treebund-workspace-root)
                          bare-path)))
-      (should (length= (treebund--worktree-list worktree) 3)))))
+      (should (= (length (treebund--worktree-list worktree)) 3)))))
 
 (treebund-deftest rev-count
   (:remotes (("remote" . ("master" "other-branch"))))

@@ -200,7 +200,7 @@ MSG is the text to be inserted into the log."
              (insert (propertize (string-join (append '("git") msg '("\n")) " ") 'face 'treebund--gitlog-heading)))
             ((eq 'output type)
              (let ((msg (apply #'format msg)))
-               (when (length= msg 0)
+               (when (= (length msg) 0)
                  (setq msg " "))
                (insert msg))
              (newline 2))))))
