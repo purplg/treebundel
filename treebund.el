@@ -358,7 +358,7 @@ If BRANCH is a string or list of strings, only check these local branches."
   (when (eq 'string (type-of branches))
     (setq branches (list branches)))
   (setq repo-path (treebund--project-bare repo-path))
-  (length> (treebund--git-with-repo repo-path "log" "--branches" "--not" "--remotes") 0))
+  (> (length (treebund--git-with-repo repo-path "log" "--branches" "--not" "--remotes")) 0))
 
 ;; Bares
 (defun treebund--bare-name (bare-path)
