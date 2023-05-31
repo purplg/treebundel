@@ -106,7 +106,7 @@ Each created branch will have 2 commits."
   (let ((project (pop projects)))
     (while project
       (let* ((worktree-path (pop project))
-             (remote-branch (string-split (pop project) "/")))
+             (remote-branch (split-string (pop project) "/")))
         (treebund-test--setup-project worktree-path (pop remote-branch) (pop remote-branch)))
       (setq project (pop projects)))))
 
