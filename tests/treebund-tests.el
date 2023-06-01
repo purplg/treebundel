@@ -31,8 +31,8 @@
 
 
 ;;; Environment:
-(setq treebund-test--dir (expand-file-name "treebund-tests" temporary-file-directory))
-(setq treebund-remote--dir (concat (file-name-as-directory treebund-test--dir) "simulated-remote"))
+(setq treebund-test--dir (concat temporary-file-directory "treebund-tests/"))
+(setq treebund-remote--dir (concat treebund-test--dir "simulated-remote/"))
 
 (defun treebund-test--setup-branch (name origin-path &optional num-commits)
   (let ((worktree-path (expand-file-name name treebund-remote--dir)))
@@ -72,7 +72,7 @@ remote. Each branch will have 2 commits added."
   ;; Clone the repo if it hasn't been cloned from simulated-remote yet
   (let ((bare-path (concat (file-name-as-directory treebund-bare-dir)
                            (concat remote-name ".git")))
-        (worktree-path (concat (file-name-as-directory treebund-workspace-root) worktree-path)))
+        (worktree-path (concat treebund-workspace-root worktree-path)))
     (make-directory worktree-path t)
     (unless (file-exists-p bare-path)
       (treebund--clone (concat (file-name-as-directory treebund-remote--dir)
@@ -119,8 +119,8 @@ are used for all tests."
      ,(when (stringp (car body))
         (pop body))
      (let* ((inhibit-message nil)
-            (treebund-workspace-root (concat (file-name-as-directory treebund-test--dir) "workspaces"))
-            (treebund-bare-dir (concat (file-name-as-directory treebund-workspace-root) ".bare"))
+            (treebund-workspace-root (concat treebund-test--dir "workspaces/"))
+            (treebund-bare-dir (concat (file-name-as-directory treebund-workspace-root) ".bare/"))
             (treebund-project-open-function (lambda (&rest _)))
             (treebund-prefix "test/"))
        (treebund-test--setup
@@ -153,7 +153,7 @@ are used for all tests."
     (should (member "branch-one" (treebund--branches origin)))
     (should (member "branch-two" (treebund--branches origin))))
 
-  (let* ((workspace (concat (file-name-as-directory treebund-workspace-root) "some-workspace"))
+  (let* ((workspace (concat treebund-workspace-root "some-workspace"))
          (project-two-one (concat (file-name-as-directory workspace) "project-two-one"))
          (project-three-one (concat (file-name-as-directory workspace) "project-three-one"))
          (project-three-two (concat (file-name-as-directory workspace) "project-three-two")))
@@ -165,8 +165,8 @@ are used for all tests."
 (treebund-deftest branches
   (:remotes (("remote" . ("test/branches" "test/branches-two"))
              ("empty-remote" . ())))
-  (let* ((workspace-path (expand-file-name "branches" treebund-workspace-root))
-         (remote (expand-file-name "remote.git" treebund-remote--dir))
+  (let* ((workspace-path (concat treebund-workspace-root "branches"))
+         (remote (concat treebund-remote--dir "remote.git"))
          (bare-path (treebund--clone remote)))
 
     ; Check bare repository branches
@@ -187,7 +187,7 @@ are used for all tests."
 
 (treebund-deftest worktree-bare
   (:remotes (("remote" . ("test/worktree-bare"))))
-  (let* ((workspace-path (expand-file-name "worktree-bare" treebund-workspace-root))
+  (let* ((workspace-path (concat treebund-workspace-root "worktree-bare"))
          (remote (expand-file-name "remote.git" treebund-remote--dir))
          (bare-path (treebund--clone remote))
          (project-path (treebund--project-add workspace-path bare-path)))
@@ -195,8 +195,8 @@ are used for all tests."
 
 (treebund-deftest worktree-remove
   (:remotes (("remote" . ("test/worktree-remove"))))
-  (let* ((workspace-path (expand-file-name "worktree-remove" treebund-workspace-root))
-         (remote (expand-file-name "remote.git" treebund-remote--dir))
+  (let* ((workspace-path (concat treebund-workspace-root "worktree-remove/"))
+         (remote (concat treebund-remote--dir "remote.git"))
          (bare-path (treebund--clone remote))
          (project-path (treebund--project-add workspace-path bare-path)))
     (treebund--worktree-remove project-path)
@@ -367,11 +367,48 @@ are used for all tests."
       (should-not (treebund-current-workspace)))
 
     (let ((buffer-file-name (concat (file-name-as-directory treebund-workspace-root) "some-workspace")))
-      (should (string= (concat (file-name-as-directory treebund-test--dir) "workspaces/some-workspace")
+      (should (string= (concat (file-name-as-directory treebund-test--dir) "workspaces/some-workspace/")
                        (treebund-current-workspace))))
     (let ((buffer-file-name (concat (file-name-as-directory treebund-workspace-root) "some-workspace/some-project")))
-      (should (string= (concat (file-name-as-directory treebund-test--dir) "workspaces/some-workspace")
+      (should (string= (concat (file-name-as-directory treebund-test--dir) "workspaces/some-workspace/")
                        (treebund-current-workspace))))))
+
+(treebund-deftest project-path-validation
+  ( :remotes (("remote" . ("master")))
+    :projects (("some-workspace/some-project" "remote/master")))
+  (make-directory (expand-file-name "some-workspace/some-project/sub-directory"
+                                    treebund-workspace-root))
+  (let ((path (expand-file-name "../" treebund-workspace-root)))
+    (should (string= (format-message "Not in a workspace")
+                     (cadr (should-error
+                            (treebund--project-path-validate path)
+                            :type 'treebund-error)))))
+
+  (let ((path treebund-workspace-root))
+    (should (string= (format-message "Not in a workspace")
+                     (cadr (should-error
+                            (treebund--project-path-validate path)
+                            :type 'treebund-error)))))
+
+  (let ((path (concat (file-name-as-directory treebund-workspace-root)
+                      "some-workspace")))
+    (should (string= (format-message "Not in a project")
+                     (cadr (should-error
+                            (treebund--project-path-validate path)
+                            :type 'treebund-error)))))
+
+  (let ((path (concat (file-name-as-directory treebund-workspace-root)
+                      "some-workspace/some-project")))
+    (should-not
+     (treebund--project-path-validate path)))
+
+  (let ((path (concat (file-name-as-directory treebund-workspace-root)
+                      "some-workspace/some-project/sub-directory")))
+    (should (string= (format-message "Project name cannot contain `/'")
+                     (cadr (should-error
+                            (treebund--project-path-validate path)
+                            :type 'treebund-error))))))
+
 
 (provide 'treebund-tests)
 
