@@ -106,7 +106,7 @@
 ;; | ~treebund-delete-workspace~ | Delete a workspace                          |
 
 ;;; Code:
-(require 'subr-x)
+(eval-when-compile (require 'subr-x))
 (require 'vc-git)
 
 
