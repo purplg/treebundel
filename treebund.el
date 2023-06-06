@@ -1,6 +1,6 @@
 ;;; treebund.el --- Bundle related git-worktrees together -*- lexical-binding: t; -*-
 
-;; Package-Requires: ((emacs "26.1"))
+;; Package-Requires: ((emacs "27.1"))
 ;; Version: 0.1.0
 ;; Author: Ben Whitley
 ;; Homepage: https://github.com/purplg/treebund.el
