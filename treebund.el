@@ -443,7 +443,6 @@ PROJECT-PATH is the name of the worktrees' directory in the workspace."
 If FILE-PATH is non-nil, use the current buffer."
   (when-let* ((file-path (or file-path buffer-file-name))
               (file-path (expand-file-name file-path))
-              ((file-exists-p file-path))
               (workspace-path (treebund-current-workspace file-path))
               (workspace-path (directory-file-name workspace-path))
               (relative-path (string-remove-prefix workspace-path file-path))
