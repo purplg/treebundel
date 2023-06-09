@@ -423,12 +423,10 @@ BARE-PATH is the main repository the worktree is being created from.
 BRANCH-NAME is the name of branch to be created and checked out in the workspace.
 
 PROJECT-PATH is the name of the worktrees' directory in the workspace."
-  (when project-path
-    (treebund--project-path-validate project-path))
   (treebund--worktree-add bare-path
                           (or project-path
                               (concat (file-name-as-directory workspace-path)
-                                                (treebund--bare-name bare-path)))
+                                      (treebund--bare-name bare-path)))
                           (or branch-name
                               (treebund--branch-name workspace-path))))
 
@@ -444,23 +442,11 @@ If FILE-PATH is non-nil, use the current buffer."
   (when-let* ((file-path (or file-path buffer-file-name))
               (file-path (expand-file-name file-path))
               (workspace-path (treebund-current-workspace file-path))
-              (workspace-path (directory-file-name workspace-path))
               (relative-path (string-remove-prefix workspace-path file-path))
               ((not (string-empty-p relative-path)))
               (project-parts (split-string relative-path "/")))
     (when-let ((project-name (pop project-parts)))
       (concat workspace-path project-name))))
-
-(defun treebund--project-path-validate (project-path)
-  "Returns error string if error found, nil if no errors found."
-  (let* ((project-path (directory-file-name project-path))
-         (workspace-path (treebund-current-workspace project-path)))
-    (cond ((not workspace-path)
-           (treebund--error "Not in a workspace"))
-          ((not (treebund--project-current project-path))
-           (treebund--error "Not in a project"))
-          ((seq-contains-p (string-remove-prefix workspace-path project-path) ?\/)
-           (treebund--error "Project name cannot contain `/'")))))
 
 (defun treebund--project-name (file-path)
   "Return the name of project at PROJECT-PATH."
