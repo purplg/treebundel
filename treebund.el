@@ -285,14 +285,6 @@ Returns the path to the newly created worktree."
   (treebund--git-with-repo repo-path
     "branch" "--show-current"))
 
-(defun treebund--branch-delete (bare-path branch-name)
-  "Delete a branch in a git repository.
-BARE-PATH is the bare git repository to be acted on.
-
-BRANCH-NAME is the branch to be deleted within this repository."
-  (treebund--git-with-repo bare-path
-    "branch" "-D" branch-name))
-
 (defun treebund--clone (url)
   "Clone a repository from URL to DEST."
   (let* ((dest (concat (file-name-as-directory treebund-bare-dir)
@@ -627,8 +619,7 @@ this project."
 
 ;;;###autoload
 (defun treebund-remove-project (project-path)
-  "Remove project at PROJECT-PATH from a workspace.
-If there are not commits to the branch, the branch will automatically be deleted."
+  "Remove project at PROJECT-PATH from a workspace."
   (interactive
    (let ((workspace-path (or (and (not current-prefix-arg)
                                   (treebund-current-workspace))
@@ -638,9 +629,7 @@ If there are not commits to the branch, the branch will automatically be deleted
                                            (treebund--workspace-name workspace-path))))))
   (let ((bare-path (treebund--project-bare project-path))
         (branch-name (treebund--branch project-path)))
-    (treebund--worktree-remove project-path)
-    (unless (treebund--unpushed-commits-p bare-path `(,branch-name))
-      (treebund--branch-delete bare-path branch-name))))
+    (treebund--worktree-remove project-path)))
 
 ;;;###autoload
 (defun treebund-clone (url)

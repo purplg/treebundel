@@ -218,18 +218,6 @@ are used for all tests."
          (project-path (treebund--project-add workspace-path bare-path)))
     (should (string= "test/branch" (treebund--branch project-path)))))
 
-(treebund-deftest branch-delete
-  (:remotes (("remote" . ("master" "branch-one" "branch-two"))))
-  (let* ((workspace-path (expand-file-name "branch-delete" treebund-workspace-root))
-         (remote (expand-file-name "remote.git" treebund-remote--dir))
-         (bare-path (treebund--clone remote))
-         (project-path (treebund--project-add workspace-path bare-path)))
-    (should (= (length (treebund--branches bare-path)) 4))
-    (treebund--branch-delete bare-path "branch-one")
-    (should (= (length (treebund--branches bare-path)) 3))
-    (treebund--branch-delete project-path "branch-two")
-    (should (= (length (treebund--branches bare-path)) 2))))
-
 (treebund-deftest clone
   (:remotes (("remote" . ("master" "other-branch"))))
   (let* ((workspace-path (expand-file-name "branch-delete" treebund-workspace-root))
