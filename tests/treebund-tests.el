@@ -302,6 +302,27 @@ are used for all tests."
     (treebund--git-with-repo master-path "push" "--set-upstream" "origin" "master")
     (should-not (treebund--unpushed-commits-p master-path))))
 
+(treebund-deftest project-clean-p
+  ( :remotes (("origin" . ("master" "other-branch")))
+    :projects (("some-feature/master" . ("origin/master"))))
+  (let* ((project-path (concat (file-name-as-directory treebund-workspace-root) "some-feature/master"))
+         (test-file (concat (file-name-as-directory project-path) "unpushed")))
+
+    ;; A fresh project should be clean.
+    (should (treebund--project-clean-p project-path))
+
+    ;; An untracked file should be dirty.
+    (with-temp-buffer (write-file test-file))
+    (should-not (treebund--project-clean-p project-path))
+
+    ;; Tracking the file should still be dirty.
+    (treebund--git-with-repo project-path "add" test-file)
+    (should-not (treebund--project-clean-p project-path))
+
+    ;; Committing the file should make the project clean.
+    (treebund--git-with-repo project-path "commit" "-m" "some-commit")
+    (should (treebund--project-clean-p project-path))))
+
 (treebund-deftest bare-name
   ( :remotes (("origin" . ("master")))
     :projects (("some-feature/feature" "origin/master")))

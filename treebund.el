@@ -352,6 +352,16 @@ If BRANCH is a string or list of strings, only check these local branches."
   (setq repo-path (treebund--project-bare repo-path))
   (> (length (treebund--git-with-repo repo-path "log" "--branches" "--not" "--remotes")) 0))
 
+(defun treebund--project-clean-p (project-path)
+  "Return t if there are no untracked changes in project.
+PROJECT-PATH is the worktree to check."
+  (= (length (split-string
+              (treebund--git-with-repo project-path
+                "status" "-z" "--porcelain")
+              "\0"
+              t))
+     0))
+
 ;; Bares
 (defun treebund--bare-name (bare-path)
   "Return the name of bare repository at BARE-PATH."
@@ -629,9 +639,11 @@ this project."
      (list (treebund--read-project workspace-path
                                    (format "Remove project from %s: "
                                            (treebund--workspace-name workspace-path))))))
-  (let ((bare-path (treebund--project-bare project-path))
-        (branch-name (treebund--branch project-path)))
-    (treebund--worktree-remove project-path)))
+  (if (treebund--project-clean-p project-path)
+      (treebund--worktree-remove project-path)
+    (treebund--error "Cannot remove '%s/%s' because the project is dirty."
+                     (treebund--workspace-name (treebund-current-workspace project-path))
+                     (treebund--project-name project-path))))
 
 ;;;###autoload
 (defun treebund-clone (url)
