@@ -206,9 +206,11 @@ MSG is the text to be inserted into the log."
 
 ;;;; Git operations
 
-;; Fundamental functions to performing fundamental git operations. The two macros
-;; should be used only by the rest of the functions in this section. The rest
-;; functions parse the git output into something more useful for this package.
+;; Parse the git output into something more useful.
+;;
+;; The two macros below should be used only by the functions within this
+;; section. Additional git operations should have their own accompanying
+;; function instead of using a macro directly.
 
 (defmacro treebund--git (&rest args)
   "Base macro for all treebund git commands.
@@ -339,7 +341,7 @@ BODY is evaluated with the context of a buffer in the REPO-PATH repository"
   (> (treebund--repo-worktree-count repo-path) 0))
 
 (defun treebund--unpushed-commits-p (repo-path &optional branches)
-  "Return if there are any unpushed commits to remote.
+  "Return t if there are any unpushed commits to remote.
 REPO-PATH is the repository to be acted on.
 
 If BRANCH is nil, check all local BRANCHES.

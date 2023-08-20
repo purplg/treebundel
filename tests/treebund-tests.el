@@ -16,7 +16,7 @@
 
 (when treebund-test-logging
   (defun treebund--gitlog (type &rest msg)
-    "Override the logging method to write to a file instead of buffer."
+    "Overridden logging method to write to a file instead of buffer."
     (with-temp-buffer
       (goto-char (point-max))
       (cond ((eq 'command type)
