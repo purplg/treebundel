@@ -402,18 +402,15 @@ This will check to see if BARE-PATH exists within
 (defun treebund-current-workspace (&optional file-path)
   "Return the path to the current workspace.
 If FILE-PATH is non-nil, use the current buffer instead."
-  (when-let* ((file-path (or file-path buffer-file-name))
-              (file-path (expand-file-name file-path))
-              (workspace-root (file-name-as-directory treebund-workspace-root))
-              ;; Ensure project is with the workspace path
-              ((string-prefix-p workspace-root file-path))
-              ;; Strip workspace-root from the path to make a relative path.
-              (workspace-name (car (split-string (string-remove-prefix workspace-root
-                                                                       file-path)
-                                                 "/")))
-              ;; Ensure workspace name is not empty
-              ((not (string-empty-p workspace-name))))
-    (file-name-as-directory (concat (file-name-as-directory workspace-root) workspace-name))))
+  (setq file-path (directory-file-name (or (and file-path (expand-file-name file-path))
+                                           buffer-file-name)))
+  (let ((workspace-name nil))
+    ;; Traverse up parent directories until the workspace root is all that remains
+    (while (string-prefix-p treebund-workspace-root (directory-file-name file-path))
+      (setq workspace-name (file-name-nondirectory (directory-file-name file-path)))
+      (setq file-path (file-name-directory (directory-file-name file-path))))
+    (when workspace-name
+      (file-name-as-directory (concat treebund-workspace-root workspace-name)))))
 
 ;; Projects
 (defun treebund--project-add (workspace-path bare-path &optional branch-name project-path)
@@ -443,14 +440,16 @@ PROJECT-PATH is the name of the worktrees' directory in the workspace."
 (defun treebund--project-current (&optional file-path)
   "Return the project path of FILE-PATH.
 If FILE-PATH is non-nil, use the current buffer."
-  (when-let* ((file-path (or file-path buffer-file-name))
-              (file-path (expand-file-name file-path))
-              (workspace-path (treebund-current-workspace file-path))
-              (relative-path (string-remove-prefix workspace-path file-path))
-              ((not (string-empty-p relative-path)))
-              (project-parts (split-string relative-path "/")))
-    (when-let ((project-name (pop project-parts)))
-      (concat workspace-path project-name))))
+  (setq file-path (directory-file-name (or (and file-path (expand-file-name file-path))
+                                           buffer-file-name)))
+  (let ((workspace-path (treebund-current-workspace file-path))
+        (project-name nil))
+    ;; Traverse up parent directories until the current workspace is all that remains
+    (while (string-prefix-p workspace-path (directory-file-name file-path))
+      (setq project-name (file-name-nondirectory (directory-file-name file-path)))
+      (setq file-path (file-name-directory (directory-file-name file-path))))
+    (when project-name
+      (file-name-as-directory (concat workspace-path project-name)))))
 
 (defun treebund--project-name (file-path)
   "Return the name of project at PROJECT-PATH."
