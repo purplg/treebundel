@@ -378,6 +378,7 @@ are used for all tests."
     (let ((buffer-file-name (concat (file-name-as-directory treebund-workspace-root) "some-workspace")))
       (should (string= (concat (file-name-as-directory treebund-test--dir) "workspaces/some-workspace/")
                        (treebund-current-workspace))))
+
     (let ((buffer-file-name (concat (file-name-as-directory treebund-workspace-root) "some-workspace/some-project")))
       (should (string= (concat (file-name-as-directory treebund-test--dir) "workspaces/some-workspace/")
                        (treebund-current-workspace))))))
