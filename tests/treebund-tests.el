@@ -369,6 +369,9 @@ are used for all tests."
     :projects (("some-workspace/some-project" "remote/master")))
   (make-directory (concat (file-name-as-directory treebund-workspace-root) "test-project"))
   (with-temp-buffer
+    ;; Should handle nil
+    (treebund-current-workspace nil)
+
     (let ((buffer-file-name (expand-file-name "../" treebund-workspace-root)))
       (should-not (treebund-current-workspace)))
 
