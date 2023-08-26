@@ -246,27 +246,26 @@ are used for all tests."
 
 (treebund-deftest rev-count
   (:remotes (("remote" . ("master" "other-branch"))))
-  (should (equal (treebund--rev-count
-                  (treebund--clone (expand-file-name "remote.git" treebund-remote--dir))
-                  "other-branch")
-                 3)))
+  (should (equal 3 (treebund--rev-count
+                    (treebund--clone (expand-file-name "remote.git" treebund-remote--dir))
+                    "other-branch"))))
 
 (treebund-deftest repo-worktree-count
   (:remotes (("remote" . ("master"))))
   (let* ((remote (expand-file-name "remote.git" treebund-remote--dir))
          (bare-path (treebund--clone remote)))
 
-    (should (equal (treebund--repo-worktree-count bare-path) 0))
+    (should (equal 0 (treebund--repo-worktree-count bare-path)))
 
     (treebund--project-add
      (expand-file-name "repo-worktree-count-one" treebund-workspace-root)
      bare-path)
-    (should (equal (treebund--repo-worktree-count bare-path) 1))
+    (should (equal 1 (treebund--repo-worktree-count bare-path)))
 
     (treebund--project-add
      (expand-file-name "repo-worktree-count-two" treebund-workspace-root)
      bare-path)
-    (should (equal (treebund--repo-worktree-count bare-path) 2))))
+    (should (equal 2 (treebund--repo-worktree-count bare-path)))))
 
 (treebund-deftest has-worktrees-p
   (:remotes (("remote" . ("master"))))
