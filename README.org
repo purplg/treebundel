@@ -62,7 +62,7 @@ treebund-workspace-root (default: "~/workspaces/")
 
 The main commands for using treebund.el.
 
-- treebund-open :: Open a project in a workspace. Open a project in a some workspace.
+- treebund-open :: Open a project in a workspace.
 
 - treebund-open-project :: Open other project within current workspace. If you're already in a
   workspace, prompt to open a different project within that workspace.
