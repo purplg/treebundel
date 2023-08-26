@@ -63,13 +63,21 @@ treebund-workspace-root (default: "~/workspaces/")
 
 * Usage
 
-| Command                     | Description                                 |
-|-----------------------------+---------------------------------------------|
-| ~treebund-open~             | Open a project in a workspace               |
-| ~treebund-open-project~     | Open other project within current workspace |
-| ~treebund-add-project~      | Add a project to a workspace                |
-| ~treebund-remove-project~   | Remove a project from a workspace           |
-| ~treebund-delete-workspace~ | Delete a workspace                          |
+The main commands for using treebund.el.
+
+- treebund-open :: Open a project in a workspace. Open a project in a some workspace.
+
+- treebund-open-project :: Open other project within current workspace. If you're already in a
+  workspace, prompt to open a different project within that workspace.
+
+- treebund-add-project :: Add a project to a workspace. Will prompt you for a bare repository to
+  add to your workspace.
+
+- treebund-remove-project :: Remove a project from a workspace. The project must not have any
+  uncommitted changes for it to be removed.
+
+- treebund-delete-workspace :: Delete a workspace. The workspace must not have any projects in it
+  for it to be removed.
 
 Assuming default configuration, the following steps will create a bare clone of the provided repo
 URL to =~/workspaces/.bare/<repo-name>.git=, then create and open a worktree for a new branch called
