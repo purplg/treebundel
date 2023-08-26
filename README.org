@@ -20,7 +20,7 @@ pop, and pull changes in from the same repository in other workspaces thanks to 
 - [[#installation][Installation]]
 - [[#usage][Usage]]
 - [[#configuration][Configuration]]
-- [[#example-snippets][Example snippets]]
+- [[#nifty-snippets][Nifty snippets]]
 - [[#license][License]]
 :END:
 
@@ -130,7 +130,9 @@ argument, which is the path to the project directory or workspace directory to b
 See the [[#project-tabs][Project Tabs]] example to see an example on how to use
 =treebund-before-project-open-functions= to create a new tab for every project.
 
-* Example snippets
+* Nifty snippets
+
+This snippets can extend the usefulness of treebund.el.
 
 ** Project Tabs
 
