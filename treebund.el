@@ -453,9 +453,8 @@ If FILE-PATH is non-nil, use the current buffer."
         (file-name-concat workspace-path project-name)))))
 
 (defun treebund--project-name (file-path)
-  "Return the name of project at PROJECT-PATH."
-  (when-let (((string-prefix-p treebund-workspace-root file-path))
-             (project-path (treebund--project-current file-path)))
+  "Return the name of project at FILE-PATH."
+  (when-let ((project-path (treebund--project-current file-path)))
     (file-name-nondirectory (directory-file-name file-path))))
 
 ;; Branches
