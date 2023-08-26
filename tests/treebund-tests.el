@@ -350,7 +350,7 @@ are used for all tests."
       (treebund--git-with-repo project-path "add" test-file)
       (treebund--git-with-repo project-path "commit" "-m" "unpushed-commit"))
     (treebund-remove-project project-path)
-    (should (string= (format "%s has unpushed commits on some branches." (treebund--bare-name bare-path))
+    (should (string= (format "%s has unpushed commits on some branches" (treebund--bare-name bare-path))
                      (cadr (should-error
                             (treebund-delete-bare bare-path)
                             :type 'treebund-error))))))
