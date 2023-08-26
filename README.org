@@ -99,7 +99,7 @@ project in your current workspace or ~treebund-open~ to open a project in a diff
   also just make this ~find-file~ to just open the file instantly or any other function that takes a
   file path.
 
-- treebund-bare-dir :: *Default*: =(file-name-concat treebund-workspace-root “.bare”=
+- treebund-bare-dir :: *Default*: =(file-name-concat treebund-workspace-root “.bare”)=
 
   This is the directory that bare repository get cloned to. The intent is for
   this to be mostly transparent, hence the =.= prefix to make it hidden by default.
