@@ -17,7 +17,6 @@ pop, and pull changes in from the same repository in other workspaces thanks to 
 :END:
 :CONTENTS:
 - [[#terminology][Terminology]]
-- [[#structure][Structure]]
 - [[#installation][Installation]]
 - [[#usage][Usage]]
 - [[#configuration][Configuration]]
@@ -34,9 +33,7 @@ pop, and pull changes in from the same repository in other workspaces thanks to 
 | *Bare*      | A bare repository used as a source to create a *project*'s git-worktree.        |
 | *Prefix*    | The string added before the name of the branch checked out for the *workspace*. |
 
-* Structure
-
-Workspaces are structured as such:
+The main workspace directory contains workspaces which each contains a collection of projects:
 
 #+BEGIN_SRC
 treebund-workspace-root (default: "~/workspaces/")
