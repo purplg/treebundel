@@ -244,7 +244,7 @@ When OMIT-MAIN is non-nil, exclude the default branch."
     (seq-remove #'string-empty-p
                 (if omit-main
                     (let ((main-branch (treebund--branch-default repo-path)))
-                      (seq-remove (lambda (branch) (equal main-branch branch)) branches))
+                      (remove main-branch branches))
                   branches))))
 
 (defun treebund--worktree-bare (project-path)
