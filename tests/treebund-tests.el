@@ -180,9 +180,10 @@ are used for all tests."
     (should (member "test/branches-two" (treebund--branches project-path))))
 
   ; Ensure nil is returned when no branches exist.
-  (let* ((remote (expand-file-name "empty-remote.git" treebund-remote--dir))
-         (bare-path (treebund--clone remote)))
-    (should (length= (treebund--branches bare-path) 0))))
+  (should (length= (treebund--branches
+                    (treebund--clone
+                     (file-name-concat treebund-remote--dir "empty-remote.git")))
+                   0)))
 
 (treebund-deftest worktree-bare
   (:remotes (("remote" . ("test/worktree-bare"))))
