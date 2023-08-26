@@ -202,6 +202,9 @@ MSG is the text to be inserted into the log."
                (insert msg))
              (newline 2))))))
 
+(defun treebund--message (&rest args)
+  (message "treebund: %s" (apply #'format args)))
+
 
 ;;;; Git operations
 
@@ -611,7 +614,7 @@ projects' bare repository located at `treebund-bare-dir'."
           (dolist (project-path project-paths)
             (treebund--worktree-remove project-path))
           (delete-directory workspace-path)
-          (message "Deleted workspace `%s'" (treebund--workspace-name workspace-path)))
+          (treebund--message "Deleted workspace `%s'" (treebund--workspace-name workspace-path)))
       (user-error "There must not be any unsaved changes to delete a workspace"))))
 
 ;;;###autoload
@@ -663,7 +666,9 @@ There must be no changes in the project to remove it."
                                    (format "Remove project from %s: "
                                            (treebund--workspace-name workspace-path))))))
   (if (treebund--project-clean-p project-path)
-      (treebund--worktree-remove project-path)
+      (progn
+        (treebund--worktree-remove project-path)
+        (treebund--message "Removed project `%s'" (treebund--project-name project-path)))
     (treebund--error "Cannot remove '%s/%s' because the project is dirty"
                      (treebund--workspace-name (treebund-current-workspace project-path))
                      (treebund--project-name project-path))))
@@ -676,9 +681,9 @@ with `treebund-add-project'"
   (interactive
    (list (read-string "URL: " (or (treebund--git-url-like-p (gui-get-selection 'CLIPBOARD 'STRING))
                                   (treebund--git-url-like-p (gui-get-selection 'PRIMARY 'STRING))))))
-  (message "Cloning %s..." url)
+  (treebund--message "Cloning %s..." url)
   (let ((bare-path (treebund--clone url)))
-    (message "Finished cloning %s." (treebund--bare-name bare-path))
+    (treebund-message "Finished cloning %s." (treebund--bare-name bare-path))
     bare-path))
 
 ;;;###autoload
