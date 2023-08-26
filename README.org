@@ -87,30 +87,30 @@ project in your current workspace or ~treebund-open~ to open a project in a diff
 
 * Configuration
 
-- treebund-workspace-root :: The most important variable you probably want to configure is
+- treebund-workspace-root :: *Default*: =“~/workspaces/”=
+
+  The most important variable you probably want to configure is
   ~treebund-workspace-root~. This configures where all of the treebund workspaces are going to be
   located on your file system.
 
-  *Default*: =“~/workspaces/”=
+- treebund-project-open-function :: *Default*: =#'project-switch-project=
 
-- treebund-project-open-function :: This is the function called when a project is opened. You could
+  This is the function called when a project is opened. You could
   also just make this ~find-file~ to just open the file instantly or any other function that takes a
   file path.
 
-  *Default*: =#'project-switch-project=
+- treebund-bare-dir :: *Default*: =(file-name-concat treebund-workspace-root “.bare”=
 
-- treebund-bare-dir :: This is the directory that bare repository get cloned to. The intent is for
+  This is the directory that bare repository get cloned to. The intent is for
   this to be mostly transparent, hence the =.= prefix to make it hidden by default.
 
-  *Default*: =(file-name-concat treebund-workspace-root “.bare”=
+- treebund-prefix :: *Default*: =“feature/”=
 
-- treebund-prefix :: A string used to prefix all branches created with treebund. By default, it's
+  A string used to prefix all branches created with treebund. By default, it's
   =feature/= such that when you add a new project to a workspace, the new branch is name
   =feature/<workspace-name>=. You can use dir-locals to set workspace-specific prefixes although
   this, unfortunately, prevents you from using dir-locals in your project since dir-locals only
   looks as the closest file.
-
-  *Default*: =“feature/”=
 
 ** Hooks
 
