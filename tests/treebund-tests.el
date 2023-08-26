@@ -326,10 +326,8 @@ are used for all tests."
 (treebund-deftest bare-name
   ( :remotes (("origin" . ("master")))
     :projects (("some-feature/feature" "origin/master")))
-  (let* ((remote-path (file-name-concat treebund-remote--dir "origin.git"))
-         (bare-path (file-name-concat treebund-bare-dir "origin.git"))
-         (project-path (file-name-concat treebund-workspace-root "some-feature/feature")))
-    (should (string= "origin" (treebund--bare-name bare-path)))))
+  (should (string= "origin" (treebund--bare-name (file-name-concat treebund-bare-dir "origin.git"))))
+  (should (= nil (treebund--bare-name (file-name-concat treebund-workspace-root "some-feature/feature")))))
 
 (treebund-deftest do-not-delete-with-worktrees
   ( :remotes (("remote" . ("master")))
