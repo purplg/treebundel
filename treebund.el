@@ -65,7 +65,7 @@
 ;; `treebund-prefix'
 ;;  Default: 'feature/'
 ;;
-;; This is probably the most subjective variable you'd want to customize. With
+;; This is probably the most subjective variable you'd want to customize.  With
 ;; its default value, when you add a project to a workspace named, for example,
 ;; 'new-protocol', the new project will be checked out to a new branch called
 ;; 'feature/new-protocol'.
@@ -73,13 +73,13 @@
 ;; `treebund-workspace-root'
 ;;  Default: '~/workspaces/'
 ;;
-;; This one is also very subjective. It's where all of your workspaces will
+;; This one is also very subjective.  It's where all of your workspaces will
 ;; exist on your file-system.
 
 ;; `treebund-project-open-function'
 ;;  Default: `project-switch-project'
 ;;
-;; This is the function called when a project is opened. You could also just
+;; This is the function called when a project is opened.  You could also just
 ;; make this `find-file' to just open the file instantly or any other function
 ;; that takes a file path.
 
@@ -88,7 +88,7 @@
 ;; `treebund-after-project-open-hook'
 ;; `treebund-after-workspace-open-hook'
 ;;
-;; These hooks are called before or after a project or workspace is opened. The
+;; These hooks are called before or after a project or workspace is opened.  The
 ;; `-functions'-suffixed hooks take a single argument, which is the path to the
 ;; project directory or workspace directory to be opened.
 
@@ -203,6 +203,8 @@ MSG is the text to be inserted into the log."
              (newline 2))))))
 
 (defun treebund--message (&rest args)
+  "Format a message with a 'treebund' prefix.
+ARGS is same arguments as `message'."
   (message "treebund: %s" (apply #'format args)))
 
 (define-error 'treebund-error "treebund error")
@@ -601,7 +603,7 @@ current buffer is in one."
 (defun treebund-delete-workspace (workspace-path)
   "Delete workspace at WORKSPACE-PATH.
 This will check if all projects within the workspace are clean and if so, remove
-everything in the workspace. Anything committed is still saved in the respective
+everything in the workspace.  Anything committed is still saved in the respective
 projects' bare repository located at `treebund-bare-dir'."
   (interactive
    (list (treebund--read-workspace "Delete workspace" t)))
