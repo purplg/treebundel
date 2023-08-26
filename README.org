@@ -73,8 +73,9 @@ The main commands for using treebund.el.
 - treebund-remove-project :: Remove a project from a workspace. The project must not have any
   uncommitted changes for it to be removed.
 
-- treebund-delete-workspace :: Delete a workspace. The workspace must not have any projects in it
-  for it to be removed.
+- treebund-delete-workspace :: Delete a workspace. Any projects within the workspace are checked to
+  see if they're clean, and if so, all projects and the workspace itself are deleted. Anything
+  committed is still saved in the respective projects' bare repository.
 
 Assuming default configuration, the following steps will create a bare clone of the provided repo
 URL to =~/workspaces/.bare/<repo-name>.git=, then create and open a worktree for a new branch called

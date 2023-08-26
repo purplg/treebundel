@@ -597,14 +597,22 @@ current buffer is in one."
 ;;;###autoload
 (defun treebund-delete-workspace (workspace-path)
   "Delete workspace at WORKSPACE-PATH.
-The workspace must be empty for it to be removed.  Use `treebund-remove-project'
-to remove all projects from workspace first."
+This will check if all projects within the workspace are clean and if so, remove
+everything in the workspace. Anything committed is still saved in the respective
+projects' bare repository located at `treebund-bare-dir'."
   (interactive
    (list (treebund--read-workspace "Delete workspace" t)))
-  (if (and (file-exists-p workspace-path)
-           (directory-empty-p workspace-path))
-      (delete-directory workspace-path nil nil)
-    (user-error "Workspace must be empty to delete")))
+  (let ((project-paths (directory-files workspace-path t "^[^.].*")))
+    (if (and (f-directory-p workspace-path)
+             (seq-every-p (lambda (project-path)
+                            (treebund--project-clean-p project-path))
+                          project-paths))
+        (progn
+          (dolist (project-path project-paths)
+            (treebund--worktree-remove project-path))
+          (delete-directory workspace-path)
+          (message "Deleted workspace `%s'" (treebund--workspace-name workspace-path)))
+      (user-error "There must not be any unsaved changes to delete a workspace"))))
 
 ;;;###autoload
 (defun treebund-add-project (workspace-path bare-path project-path project-branch)
