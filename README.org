@@ -71,74 +71,63 @@ treebund-workspace-root (default: "~/workspaces/")
 | ~treebund-remove-project~   | Remove a project from a workspace           |
 | ~treebund-delete-workspace~ | Delete a workspace                          |
 
-Assuming default configuration, the following will create a bare clone of the provided repo URL to
-=~/workspaces/.bare/<repo-name>.git=, then create and open a worktree for a new branch called
+Assuming default configuration, the following steps will create a bare clone of the provided repo
+URL to =~/workspaces/.bare/<repo-name>.git=, then create and open a worktree for a new branch called
 =feature/<workspace-name>=.
 
-1. Create a new workspace using ~treebund-new-workspace~.
-2. Interactively call ~treebund-add-project~.
-3. Select the newly created workspace.
-4. Select =[ clone ]=.
-5. Enter the remote URL for the repository to be added to the workspace.
+1. Interactively call ~treebund-add-project~.
+2. Enter name for the new (or existing) workspace.
+3. Select =[ clone ]=.
+4. Enter the URL to clone for the repository to be added to the workspace.
 
-   You should then be prompted with your ~project-switch-project~ prompt to begin editing.
+You should then be prompted with your ~project-switch-project~ prompt to begin editing.
 
-   Whenever you need a different repository, you can call ~treebund-open~ and switch to and/or add a
-   new repository to your workspace.
+Whenever you need a different repository, you can call ~treebund-open-project~ to open and adjacent
+project in your current workspace or ~treebund-open~ to open a project in a different workspace.
 
 * Configuration
 
-** treebund-workspace-root
+- treebund-workspace-root :: The most important variable you probably want to configure is
+  ~treebund-workspace-root~. This configures where all of the treebund workspaces are going to be
+  located on your file system.
 
-*Default*:
-#+BEGIN_EXAMPLE
-"~/workspaces/"
-#+END_EXAMPLE
+  *Default*: =“~/workspaces/”=
 
-The most important variable you probably want to configure is ~treebund-workspace-root~. This
-configures where all of the treebund workspaces are going to be located on your file system.
+- treebund-project-open-function :: This is the function called when a project is opened. You could
+  also just make this ~find-file~ to just open the file instantly or any other function that takes a
+  file path.
 
-** treebund-bare-dir
+  *Default*: =#'project-switch-project=
 
-*Default*:
-#+BEGIN_EXAMPLE
-treebund-workspace-root + ".bare"
-#+END_EXAMPLE
+- treebund-bare-dir :: This is the directory that bare repository get cloned to. The intent is for
+  this to be mostly transparent, hence the =.= prefix to make it hidden by default.
 
-This is the directory that bare repository get cloned to. The intent is for this to be mostly
-transparent, hence the =.= prefix to make it hidden by default.
+  *Default*: =(file-name-concat treebund-workspace-root “.bare”=
 
-** treebund-prefix
+- treebund-prefix :: A string used to prefix all branches created with treebund. By default, it's
+  =feature/= such that when you add a new project to a workspace, the new branch is name
+  =feature/<workspace-name>=. You can use dir-locals to set workspace-specific prefixes although
+  this, unfortunately, prevents you from using dir-locals in your project since dir-locals only
+  looks as the closest file.
 
-*Default*:
-#+BEGIN_EXAMPLE
-"feature/"
-#+END_EXAMPLE
-
-~treebund-prefix~ is a string used to prefix all treebund-created branches. By default, it's
-=feature/= such that when you add a new project to a workspace, the new branch is name
-=feature/<workspace-name>=. At work, I set this to my name so that I know it won't conflict with
-another branch on remote.
-
-Eventually, I plan on having workspace-specific configuration items so that you may select a prefix
-per workspace. Then you could specify a prefix like =bugfix/=, an issue number, or whatever you
-like for the whole workspace and easily relate multiple branches on different repositories together.
+  *Default*: =“feature/”=
 
 ** Hooks
 
-| Hook                                     | Description                                                    |
-|------------------------------------------+----------------------------------------------------------------|
-| ~treebund-before-project-open-functions~ | Called before a project is open with the path to the project.  |
-| ~treebund-after-project-open-functions~  | Called after a project is open with the path to the workspace. |
-| ~treebund-before-workspace-open-hook~    | Called before a workspace is open.                             |
-| ~treebund-after-workspace-open-hook~     | Called after a workspace is open.                              |
+- ~treebund-before-workspace-open-functions~
+- ~treebund-before-project-open-functions~
+- ~treebund-after-project-open-hook~
+- ~treebund-after-workspace-open-hook~
 
-See the [[#Project tabs][Project tabs]] example to see an example on how to use
+These hooks are called in the order listed above. The =-functions=-suffixed hooks take a single
+argument, which is the path to the project directory or workspace directory to be opened.
+
+See the [[#project-tabs][Project Tabs]] example to see an example on how to use
 =treebund-before-project-open-functions= to create a new tab for every project.
 
 * Example snippets
 
-** Project tabs
+** Project Tabs
 
 To create a new tab for every project opened with treebund:
 
@@ -153,7 +142,7 @@ To create a new tab for every project opened with treebund:
                    (format "%s/%s" workspace-name project-name))))))
 #+END_SRC
 
-** Workspace notes
+** Workspace Notes
 
 This snippet will open a file within a =projects= directory in your =org-directory= an org file with the name of your workspace.
 

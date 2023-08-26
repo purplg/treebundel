@@ -9,13 +9,13 @@
 ;;; Commentary:
 
 ;; This package is used for bundling related git-worktrees from multiple
-;; repositories together. This helps switch quickly between repositories and
-;; ensure you're on the correct branch. When you're done with your changes, you
+;; repositories together.  This helps switch quickly between repositories and
+;; ensure you're on the correct branch.  When you're done with your changes, you
 ;; can use the repositories in the workspace and know which ones were modified
 ;; to simplify the process of getting the changes merged in together.
 ;;
 ;; Additionally, git metadata (the =.git= directory) is shared between all
-;; projects. You can stash, pop, and pull changes in from the same repository in
+;; projects.  You can stash, pop, and pull changes in from the same repository in
 ;; other workspaces thanks to the power of git-worktrees.
 
 
@@ -54,11 +54,10 @@
 ;; provided repo URL to '~/workspaces/.bare/<repo-name>.git', then create and
 ;; open a worktree for a new branch called 'feature/<workspace-name>'.
 ;;
-;; 1. Create a new workspace using `treebund-new-workspace'.
-;; 2. Interactively call `treebund-add-project'.
-;; 3. Select the newly created workspace.
-;; 4. Select '[ clone ]'.
-;; 5. Enter the remote URL for the repository to be added to the workspace.
+;; 1. Interactively call `treebund-add-project'.
+;; 2. Enter name for the new (or existing) workspace.
+;; 3. Select '[ clone ]'.
+;; 4. Enter the URL to clone for the repository to be added to the workspace.
 
 
 ;;;; Configuration:
@@ -69,8 +68,7 @@
 ;; This is probably the most subjective variable you'd want to customize. With
 ;; its default value, when you add a project to a workspace named, for example,
 ;; 'new-protocol', the new project will be checked out to a new branch called
-;; 'feature/new-protocol'. Eventually, I'd like to make the prefix
-;; workspace-specific, then this would variable just provide the default.
+;; 'feature/new-protocol'.
 
 ;; `treebund-workspace-root'
 ;;  Default: '~/workspaces/'
@@ -85,9 +83,9 @@
 ;; make this `find-file' to just open the file instantly or any other function
 ;; that takes a file path.
 
+;; `treebund-before-workspace-open-functions'
 ;; `treebund-before-project-open-functions'
 ;; `treebund-after-project-open-hook'
-;; `treebund-before-workspace-open-functions'
 ;; `treebund-after-workspace-open-hook'
 ;;
 ;; These hooks are called before or after a project or workspace is opened. The
@@ -289,7 +287,9 @@ Returns the path to the newly created worktree."
     "branch" "--show-current"))
 
 (defun treebund--clone (url)
-  "Clone a repository from URL to DEST."
+  "Clone a repository from URL to DEST.
+Place the cloned repository as a bare repository in the directory declared in
+`treebund-bare-dir' so worktrees can be created from it as workspace projects."
   (let* ((dest (file-name-concat treebund-bare-dir
                                  (car (last (split-string url "/"))))))
     (when (file-exists-p dest)
@@ -300,7 +300,8 @@ Returns the path to the newly created worktree."
     dest))
 
 (defun treebund--rev-count (repo-path commit-a &optional commit-b)
-  "Return the number of commits between COMMIT-A and COMMIT-B at REPO-PATH."
+  "Return the number of commits between COMMIT-A and COMMIT-B at REPO-PATH.
+If COMMIT-B is nil, count between HEAD Of default branch and COMMIT-A."
   (unless commit-b
     (setq commit-b commit-a)
     (setq commit-a (treebund--branch-default repo-path)))
@@ -314,6 +315,7 @@ Returns the path to the newly created worktree."
 (define-error 'treebund-error "treebund error")
 
 (defun treebund--error (format &rest args)
+  "Print and error with ARGS formatted with FORMAT."
   (signal 'treebund-error (list (apply #'format-message format args))))
 
 ;; These functions provide useful functions for and the rules to enforce the
@@ -354,7 +356,7 @@ If BRANCH is a string or list of strings, only check these local branches."
   (> (length (treebund--git-with-repo repo-path "log" "--branches" "--not" "--remotes")) 0))
 
 (defun treebund--project-clean-p (project-path)
-  "Return t if there are no untracked changes in project.
+  "Return t if there are no uncommitted modifications in project.
 PROJECT-PATH is the worktree to check."
   (= (length (split-string
               (treebund--git-with-repo project-path
@@ -416,13 +418,15 @@ If FILE-PATH is non-nil, use the current buffer instead."
 ;; Projects
 (defun treebund--project-add (workspace-path bare-path &optional branch-name project-path)
   "Add a project to a workspace.
-This function defines the way project worktrees are added and named in workspaces.
+This function defines the way project worktrees are added and named in
+workspaces.
 
 WORKSPACE-PATH is the directory to place the new worktree in.
 
 BARE-PATH is the main repository the worktree is being created from.
 
-BRANCH-NAME is the name of branch to be created and checked out in the workspace.
+BRANCH-NAME is the name of branch to be created and checked out in the
+workspace.
 
 PROJECT-PATH is the name of the worktrees' directory in the workspace."
   (treebund--worktree-add bare-path
@@ -504,7 +508,10 @@ PROMPT is the prompt to be presented to the user in the
 minibuffer.
 
 When ADD is non-nil, add an option for the user to add a project
-that isn't in the workspace."
+that isn't in the workspace.
+
+INITIAL is the default value for the name of the project that is automatically
+inserted when the minibuffered is shown."
   (let* ((candidates (mapcar (lambda (project)
                                (cons (file-name-nondirectory project) project))
                              (treebund--workspace-projects workspace-path))))
@@ -521,7 +528,10 @@ that isn't in the workspace."
 (defun treebund--read-workspace (&optional prompt require-match)
   "Interactively find the path of a workspace.
 PROMPT is the prompt to be presented to the user in the
-minibuffer."
+minibuffer.
+
+REQUIRE-MATCH forces a valid workspace to be selected.  This removes the ability
+to create a workspace with a new entry."
   (let* ((candidates (mapcar (lambda (workspace)
                                (cons workspace
                                      (expand-file-name workspace treebund-workspace-root)))
@@ -563,8 +573,11 @@ PROJECT-PATH is the project to be opened."
 ;;;###autoload
 (defun treebund-open (workspace-path)
   "Open or create a workspace and a project within it.
-This will always prompt for a workspace. If you want to prefer
-your current workspace, use `treebund-open-project'."
+
+WORKSPACE-PATH is the workspace to open.
+
+This will always prompt for a workspace.  If you want to prefer your current
+workspace, use `treebund-open-project'."
   (interactive (list (treebund--read-workspace "Open workspace")))
   (treebund--open
    (treebund--read-project workspace-path
@@ -583,7 +596,9 @@ current buffer is in one."
 
 ;;;###autoload
 (defun treebund-delete-workspace (workspace-path)
-  "Delete workspace at WORKSPACE-PATH."
+  "Delete workspace at WORKSPACE-PATH.
+The workspace must be empty for it to be removed.  Use `treebund-remove-project'
+to remove all projects from workspace first."
   (interactive
    (list (treebund--read-workspace "Delete workspace" t)))
   (if (and (file-exists-p workspace-path)
@@ -630,7 +645,8 @@ this project."
 
 ;;;###autoload
 (defun treebund-remove-project (project-path)
-  "Remove project at PROJECT-PATH from a workspace."
+  "Remove project at PROJECT-PATH from a workspace.
+There must be no changes in the project to remove it."
   (interactive
    (let ((workspace-path (or (and (not current-prefix-arg)
                                   (treebund-current-workspace))
@@ -640,13 +656,15 @@ this project."
                                            (treebund--workspace-name workspace-path))))))
   (if (treebund--project-clean-p project-path)
       (treebund--worktree-remove project-path)
-    (treebund--error "Cannot remove '%s/%s' because the project is dirty."
+    (treebund--error "Cannot remove '%s/%s' because the project is dirty"
                      (treebund--workspace-name (treebund-current-workspace project-path))
                      (treebund--project-name project-path))))
 
 ;;;###autoload
 (defun treebund-clone (url)
-  "Clone URL to the collection of bare repos."
+  "Clone URL to the collection of bare repos.
+Once a repository is in the bare repos collection, you can add it to a project
+with `treebund-add-project'"
   (interactive
    (list (read-string "URL: " (or (treebund--git-url-like-p (gui-get-selection 'CLIPBOARD 'STRING))
                                   (treebund--git-url-like-p (gui-get-selection 'PRIMARY 'STRING))))))
@@ -658,8 +676,10 @@ this project."
 ;;;###autoload
 (defun treebund-delete-bare (bare-path &optional interactive)
   "Delete a bare repository at BARE-PATH.
-Existing worktrees or uncommitted changes will be checked before
-deletion."
+Existing worktrees or uncommitted changes will prevent you from deleting.
+
+If INTERACTIVE is non-nil, prompt the user to force delete for any changes not
+on remote."
   (interactive
    (list (treebund--read-bare "Select repo to delete: ") t))
   (cond ((treebund--has-worktrees-p bare-path)
@@ -667,7 +687,7 @@ deletion."
         ((and (treebund--unpushed-commits-p bare-path)
               (not (if interactive
                        (yes-or-no-p (format "%s has unpushed commits on some branches.  Delete anyway?" (treebund--bare-name bare-path)))
-                     (treebund--error (format "%s has unpushed commits on some branches." (treebund--bare-name bare-path)))))))
+                     (treebund--error (format "%s has unpushed commits on some branches" (treebund--bare-name bare-path)))))))
         (t (treebund--bare-delete bare-path))))
 
 (provide 'treebund)
