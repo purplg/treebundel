@@ -467,10 +467,12 @@ If FILE-PATH is non-nil, use the current buffer."
   "Generate a branch name for WORKSPACE-PATH."
   (concat treebund-prefix (treebund--workspace-name workspace-path)))
 
-(defun treebund--branch-default (repo-path)
-  "Return the default branch at REPO-PATH."
-  (treebund--with-repo repo-path
-    (car (vc-git-branches))))
+(defun treebund--branch-default (project-path)
+  "Return the default branch at PROJECT-PATH.
+The bare repository should have it's HEAD set to the HEAD of remote, which is
+the default branch.  So this function just gets the branch that the HEAD of the
+bare repo points to."
+  (treebund--branch (treebund--project-bare project-path)))
 
 
 ;;;; User functions
