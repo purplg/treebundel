@@ -290,7 +290,7 @@ Returns the path to the newly created worktree."
     "branch" "--show-current"))
 
 (defun treebund--clone (url)
-  "Clone a repository from URL to DEST.
+  "Clone a repository from URL to the bare repo directory.
 Place the cloned repository as a bare repository in the directory declared in
 `treebund-bare-dir' so worktrees can be created from it as workspace projects."
   (let* ((dest (file-name-concat treebund-bare-dir
