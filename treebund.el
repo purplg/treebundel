@@ -222,7 +222,7 @@ MSG is the text to be inserted into the log."
 
 (defmacro treebund--git (&rest args)
   "Base macro for all treebund git commands.
-ARGS are the arguements passed to git."
+ARGS are the arguments passed to git."
   (declare (indent defun))
   `(with-temp-buffer
      (treebund--gitlog 'command (string-join (list ,@args) " "))
@@ -234,7 +234,7 @@ ARGS are the arguements passed to git."
        output)))
 
 (defmacro treebund--git-with-repo (repo-path &rest args)
-  "Run a command on a specific git repositorys.
+  "Run a command on a specific git repository.
 REPO-PATH is the repository to pass to git with the '-C' switch.
 
 ARGS are the arguments passed to git."
@@ -302,7 +302,7 @@ Place the cloned repository as a bare repository in the directory declared in
   (let* ((dest (file-name-concat treebund-bare-dir
                                  (car (last (split-string url "/"))))))
     (when (file-exists-p dest)
-      (user-error "Repostitory with this name is already cloned"))
+      (user-error "Repository with this name is already cloned"))
     (treebund--git "clone" url "--bare" dest)
     (treebund--git-with-repo dest "config" "remote.origin.fetch" "+refs/heads/*:refs/remotes/origin/*")
     (treebund--git-with-repo dest "fetch")
@@ -326,7 +326,7 @@ If COMMIT-B is nil, count between HEAD Of default branch and COMMIT-A."
 
 ;; Repos
 (defmacro treebund--with-repo (repo-path &rest body)
-  "Run BODY in the context of a buffer in REPOSITORY-PATH.
+  "Run BODY in the context of a buffer in REPO-PATH.
 BODY is evaluated with the context of a buffer in the REPO-PATH repository"
   (declare (indent defun))
   `(let* ((buffer (find-file-noselect ,repo-path))
@@ -347,12 +347,11 @@ BODY is evaluated with the context of a buffer in the REPO-PATH repository"
   (> (treebund--repo-worktree-count repo-path) 0))
 
 (defun treebund--unpushed-commits-p (repo-path &optional branches)
-  "Return t if there are any unpushed commits to remote.
+  "Return t if there are changes not on remote.
 REPO-PATH is the repository to be acted on.
 
-If BRANCH is nil, check all local BRANCHES.
-
-If BRANCH is a string or list of strings, only check these local branches."
+If BRANCH is nil, check all local BRANCHES.  If BRANCH is a string or list of
+strings, only check these local branches."
   (when (eq 'string (type-of branches))
     (setq branches (list branches)))
   (setq repo-path (treebund--project-bare repo-path))
@@ -395,7 +394,7 @@ This will check to see if BARE-PATH exists within
   (file-name-nondirectory (directory-file-name workspace-path)))
 
 (defun treebund--workspace-projects (workspace-path)
-  "Return a list of absoute paths to projects in WORKSPACE-PATH."
+  "Return a list of absolute paths to projects in WORKSPACE-PATH."
   (seq-filter #'file-directory-p
               (directory-files workspace-path t "^[^.].*")))
 
@@ -421,8 +420,7 @@ If FILE-PATH is non-nil, use the current buffer instead."
 ;; Projects
 (defun treebund--project-add (workspace-path bare-path &optional branch-name project-path)
   "Add a project to a workspace.
-This function defines the way project worktrees are added and named in
-workspaces.
+Defines the way project worktrees are added and named in workspaces.
 
 WORKSPACE-PATH is the directory to place the new worktree in.
 
@@ -514,7 +512,7 @@ When ADD is non-nil, add an option for the user to add a project
 that isn't in the workspace.
 
 INITIAL is the default value for the name of the project that is automatically
-inserted when the minibuffered is shown."
+inserted when the minibuffer is shown."
   (let* ((candidates (mapcar (lambda (project)
                                (cons (file-name-nondirectory project) project))
                              (treebund--workspace-projects workspace-path))))
