@@ -1,6 +1,6 @@
 ;;; treebund.el --- Bundle related git-worktrees together -*- lexical-binding: t; -*-
 
-;; Package-Requires: ((emacs "27.1"))
+;; Package-Requires: ((emacs "27.1") (compat "29.1.4.2"))
 ;; Version: 0.1.0
 ;; Author: Ben Whitley
 ;; Homepage: https://github.com/purplg/treebund.el
@@ -107,6 +107,7 @@
 
 ;;; Code:
 (eval-when-compile (require 'subr-x))
+(require 'compat)
 (require 'vc-git)
 
 
@@ -130,7 +131,7 @@
          (set option (file-name-as-directory (expand-file-name
                                               value)))))
 
-(defcustom treebund-bare-dir (concat (file-name-as-directory treebund-workspace-root) ".bare")
+(defcustom treebund-bare-dir (file-name-concat treebund-workspace-root ".bare")
   "The path where bare repositories are stored."
   :group 'treebund
   :type 'string
@@ -289,8 +290,8 @@ Returns the path to the newly created worktree."
 
 (defun treebund--clone (url)
   "Clone a repository from URL to DEST."
-  (let* ((dest (concat (file-name-as-directory treebund-bare-dir)
-                       (car (last (split-string url "/"))))))
+  (let* ((dest (file-name-concat treebund-bare-dir
+                                 (car (last (split-string url "/"))))))
     (when (file-exists-p dest)
       (user-error "Repostitory with this name is already cloned"))
     (treebund--git "clone" url "--bare" dest)
@@ -410,7 +411,7 @@ If FILE-PATH is non-nil, use the current buffer instead."
         (setq workspace-name (file-name-nondirectory (directory-file-name file-path)))
         (setq file-path (file-name-directory (directory-file-name file-path))))
       (when workspace-name
-        (file-name-as-directory (concat treebund-workspace-root workspace-name))))))
+        (file-name-as-directory (file-name-concat treebund-workspace-root workspace-name))))))
 
 ;; Projects
 (defun treebund--project-add (workspace-path bare-path &optional branch-name project-path)
@@ -426,8 +427,8 @@ BRANCH-NAME is the name of branch to be created and checked out in the workspace
 PROJECT-PATH is the name of the worktrees' directory in the workspace."
   (treebund--worktree-add bare-path
                           (or project-path
-                              (concat (file-name-as-directory workspace-path)
-                                      (treebund--bare-name bare-path)))
+                              (file-name-concat workspace-path
+                                                (treebund--bare-name bare-path)))
                           (or branch-name
                               (treebund--branch-name workspace-path))))
 
@@ -449,7 +450,7 @@ If FILE-PATH is non-nil, use the current buffer."
         (setq project-name (file-name-nondirectory (directory-file-name file-path)))
         (setq file-path (file-name-directory (directory-file-name file-path))))
       (when project-name
-        (file-name-as-directory (concat workspace-path project-name))))))
+        (file-name-concat workspace-path project-name)))))
 
 (defun treebund--project-name (file-path)
   "Return the name of project at PROJECT-PATH."
@@ -484,7 +485,7 @@ When OMIT is non-nil, it should be a list of a candidates to be
 excluded from the candidates."
   (let* ((candidates (mapcar (lambda (bare)
                                (cons (replace-regexp-in-string "\.git$" "" bare)
-                                     (concat (file-name-as-directory treebund-bare-dir) bare)))
+                                     (file-name-concat treebund-bare-dir bare)))
                              (treebund--bare-list))))
     (when omit
       (setq candidates (seq-remove (lambda (bare) (member (car bare) omit))
@@ -532,7 +533,7 @@ minibuffer."
          (selection (completing-read prompt candidates nil require-match nil nil default)))
     (if-let ((existing (cdr (assoc selection candidates))))
         existing
-      (let ((workspace-path (concat (file-name-as-directory treebund-workspace-root) selection)))
+      (let ((workspace-path (file-name-concat treebund-workspace-root selection)))
         (make-directory workspace-path)
         workspace-path))))
 
