@@ -205,6 +205,12 @@ MSG is the text to be inserted into the log."
 (defun treebund--message (&rest args)
   (message "treebund: %s" (apply #'format args)))
 
+(define-error 'treebund-error "treebund error")
+
+(defun treebund--error (format &rest args)
+  "Print and error with ARGS formatted with FORMAT."
+  (signal 'treebund-error (list (apply #'format-message format args))))
+
 
 ;;;; Git operations
 
@@ -313,13 +319,7 @@ If COMMIT-B is nil, count between HEAD Of default branch and COMMIT-A."
      "rev-list" (concat commit-a ".." commit-b) "--count")))
 
 
-;;;; Internal
-
-(define-error 'treebund-error "treebund error")
-
-(defun treebund--error (format &rest args)
-  "Print and error with ARGS formatted with FORMAT."
-  (signal 'treebund-error (list (apply #'format-message format args))))
+;;;; Workspace management
 
 ;; These functions provide useful functions for and the rules to enforce the
 ;; definitions of the terminology at the top of this package.
