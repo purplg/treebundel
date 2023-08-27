@@ -21,14 +21,14 @@
 
 ;;;; Terminology:
 
-;; Workspace
-;;   A collection of 'PROJECT's created from 'BARE's.
+;; Bare
+;;   A bare repository used as a source to create a 'PROJECT's git-worktree.
 ;;
 ;; Project
 ;;   A git-worktree checked out from a 'BARE' stored in a 'WORKSPACE'.
 ;;
-;; Bare
-;;   A bare repository used as a source to create a 'PROJECT's git-worktree.
+;; Workspace
+;;   A collection of 'PROJECT's created from 'BARE's.
 
 
 ;;;; Structure:

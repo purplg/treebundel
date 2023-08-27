@@ -28,9 +28,9 @@ pop, and pull changes in from the same repository in other workspaces thanks to 
 
 | Term        | Description                                                                     |
 |-------------+---------------------------------------------------------------------------------|
-| *Workspace* | A collection of *project*'s created from *bare*'s.                              |
-| *Project*   | A git-worktree checked out from a *bare* stored in a *workspace*.               |
 | *Bare*      | A bare repository used as a source to create a *project*'s git-worktree.        |
+| *Project*   | A git-worktree checked out from a *bare* stored in a *workspace*.               |
+| *Workspace* | A collection of *project*'s created from *bare*'s.                              |
 | *Prefix*    | The string added before the name of the branch checked out for the *workspace*. |
 
 The main workspace directory contains workspaces which each contains a collection of projects:
