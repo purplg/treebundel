@@ -13,7 +13,7 @@
 ;;; Logging:
 (setq ert-quiet nil)
 
-(setq-default treebundel-test-logging nil)
+(defvar treebundel-test-logging nil)
 
 (when treebundel-test-logging
   (defun treebundel--gitlog (type &rest msg)
@@ -32,8 +32,8 @@
 
 
 ;;; Environment:
-(setq treebundel-test--dir (file-name-concat temporary-file-directory "treebundel-tests/"))
-(setq treebundel-remote--dir (file-name-concat treebundel-test--dir "simulated-remote/"))
+(defvar treebundel-test--dir (file-name-concat temporary-file-directory "treebundel-tests/"))
+(defvar treebundel-remote--dir (file-name-concat treebundel-test--dir "simulated-remote/"))
 
 (defun treebundel-test--setup-branch (name origin-path &optional num-commits)
   (let ((worktree-path (expand-file-name name treebundel-remote--dir)))
@@ -219,8 +219,7 @@ are used for all tests."
 
 (treebundel-deftest clone
   (:remotes (("remote" . ("master" "other-branch"))))
-  (let* ((workspace-path (expand-file-name "branch-delete" treebundel-workspace-root))
-         (remote (expand-file-name "remote.git" treebundel-remote--dir))
+  (let* ((remote (expand-file-name "remote.git" treebundel-remote--dir))
          (bare-path (treebundel--clone remote)))
     (should (file-directory-p bare-path))
     (should (length= (treebundel--branches bare-path) 2))
