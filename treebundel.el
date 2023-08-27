@@ -138,7 +138,13 @@
                                               value)))))
 
 (defcustom treebundel-project-open-function
-  (if (version< emacs-version "28") 'find-file 'project-switch-project)
+  (if (version< emacs-version "28")
+      (lambda (dir)
+        (find-file (read-file-name
+                    (format "Find file in %s: "
+                            (treebundel--project-name dir))
+                    (file-name-as-directory dir))))
+    'project-switch-project)
   "Function called to switch to a new project."
   :group 'treebundel
   :type 'function)
