@@ -617,7 +617,7 @@ respective projects' bare repository located at `treebundel-bare-dir'."
           (dolist (project-path project-paths)
             (treebundel--worktree-remove project-path))
           (delete-directory workspace-path)
-          (treebundel--message "Deleted workspace `%s'" (treebundel--workspace-name workspace-path)))
+          (treebundel--message "Deleted workspace '%s'" (treebundel--workspace-name workspace-path)))
       (user-error "There must not be any unsaved changes to delete a workspace"))))
 
 ;;;###autoload
