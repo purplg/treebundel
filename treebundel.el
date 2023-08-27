@@ -669,9 +669,11 @@ There must be no changes in the project to remove it."
                                    (format "Remove project from %s: "
                                            (treebundel--workspace-name workspace-path))))))
   (if (treebundel--project-clean-p project-path)
-      (progn
+      (let ((workspace-path (treebundel-current-workspace project-path)))
         (treebundel--worktree-remove project-path)
-        (treebundel--message "Removed project `%s'" (treebundel--project-name project-path)))
+        (treebundel--message "Removed project '%s' from '%s'"
+                             (treebundel--project-name project-path)
+                             (treebundel--workspace-name workspace-path)))
     (treebundel--error "Cannot remove '%s/%s' because the project is dirty"
                      (treebundel--workspace-name (treebundel-current-workspace project-path))
                      (treebundel--project-name project-path))))
