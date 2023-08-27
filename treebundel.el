@@ -350,7 +350,7 @@ BODY is evaluated with the context of a buffer in the REPO-PATH repository"
   (> (treebundel--repo-worktree-count repo-path) 0))
 
 (defun treebundel--unpushed-commits-p (repo-path &optional branches)
-  "Return t if there are changes not on remote.
+  "Return t if there are commits not on remote.
 REPO-PATH is the repository to be acted on.
 
 If BRANCH is nil, check all local BRANCHES.  If BRANCH is a string or list of
