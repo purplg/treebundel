@@ -187,7 +187,7 @@ be opened."
 
 (defun treebundel--gitlog (type &rest msg)
   "Insert a message in the treebundel git log buffer.
-TYPE is the type of log message.  Can be either 'command or 'output.
+TYPE is the type of log message.  Can be either \='command or \='output.
 
 MSG is the text to be inserted into the log."
   (with-current-buffer (treebundel--gitlog-buffer)
@@ -203,7 +203,7 @@ MSG is the text to be inserted into the log."
              (newline 2))))))
 
 (defun treebundel--message (&rest args)
-  "Format a message with a 'treebundel' prefix.
+  "Format a message with a treebundel prefix.
 ARGS is same arguments as `message'."
   (message "treebundel: %s" (apply #'format args)))
 
@@ -603,12 +603,12 @@ current buffer is in one."
 (defun treebundel-delete-workspace (workspace-path)
   "Delete workspace at WORKSPACE-PATH.
 This will check if all projects within the workspace are clean and if so, remove
-everything in the workspace.  Anything committed is still saved in the respective
-projects' bare repository located at `treebundel-bare-dir'."
+everything in the workspace.  Anything committed is still saved in the
+respective projects' bare repository located at `treebundel-bare-dir'."
   (interactive
    (list (treebundel--read-workspace "Delete workspace" t)))
   (let ((project-paths (directory-files workspace-path t "^[^.].*")))
-    (if (and (f-directory-p workspace-path)
+    (if (and (file-directory-p workspace-path)
              (seq-every-p (lambda (project-path)
                             (treebundel--project-clean-p project-path))
                           project-paths))
