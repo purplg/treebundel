@@ -685,7 +685,7 @@ with `treebundel-add-project'"
                                   (treebundel--git-url-like-p (gui-get-selection 'PRIMARY 'STRING))))))
   (treebundel--message "Cloning %s..." url)
   (let ((bare-path (treebundel--clone url)))
-    (treebundel-message "Finished cloning %s." (treebundel--bare-name bare-path))
+    (treebundel--message "Finished cloning %s." (treebundel--bare-name bare-path))
     bare-path))
 
 ;;;###autoload
