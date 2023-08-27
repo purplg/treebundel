@@ -137,7 +137,8 @@
          (set option (file-name-as-directory (expand-file-name
                                               value)))))
 
-(defcustom treebundel-project-open-function #'project-switch-project
+(defcustom treebundel-project-open-function
+  (if (version<= emacs-version "27") 'find-file 'project-switch-project)
   "Function called to switch to a new project."
   :group 'treebundel
   :type 'function)
