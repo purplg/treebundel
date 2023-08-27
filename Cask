@@ -1,4 +1,4 @@
 (source gnu)
 (source melpa)
 
-(package-file "treebund.el")
+(package-file "treebundel.el")

@@ -1,4 +1,4 @@
-#+TITLE: treebund.el
+#+TITLE: treebundel
 
 This package is used for bundling related git-worktrees from multiple repositories together. This
 helps switch quickly between repositories and ensure you're on the correct branch. When you're done
@@ -36,7 +36,7 @@ pop, and pull changes in from the same repository in other workspaces thanks to 
 The main workspace directory contains workspaces which each contains a collection of projects:
 
 #+BEGIN_SRC
-treebund-workspace-root (default: "~/workspaces/")
+treebundel-workspace-root (default: "~/workspaces/")
    |
    L workspace1
    |    L project-one   (branch: "feature/workspace1")
@@ -54,26 +54,26 @@ treebund-workspace-root (default: "~/workspaces/")
 ** straight.el
 
 #+BEGIN_SRC emacs-lisp :results none
-(straight-use-package '(treebund :type git :host github :repo "purplg/treebund.el"))
+(straight-use-package '(treebundel :type git :host github :repo "purplg/treebundel"))
 ;; -- Configuration goes here --
 #+END_SRC
 
 * Usage
 
-The main commands for using treebund.el.
+The main commands for using treebundel.
 
-- treebund-open :: Open a project in a workspace.
+- treebundel-open :: Open a project in a workspace.
 
-- treebund-open-project :: Open other project within current workspace. If you're already in a
+- treebundel-open-project :: Open other project within current workspace. If you're already in a
   workspace, prompt to open a different project within that workspace.
 
-- treebund-add-project :: Add a project to a workspace. Will prompt you for a bare repository to
+- treebundel-add-project :: Add a project to a workspace. Will prompt you for a bare repository to
   add to your workspace.
 
-- treebund-remove-project :: Remove a project from a workspace. The project must not have any
+- treebundel-remove-project :: Remove a project from a workspace. The project must not have any
   uncommitted changes for it to be removed.
 
-- treebund-delete-workspace :: Delete a workspace. Any projects within the workspace are checked to
+- treebundel-delete-workspace :: Delete a workspace. Any projects within the workspace are checked to
   see if they're clean, and if so, all projects and the workspace itself are deleted. Anything
   committed is still saved in the respective projects' bare repository.
 
@@ -81,38 +81,38 @@ Assuming default configuration, the following steps will create a bare clone of 
 URL to =~/workspaces/.bare/<repo-name>.git=, then create and open a worktree for a new branch called
 =feature/<workspace-name>=.
 
-1. Interactively call ~treebund-add-project~.
+1. Interactively call ~treebundel-add-project~.
 2. Enter name for the new (or existing) workspace.
 3. Select =[ clone ]=.
 4. Enter the URL to clone for the repository to be added to the workspace.
 
 You should then be prompted with your ~project-switch-project~ prompt to begin editing.
 
-Whenever you need a different repository, you can call ~treebund-open-project~ to open and adjacent
-project in your current workspace or ~treebund-open~ to open a project in a different workspace.
+Whenever you need a different repository, you can call ~treebundel-open-project~ to open and adjacent
+project in your current workspace or ~treebundel-open~ to open a project in a different workspace.
 
 * Configuration
 
-- treebund-workspace-root :: *Default*: =“~/workspaces/”=
+- treebundel-workspace-root :: *Default*: =“~/workspaces/”=
 
   The most important variable you probably want to configure is
-  ~treebund-workspace-root~. This configures where all of the treebund workspaces are going to be
+  ~treebundel-workspace-root~. This configures where all of the treebundel workspaces are going to be
   located on your file system.
 
-- treebund-project-open-function :: *Default*: =#'project-switch-project=
+- treebundel-project-open-function :: *Default*: =#'project-switch-project=
 
   This is the function called when a project is opened. You could
   also just make this ~find-file~ to just open the file instantly or any other function that takes a
   file path.
 
-- treebund-bare-dir :: *Default*: =(file-name-concat treebund-workspace-root “.bare”)=
+- treebundel-bare-dir :: *Default*: =(file-name-concat treebundel-workspace-root “.bare”)=
 
   This is the directory that bare repository get cloned to. The intent is for
   this to be mostly transparent, hence the =.= prefix to make it hidden by default.
 
-- treebund-prefix :: *Default*: =“feature/”=
+- treebundel-prefix :: *Default*: =“feature/”=
 
-  A string used to prefix all branches created with treebund. By default, it's
+  A string used to prefix all branches created with treebundel. By default, it's
   =feature/= such that when you add a new project to a workspace, the new branch is name
   =feature/<workspace-name>=. You can use dir-locals to set workspace-specific prefixes although
   this, unfortunately, prevents you from using dir-locals in your project since dir-locals only
@@ -120,31 +120,31 @@ project in your current workspace or ~treebund-open~ to open a project in a diff
 
 ** Hooks
 
-- ~treebund-before-workspace-open-functions~
-- ~treebund-before-project-open-functions~
-- ~treebund-after-project-open-hook~
-- ~treebund-after-workspace-open-hook~
+- ~treebundel-before-workspace-open-functions~
+- ~treebundel-before-project-open-functions~
+- ~treebundel-after-project-open-hook~
+- ~treebundel-after-workspace-open-hook~
 
 These hooks are called in the order listed above. The =-functions=-suffixed hooks take a single
 argument, which is the path to the project directory or workspace directory to be opened.
 
 See the [[#project-tabs][Project Tabs]] example to see an example on how to use
-=treebund-before-project-open-functions= to create a new tab for every project.
+=treebundel-before-project-open-functions= to create a new tab for every project.
 
 * Nifty snippets
 
-This snippets can extend the usefulness of treebund.el.
+This snippets can extend the usefulness of treebundel.
 
 ** Project Tabs
 
-To create a new tab for every project opened with treebund:
+To create a new tab for every project opened with treebundel:
 
 #+BEGIN_SRC emacs-lisp
-(add-hook 'treebund-before-project-open-functions
+(add-hook 'treebundel-before-project-open-functions
           (lambda (project-path)
-            (when-let* ((workspace-path (treebund-current-workspace project-path))
-                        (workspace-name (treebund--workspace-name workspace-path))
-                        (project-name (treebund--project-name project-path)))
+            (when-let* ((workspace-path (treebundel-current-workspace project-path))
+                        (workspace-name (treebundel--workspace-name workspace-path))
+                        (project-name (treebundel--project-name project-path)))
               (tab-bar-select-tab-by-name
                (format "%s/%s" workspace-name project-name)))))
 #+END_SRC
@@ -156,13 +156,13 @@ This snippet will open a file within a =projects= directory in your =org-directo
 #+BEGIN_SRC emacs-lisp
 (defun my/open-project-notes ()
     (interactive)
-    (if-let ((workspace-path (or (treebund--workspace-current)
-                                 (treebund--read-workspace))))
+    (if-let ((workspace-path (or (treebundel--workspace-current)
+                                 (treebundel--read-workspace))))
         (find-file-other-window
          ;; e.g. ~/.org/projects/some-feature.org
          (file-name-concat org-directory
                            "projects"
-                           (file-name-with-extension (treebund--workspace-name workspace-path) "org")))
+                           (file-name-with-extension (treebundel--workspace-name workspace-path) "org")))
       (user-error "Not in a workspace")))
 #+END_SRC
 

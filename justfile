@@ -4,7 +4,7 @@ cask:
 	cask install
 	@touch {{ CASK_DIR }}
 
-test-cmd := "cask emacs -Q --batch -L ./ -l tests/treebund-tests.el"
+test-cmd := "cask emacs -Q --batch -L ./ -l tests/treebundel-tests.el"
 
 _test-all:
 	{{ test-cmd }} -f ert-run-tests-batch-and-exit
