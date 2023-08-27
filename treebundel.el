@@ -363,12 +363,12 @@ strings, only check these local branches."
 (defun treebundel--project-clean-p (project-path)
   "Return t if there are no uncommitted modifications in project.
 PROJECT-PATH is the worktree to check."
-  (= (length (split-string
-              (treebundel--git-with-repo project-path
-                "status" "-z" "--porcelain")
-              "\0"
-              t))
-     0))
+  (length= (split-string
+            (treebundel--git-with-repo project-path
+              "status" "-z" "--porcelain")
+            "\0"
+            t)
+           0))
 
 ;; Bares
 (defun treebundel--bare-name (bare-path)
