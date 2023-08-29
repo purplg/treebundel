@@ -440,11 +440,11 @@ workspace.
 
 PROJECT-PATH is the name of the worktrees' directory in the workspace."
   (treebundel--worktree-add bare-path
-                          (or project-path
-                              (file-name-concat workspace-path
-                                                (treebundel--bare-name bare-path)))
-                          (or branch-name
-                              (treebundel--branch-name workspace-path))))
+                            (or project-path
+                                (file-name-concat workspace-path
+                                                  (treebundel--bare-name bare-path)))
+                            (or branch-name
+                                (treebundel--branch-name workspace-path))))
 
 (defun treebundel--project-bare (project-path)
   "Return the respective bare for project at PROJECT-PATH."
@@ -533,8 +533,8 @@ inserted when the minibuffer is shown."
       (if (equal value 'add)
           (let ((bare-path (treebundel--read-bare prompt t)))
             (treebundel--project-add workspace-path
-                                   bare-path
-                                   (treebundel--branch-name workspace-path)))
+                                     bare-path
+                                     (treebundel--branch-name workspace-path)))
         (expand-file-name selection workspace-path)))))
 
 (defun treebundel--read-workspace (&optional prompt require-match)
@@ -593,8 +593,8 @@ workspace, use `treebundel-open-project'."
   (interactive (list (treebundel--read-workspace "Open workspace")))
   (treebundel--open
    (treebundel--read-project workspace-path
-                           (format "Open project in %s: " (treebundel--workspace-name workspace-path))
-                           t)))
+                             (format "Open project in %s: " (treebundel--workspace-name workspace-path))
+                             t)))
 
 ;;;###autoload
 (defun treebundel-open-project ()
@@ -651,22 +651,22 @@ this project."
   (interactive
    (let* ((workspace-path (treebundel--read-workspace "Add project to"))
           (bare-path (treebundel--read-bare (format "Add project to %s: "
-                                                  (treebundel--workspace-name workspace-path))
-                                          t
-                                          (treebundel--workspace-projects workspace-path)))
+                                                    (treebundel--workspace-name workspace-path))
+                                            t
+                                            (treebundel--workspace-projects workspace-path)))
           (project-branch (completing-read "Branch: "
                                            (treebundel--branches bare-path)
                                            nil
                                            nil
                                            (treebundel--branch-name workspace-path)))
           (project-path (treebundel--read-project workspace-path "Project name: "
-                                                nil
-                                                (treebundel--bare-name bare-path))))
+                                                  nil
+                                                  (treebundel--bare-name bare-path))))
      (list workspace-path bare-path project-path project-branch)))
   (treebundel--open (treebundel--project-add workspace-path
-                                         bare-path
-                                         project-branch
-                                         project-path)))
+                                             bare-path
+                                             project-branch
+                                             project-path)))
 
 ;;;###autoload
 (defun treebundel-remove-project (project-path)
@@ -677,8 +677,8 @@ There must be no changes in the project to remove it."
                                   (treebundel-current-workspace))
                              (treebundel--read-workspace "Remove project from" t))))
      (list (treebundel--read-project workspace-path
-                                   (format "Remove project from %s: "
-                                           (treebundel--workspace-name workspace-path))))))
+                                     (format "Remove project from %s: "
+                                             (treebundel--workspace-name workspace-path))))))
   (if (treebundel--project-clean-p project-path)
       (let ((workspace-path (treebundel-current-workspace project-path)))
         (treebundel--worktree-remove project-path)
@@ -686,8 +686,8 @@ There must be no changes in the project to remove it."
                              (treebundel--project-name project-path)
                              (treebundel--workspace-name workspace-path)))
     (treebundel--error "Cannot remove '%s/%s' because the project is dirty"
-                     (treebundel--workspace-name (treebundel-current-workspace project-path))
-                     (treebundel--project-name project-path))))
+                       (treebundel--workspace-name (treebundel-current-workspace project-path))
+                       (treebundel--project-name project-path))))
 
 ;;;###autoload
 (defun treebundel-clone (url)
