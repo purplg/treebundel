@@ -9,8 +9,6 @@ Additionally, git metadata (the =.git= directory) is shared between all projects
 pop, and pull changes in from the same repository in other workspaces thanks to the power of
 [[https://git-scm.com/docs/git-worktree][git-worktrees]].
 
-*NOTE*: This project is still under development and is rough around the edges.
-
 * Contents
 :PROPERTIES:
 :TOC:      :include siblings :depth 0 :force ((nothing)) :ignore (this) :local (nothing)
