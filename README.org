@@ -24,12 +24,12 @@ pop, and pull changes in from the same repository in other workspaces thanks to 
 
 * Terminology
 
-| Term        | Description                                                                     |
-|-------------+---------------------------------------------------------------------------------|
-| *Bare*      | A bare repository used as a source to create a *project*'s git-worktree.        |
-| *Project*   | A git-worktree checked out from a *bare* stored in a *workspace*.               |
-| *Workspace* | A collection of *project*'s created from *bare*'s.                              |
-| *Prefix*    | The string added before the name of the branch checked out for the *workspace*. |
+| Term        | Description                                                              |
+|-------------+--------------------------------------------------------------------------|
+| *Bare*      | A bare repository used as a source to create a *project*'s git-worktree. |
+| *Project*   | A git-worktree checked out from a *bare* stored in a *workspace*.        |
+| *Workspace* | A collection of *project*'s created from *bare*'s.                       |
+| *Prefix*    | An string used to generated a default branch name for new projects.      |
 
 The main workspace directory contains workspaces which each contains a collection of projects:
 
@@ -83,6 +83,9 @@ URL to =~/workspaces/.bare/<repo-name>.git=, then create and open a worktree for
 2. Enter name for the new (or existing) workspace.
 3. Select =[ clone ]=.
 4. Enter the URL to clone for the repository to be added to the workspace.
+5. Specify the name of the branch to checkout. By default, it'll pre-fill with
+   <treebundel-prefix>/<workspace-name>. You can also select an existing branch.
+6. Specify the project name which will be the name of the worktree is created in.
 
 You should then be prompted with your ~project-switch-project~ prompt to begin editing.
 
@@ -110,11 +113,12 @@ project in your current workspace or ~treebundel-open~ to open a project in a di
 
 - treebundel-prefix :: *Default*: =“feature/”=
 
-  A string used to prefix all branches created with treebundel. By default, it's
+  A string used to generate a default branch name created with treebundel. By default, it's
   =feature/= such that when you add a new project to a workspace, the new branch is name
-  =feature/<workspace-name>=. You can use dir-locals to set workspace-specific prefixes although
-  this, unfortunately, prevents you from using dir-locals in your project since dir-locals only
-  looks as the closest file.
+  =feature/<workspace-name>=. You don't have to use this name, it's just pre-populated for
+  convience. You can use dir-locals to set workspace-specific prefixes although this, unfortunately,
+  prevents you from using dir-locals in your project since dir-locals only looks as the closest
+  file.
 
 ** Hooks
 
