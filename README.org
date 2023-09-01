@@ -1,9 +1,10 @@
 #+TITLE: treebundel
 
-This package is used for bundling related git-worktrees from multiple repositories together. This
-helps switch quickly between feature-related projects and ensure you're on the branch related to
-that feature. When you're done with your changes, you can use the projects in the workspace and
-know which ones were modified to simplify the process of getting the changes merged in together.
+This package is used for bundling related git-worktrees from multiple repositories together. It's a
+bit of an opinionated workflow on how to manage and organize your projects. It helps switch quickly
+between feature-related projects and ensure you're on the branch related to that feature. When
+you're done with your changes, you can use the projects in the workspace and know which ones were
+modified to simplify the process of getting the changes merged in together.
 
 Additionally, git metadata (the =.git= directory) is shared between all projects. You can stash,
 pop, and pull changes in from the same repository in other workspaces thanks to the power of
