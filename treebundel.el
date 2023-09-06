@@ -104,7 +104,7 @@
 ;; | ~treebundel-delete-workspace~ | Delete a workspace                          |
 
 ;;; Code:
-(eval-when-compile (require 'subr-x))
+(require 'subr-x)
 (require 'compat)
 (require 'vc-git)
 
