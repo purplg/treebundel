@@ -3,7 +3,7 @@
 ;; Package-Requires: ((emacs "27.1") (compat "29.1.4.2"))
 ;; Version: 0.1.0
 ;; Author: Ben Whitley
-;; Homepage: https://github.com/purplg/treebundel.el
+;; Homepage: https://github.com/purplg/treebundel
 ;; SPDX-License-Identifier: MIT
 
 ;;; Commentary:
