@@ -571,16 +571,7 @@ The URL is returned for non-nil."
 (defun treebundel--open (project-path)
   "Open a project in some treebundel workspace.
 PROJECT-PATH is the project to be opened."
-  (let* ((workspace-path (treebundel-current-workspace project-path))
-         (new-workspace-p (not (string= (treebundel-current-workspace) workspace-path)))
-         (new-project-p (not (string= (treebundel--project-current) project-path))))
-    (when new-workspace-p (run-hook-with-args 'treebundel-before-workspace-open-functions workspace-path))
-    (when new-project-p (run-hook-with-args 'treebundel-before-project-open-functions project-path))
-
-    (funcall treebundel-project-open-function project-path)
-
-    (when new-project-p (run-hooks 'treebundel-after-project-open-hook))
-    (when new-workspace-p (run-hooks 'treebundel-after-workspace-open-hook))))
+  (funcall treebundel-project-open-function project-path))
 
 ;;;###autoload
 (defun treebundel-open (workspace-path)
@@ -591,10 +582,19 @@ WORKSPACE-PATH is the workspace to open.
 This will always prompt for a workspace.  If you want to prefer your current
 workspace, use `treebundel-open-project'."
   (interactive (list (treebundel--read-workspace "Open workspace")))
-  (treebundel--open
-   (treebundel--read-project workspace-path
-                             (format "Open project in %s: " (treebundel--workspace-name workspace-path))
-                             t)))
+  (let* ((project-path (treebundel--read-project workspace-path
+                                                 (format "Open project in %s: " (treebundel--workspace-name workspace-path))
+                                                 t))
+         (new-workspace-p (not (string= (treebundel-current-workspace) workspace-path)))
+         (new-project-p (not (string= (treebundel--project-current) project-path))))
+
+    (when new-workspace-p (run-hook-with-args 'treebundel-before-workspace-open-functions workspace-path))
+    (when new-project-p (run-hook-with-args 'treebundel-before-project-open-functions project-path))
+
+    (funcall treebundel-project-open-function project-path)
+
+    (when new-project-p (run-hooks 'treebundel-after-project-open-hook))
+    (when new-workspace-p (run-hooks 'treebundel-after-workspace-open-hook))))
 
 ;;;###autoload
 (defun treebundel-open-project ()
