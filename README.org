@@ -1,5 +1,7 @@
 #+TITLE: treebundel
 
+[[https://melpa.org/#/treebundel][file:https://melpa.org/packages/treebundel-badge.svg]]
+
 This package is used for bundling related git-worktrees from multiple repositories together. It's a
 bit of an opinionated workflow on how to manage and organize your projects. It helps switch quickly
 between feature-related projects and ensure you're on the branch related to that feature. When
@@ -50,7 +52,18 @@ treebundel-workspace-root (default: "~/workspaces/")
 
 * Installation
 
+This package is available on [[https://melpa.org/][MELPA]].
+
+** use-package
+
+#+BEGIN_SRC emacs-lisp :results none
+(use-package treebundel
+  :ensure t)
+#+END_SRC
+
 ** straight.el
+
+Or you can install from source. Straight example:
 
 #+BEGIN_SRC emacs-lisp :results none
 (straight-use-package '(treebundel :type git :host github :repo "purplg/treebundel"))
