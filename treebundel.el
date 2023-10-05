@@ -149,6 +149,13 @@
   :group 'treebundel
   :type 'function)
 
+(defcustom treebundel-fetch-on-add t
+  "When t, perform a git-fetch before adding a project to a workspace.
+This allows the latest branches on remote to appear when selecting a branch to checkout.
+
+Set to nil when you don't want to make network requests or just to reduce git
+operations when adding projects to your workspaces.")
+
 ;; Hooks
 (defcustom treebundel-before-project-open-functions nil
   "Hook which is run before a project is opened.
@@ -545,6 +552,9 @@ PROMPT is the prompt to be presented to the user in the minibuffer.
 
 INITIAL is the default value of the branch of the project that is automatically
 inserted when the minibuffer prompt is shown."
+  (when treebundel-fetch-on-add
+    (treebundel--message "Fetching...")
+    (treebundel--git-with-repo repo-path "fetch"))
   (completing-read (or prompt "Branch: ")
                    (treebundel--branches repo-path)
                    nil
