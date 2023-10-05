@@ -120,6 +120,12 @@ project in your current workspace or ~treebundel-open~ to open a project in a di
   also just make this ~find-file~ to just open the file instantly or any other function that takes a
   file path.
 
+- treebundel-fetch-on-add :: *Default*: =nil=
+
+  Set to nil to disable the automatic ~git fetch~ when adding a project. When disabled, you may not
+  be able to see new branches on remote without manually do a git fetch. You can interactively call
+  the ~(treebundel-fetch-bare)~ command to manually update a repository.
+
 - treebundel-bare-dir :: *Default*: =(file-name-concat treebundel-workspace-root “.bare”)=
 
   This is the directory that bare repository get cloned to. The intent is for
