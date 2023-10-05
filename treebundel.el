@@ -739,6 +739,15 @@ on remote."
                      (treebundel--error (format "%s has unpushed commits on some branches" (treebundel--bare-name bare-path)))))))
         (t (treebundel--bare-delete bare-path))))
 
+(defun treebundel-fetch-bare (bare-path)
+  "Perform a git-fetch on bare repo.
+This command is normally not useful unless `treebundel-fetch-on-add' is
+disabled. Use this command to manually control when git-fetch operations are performed."
+  (interactive (list (treebundel--read-bare "Select repo to fetch: ")))
+  (treebundel--message "Fetching...")
+  (treebundel--git-with-repo bare-path "fetch")
+  (treebundel--message "%s updated" (treebundel--bare-name bare-path)))
+
 (provide 'treebundel)
 
 ;;; treebundel.el ends here
