@@ -523,7 +523,7 @@ When ADD is non-nil, add an option for the user to add a project
 that isn't in the workspace.
 
 INITIAL is the default value for the name of the project that is automatically
-inserted when the minibuffer is shown."
+inserted when the minibuffer prompt is shown."
   (let* ((candidates (mapcar (lambda (project)
                                (cons (file-name-nondirectory project) project))
                              (treebundel--workspace-projects workspace-path))))
