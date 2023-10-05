@@ -537,6 +537,20 @@ inserted when the minibuffer prompt is shown."
                                      (treebundel--branch-name workspace-path)))
         (expand-file-name selection workspace-path)))))
 
+(defun treebundel--read-branch (repo-path &optional prompt initial)
+  "Interactively selected a branch to checkout for project.
+PROJECT-PATH is the path to project to list available branches for.
+
+PROMPT is the prompt to be presented to the user in the minibuffer.
+
+INITIAL is the default value of the branch of the project that is automatically
+inserted when the minibuffer prompt is shown."
+  (completing-read (or prompt "Branch: ")
+                   (treebundel--branches repo-path)
+                   nil
+                   nil
+                   (or initial (treebundel--branch-name repo-path))))
+
 (defun treebundel--read-workspace (&optional prompt require-match)
   "Interactively find the path of a workspace.
 PROMPT is the prompt to be presented to the user in the
@@ -654,11 +668,7 @@ this project."
                                                     (treebundel--workspace-name workspace-path))
                                             t
                                             (treebundel--workspace-projects workspace-path)))
-          (project-branch (completing-read "Branch: "
-                                           (treebundel--branches bare-path)
-                                           nil
-                                           nil
-                                           (treebundel--branch-name workspace-path)))
+          (project-branch (treebundel--read-branch bare-path))
           (project-path (treebundel--read-project workspace-path "Project name: "
                                                   nil
                                                   (treebundel--bare-name bare-path))))
