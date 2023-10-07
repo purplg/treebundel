@@ -744,8 +744,11 @@ on remote."
 
 (defun treebundel-fetch-bare (bare-path)
   "Perform a git-fetch on bare repo.
+BARE-PATH is the absolute path to the repository to fetch.
+
 This command is normally not useful unless `treebundel-fetch-on-add' is
-disabled. Use this command to manually control when git-fetch operations are performed."
+disabled.  Use this command to manually control when git-fetch operations are
+performed."
   (interactive (list (treebundel--read-bare "Select repo to fetch: ")))
   (treebundel--message "Fetching...")
   (treebundel--git-with-repo bare-path "fetch")
