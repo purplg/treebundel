@@ -549,7 +549,7 @@ inserted when the minibuffer prompt is shown."
 
 (defun treebundel--read-branch (repo-path &optional prompt initial)
   "Interactively selected a branch to checkout for project.
-PROJECT-PATH is the path to project to list available branches for.
+REPO-PATH is the path to project to list available branches for.
 
 PROMPT is the prompt to be presented to the user in the minibuffer.
 
