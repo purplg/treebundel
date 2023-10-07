@@ -151,7 +151,8 @@
 
 (defcustom treebundel-fetch-on-add t
   "When t, perform a git-fetch before adding a project to a workspace.
-This allows the latest branches on remote to appear when selecting a branch to checkout.
+This allows the latest branches on remote to appear when selecting a branch to
+checkout.
 
 Set to nil when you don't want to make network requests or just to reduce git
 operations when adding projects to your workspaces."
