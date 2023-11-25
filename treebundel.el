@@ -582,8 +582,10 @@ to create a workspace with a new entry."
     (if-let ((existing (cdr (assoc selection candidates))))
         existing
       (let ((workspace-path (file-name-concat treebundel-workspace-root selection)))
-        (make-directory workspace-path)
-        workspace-path))))
+        (when (y-or-n-p (format "Are you sure you want to create a new workspace '%s'?"
+                                (treebundel--workspace-name workspace-path)))
+          (make-directory workspace-path)
+          workspace-path)))))
 
 (defun treebundel--git-url-like-p (url)
   "Return non-nil if URL seems like a git-clonable URL.
@@ -618,10 +620,11 @@ WORKSPACE-PATH is the workspace to open.
 This will always prompt for a workspace.  If you want to prefer your current
 workspace, use `treebundel-open-project'."
   (interactive (list (treebundel--read-workspace "Open workspace")))
-  (treebundel--open
-   (treebundel--read-project workspace-path
-                             (format "Open project in %s: " (treebundel--workspace-name workspace-path))
-                             t)))
+  (when workspace-path
+    (treebundel--open
+     (treebundel--read-project workspace-path
+                               (format "Open project in %s: " (treebundel--workspace-name workspace-path))
+                               t))))
 
 ;;;###autoload
 (defun treebundel-open-project ()
@@ -676,7 +679,7 @@ provided path should be in WORKSPACE-PATH directory.
 PROJECT-BRANCH is the name of the branch to be checked out for
 this project."
   (interactive
-   (let* ((workspace-path (treebundel--read-workspace "Add project to"))
+   (let* ((workspace-path (treebundel--read-workspace "Add project to" t))
           (bare-path (treebundel--read-bare (format "Add project to %s: "
                                                     (treebundel--workspace-name workspace-path))
                                             t
