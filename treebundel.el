@@ -427,7 +427,7 @@ This will check to see if BARE-PATH exists within
   "Return the path to the current workspace.
 If FILE-PATH is non-nil, use the current buffer instead."
   (when-let ((file-path (or (and file-path (expand-file-name file-path))
-                            buffer-file-name)))
+                            default-directory)))
     (let ((workspace-name nil))
       ;; Traverse up parent directories until the workspace root is all that remains
       (while (string-prefix-p treebundel-workspace-root (directory-file-name file-path))
