@@ -650,7 +650,7 @@ respective projects' bare repository located at `treebundel-bare-dir'."
                             (treebundel--project-clean-p project-path))
                           project-paths)
              (or (length= project-paths 0)
-                 (y-or-n-p (format "Workspace '%s' has %s project%s. Delete any?"
+                 (y-or-n-p (format "Workspace '%s' has %s project%s. Delete all?"
                                    (treebundel--workspace-name workspace-path)
                                    (length project-paths)
                                    (if (length= project-paths 1) "" "s")))))
