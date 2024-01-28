@@ -380,14 +380,14 @@ strings, only check these local branches."
                "log" "--branches" "--not" "--remotes")) 0))
 
 ;; Workspaces
-(defun treebundel--workspace-name (workspace-path)
-  "Return the name of a workspace at WORKSPACE-PATH."
-  (file-name-nondirectory (directory-file-name workspace-path)))
+(defun treebundel--workspace-path (name)
+  "Return the path of a workspace named NAME."
+  (file-name-concat treebundel-workspace-root name))
 
-(defun treebundel--workspace-projects (workspace-path)
-  "Return a list of absolute paths to projects in WORKSPACE-PATH."
+(defun treebundel--workspace-projects (workspace-name)
+  "Return a list of absolute paths to projects in WORKSPACE-NAME."
   (seq-filter #'file-directory-p
-              (directory-files workspace-path t "^[^.].*")))
+              (directory-files (treebundel--workspace-path workspace-name) t "^[^.].*")))
 
 (defun treebundel--workspaces ()
   "Return a list of all existing workspace names."
@@ -396,7 +396,7 @@ strings, only check these local branches."
                        (directory-files treebundel-workspace-root t "^[^.].*"))))
 
 (defun treebundel-current-workspace (&optional file-path)
-  "Return the path to the current workspace.
+  "Return the name of the current workspace.
 If FILE-PATH is non-nil, use the current buffer instead."
   (when-let ((file-path (or (and file-path (expand-file-name file-path))
                             default-directory)))
@@ -405,15 +405,14 @@ If FILE-PATH is non-nil, use the current buffer instead."
       (while (string-prefix-p treebundel-workspace-root (directory-file-name file-path))
         (setq workspace-name (file-name-nondirectory (directory-file-name file-path)))
         (setq file-path (file-name-directory (directory-file-name file-path))))
-      (when workspace-name
-        (file-name-as-directory (file-name-concat treebundel-workspace-root workspace-name))))))
+      workspace-name)))
 
 ;; Projects
-(defun treebundel--project-add (workspace-path bare-name &optional branch-name project-path)
+(defun treebundel--project-add (workspace-name bare-name &optional branch-name project-path)
   "Add a project to a workspace.
 Defines the way project worktrees are added and named in workspaces.
 
-WORKSPACE-PATH is the directory to place the new worktree in.
+WORKSPACE-NAME is the name of the workspace to place the new project in.
 
 BARE-NAME is the name of the bare repository the worktree is being created from.
 
@@ -423,23 +422,23 @@ workspace.
 PROJECT-PATH is the name of the worktrees' directory in the workspace."
   (treebundel--worktree-add (treebundel--bare-path bare-name)
                             (or project-path
-                                (file-name-concat workspace-path bare-name))
+                                (treebundel--project-path workspace-name bare-name))
                             (or branch-name
-                                (treebundel--branch-name workspace-path))))
+                                (treebundel--branch-name workspace-name))))
 
 (defun treebundel--project-current (&optional file-path)
   "Return the project path of FILE-PATH.
 If FILE-PATH is non-nil, use the current buffer."
-  (when-let ((file-path (or (and file-path (expand-file-name file-path))
-                            buffer-file-name))
-             (workspace-path (treebundel-current-workspace file-path)))
+  (when-let* ((file-path (or (and file-path (expand-file-name file-path))
+                             buffer-file-name))
+              (workspace-path (treebundel--workspace-path
+                               (treebundel-current-workspace file-path))))
     (let ((project-name nil))
       ;; Traverse up parent directories until the current workspace is all that remains
       (while (string-prefix-p workspace-path (directory-file-name file-path))
         (setq project-name (file-name-nondirectory (directory-file-name file-path)))
         (setq file-path (file-name-directory (directory-file-name file-path))))
-      (when project-name
-        (file-name-concat workspace-path project-name)))))
+      project-name)))
 
 (defun treebundel--project-name (file-path)
   "Return the name of project at FILE-PATH."
@@ -461,9 +460,9 @@ PROJECT-PATH is the worktree to check."
            0))
 
 ;; Branches
-(defun treebundel--branch-name (workspace-path)
-  "Generate a branch name for WORKSPACE-PATH."
-  (concat treebundel-prefix (treebundel--workspace-name workspace-path)))
+(defun treebundel--branch-name (workspace-name)
+  "Generate a branch name for WORKSPACE-NAME."
+  (concat treebundel-prefix workspace-name))
 
 (defun treebundel--branch-default (repo-path)
   "Return the default branch at PROJECT-PATH.
@@ -501,9 +500,10 @@ excluded from the candidates."
             (call-interactively #'treebundel-clone)
           selection))))
 
-(defun treebundel--read-project (workspace-path &optional prompt add initial)
+;; TODO Review workspace-name rename
+(defun treebundel--read-project (workspace-name &optional prompt add initial)
   "Interactively find the path of a project.
-WORKSPACE-PATH is the workspace to look for projects in.
+WORKSPACE-NAME is the workspace to look for projects in.
 
 PROMPT is the prompt to be presented to the user in the
 minibuffer.
@@ -515,16 +515,16 @@ INITIAL is the default value for the name of the project that is automatically
 inserted when the minibuffer prompt is shown."
   (let* ((candidates (mapcar (lambda (project)
                                (cons (file-name-nondirectory project) project))
-                             (treebundel--workspace-projects workspace-path))))
+                             (treebundel--workspace-projects workspace-name))))
     (when add (setq candidates (append candidates '(("[ add ]" . add)))))
     (let* ((selection (completing-read (or prompt "Project: ") candidates nil nil initial))
            (value (cdr (assoc selection candidates))))
       (if (equal value 'add)
           (let ((bare-name (treebundel--read-bare prompt t)))
-            (treebundel--project-add workspace-path
+            (treebundel--project-add workspace-name
                                      bare-name
-                                     (treebundel--branch-name workspace-path)))
-        (expand-file-name selection workspace-path)))))
+                                     (treebundel--branch-name workspace-name)))
+        (expand-file-name selection workspace-name)))))
 
 (defun treebundel--read-branch (repo-path &optional prompt initial)
   "Interactively selected a branch to checkout for project.
@@ -554,17 +554,17 @@ to create a workspace with a new entry."
                                (cons workspace
                                      (expand-file-name workspace treebundel-workspace-root)))
                              (treebundel--workspaces)))
-         (default (when-let ((workspace-path (treebundel-current-workspace)))
-                    (treebundel--workspace-name workspace-path)))
+         (default (when-let ((workspace-name (treebundel-current-workspace)))
+                    workspace-name))
          (prompt (if default (format "%s [%s]: " (or prompt "Workspace") default) "Workspace: "))
          (selection (completing-read prompt candidates nil require-match nil nil default)))
     (if-let ((existing (cdr (assoc selection candidates))))
         existing
-      (let ((workspace-path (file-name-concat treebundel-workspace-root selection)))
+      (let ((workspace-path (treebundel--workspace-path workspace-name)))
         (when (y-or-n-p (format "Are you sure you want to create a new workspace '%s'?"
-                                (treebundel--workspace-name workspace-path)))
+                                workspace-name))
           (make-directory workspace-path)
-          workspace-path)))))
+          workspace-name)))))
 
 (defun treebundel--git-url-like-p (url)
   "Return non-nil if URL seems like a git-clonable URL.
@@ -576,33 +576,33 @@ The URL is returned for non-nil."
        (string-suffix-p ".git" url)
        url))
 
-(defun treebundel--open (project-path)
+(defun treebundel--open (workspace-name project-name)
   "Open a project in some treebundel workspace.
-PROJECT-PATH is the project to be opened."
-  (let* ((workspace-path (treebundel-current-workspace project-path))
-         (new-workspace-p (not (string= (treebundel-current-workspace) workspace-path)))
-         (new-project-p (not (string= (treebundel--project-current) project-path))))
-    (when new-workspace-p (run-hook-with-args 'treebundel-before-workspace-open-functions workspace-path))
-    (when new-project-p (run-hook-with-args 'treebundel-before-project-open-functions project-path))
+PROJECT-PATH is the project to be opened in WORKSPACE-NAME."
+  (let* ((workspace-name (treebundel-current-workspace project-path))
+         (new-workspace-p (not (string= (treebundel-current-workspace) workspace-name)))
+         (new-project-p (not (string= (treebundel--project-current) project-name))))
+    (when new-workspace-p (run-hook-with-args 'treebundel-before-workspace-open-functions workspace-name))
+    (when new-project-p (run-hook-with-args 'treebundel-before-project-open-functions project-name))
 
-    (funcall treebundel-project-open-function project-path)
+    (funcall treebundel-project-open-function (treebundel--project-path workspace-name project-name))
 
     (when new-project-p (run-hooks 'treebundel-after-project-open-hook))
     (when new-workspace-p (run-hooks 'treebundel-after-workspace-open-hook))))
 
 ;;;###autoload
-(defun treebundel-open (workspace-path)
+(defun treebundel-open (workspace-name)
   "Open or create a workspace and a project within it.
 
-WORKSPACE-PATH is the workspace to open.
+WORKSPACE-NAME is the workspace to open.
 
 This will always prompt for a workspace.  If you want to prefer your current
 workspace, use `treebundel-open-project'."
   (interactive (list (treebundel--read-workspace "Open workspace")))
-  (when workspace-path
+  (when workspace-name
     (treebundel--open
-     (treebundel--read-project workspace-path
-                               (format "Open project in %s: " (treebundel--workspace-name workspace-path))
+     (treebundel--read-project workspace-name
+                               (format "Open project in %s: " workspace-name)
                                t))))
 
 ;;;###autoload
@@ -616,58 +616,58 @@ current buffer is in one."
        (treebundel--read-workspace))))
 
 ;;;###autoload
-(defun treebundel-delete-workspace (workspace-path)
-  "Delete workspace at WORKSPACE-PATH.
+(defun treebundel-delete-workspace (workspace-name)
+  "Delete workspace at WORKSPACE-NAME.
 This will check if all projects within the workspace are clean and if so, remove
 everything in the workspace.  Anything committed is still saved in the
 respective projects' bare repository located at `treebundel-bare-dir'."
   (interactive
    (list (treebundel--read-workspace "Delete workspace" t)))
-  (let ((project-paths (directory-files workspace-path t "^[^.].*")))
-    (if (and (file-directory-p workspace-path)
-             (seq-every-p (lambda (project-path)
+  (let* ((workspace-path (treebundel--workspace-path workspace-name))
+         (project-paths (directory-files workspace-path t "^[^.].*")))
+    (if (and (seq-every-p (lambda (project-path)
                             (treebundel--project-clean-p project-path))
                           project-paths)
              (or (length= project-paths 0)
                  (y-or-n-p (format "Workspace '%s' has %s project%s. Delete all?"
-                                   (treebundel--workspace-name workspace-path)
+                                   workspace-name
                                    (length project-paths)
                                    (if (length= project-paths 1) "" "s")))))
         (progn
           (dolist (project-path project-paths)
             (treebundel--worktree-remove project-path))
           (delete-directory workspace-path)
-          (treebundel--message "Deleted workspace '%s'" (treebundel--workspace-name workspace-path)))
+          (treebundel--message "Deleted workspace '%s'" workspace-name))
       (user-error "There must not be any unsaved changes to delete a workspace"))))
 
 ;;;###autoload
-(defun treebundel-add-project (workspace-path bare-name project-path project-branch)
+(defun treebundel-add-project (workspace-name bare-name project-path project-branch)
   "Add a project to a workspace.
-This will create a worktree in WORKSPACE-PATH with a branch named
+This will create a worktree in WORKSPACE-NAME with a branch named
 after the workspace with `treebundel-prefix' prefixed.
 
-WORKSPACE-PATH is the path to the workspace in which the worktree
-will be created.
+WORKSPACE-NAME is the name of the workspace where the worktree will be
+created.
 
 BARE-NAME is the bare git repository where the worktree is derived.
 
 PROJECT-PATH is the path where the worktree will be created.  The
-provided path should be in WORKSPACE-PATH directory.
+provided path should be in workspace WORKSPACE-NAME.
 
 PROJECT-BRANCH is the name of the branch to be checked out for
 this project."
   (interactive
-   (let* ((workspace-path (treebundel--read-workspace "Add project to" t))
+   (let* ((workspace-name (treebundel--read-workspace "Add project to" t))
           (bare-name (treebundel--read-bare (format "Add project to %s: "
-                                                    (treebundel--workspace-name workspace-path))
+                                                    workspace-name)
                                             t
-                                            (treebundel--workspace-projects workspace-path)))
+                                            (treebundel--workspace-projects workspace-name)))
           (project-branch (treebundel--read-branch (treebundel--bare-path bare-name)))
-          (project-path (treebundel--read-project workspace-path "Project name: "
+          (project-path (treebundel--read-project workspace-name "Project name: "
                                                   nil
                                                   bare-name)))
-     (list workspace-path bare-name project-path project-branch)))
-  (treebundel--open (treebundel--project-add workspace-path
+     (list workspace-name bare-name project-path project-branch)))
+  (treebundel--open (treebundel--project-add workspace-name
                                              bare-name
                                              project-branch
                                              project-path)))
@@ -677,20 +677,20 @@ this project."
   "Remove project at PROJECT-PATH from a workspace.
 There must be no changes in the project to remove it."
   (interactive
-   (let ((workspace-path (or (and (not current-prefix-arg)
+   (let ((workspace-name (or (and (not current-prefix-arg)
                                   (treebundel-current-workspace))
                              (treebundel--read-workspace "Remove project from" t))))
-     (list (treebundel--read-project workspace-path
+     (list (treebundel--read-project workspace-name
                                      (format "Remove project from %s: "
-                                             (treebundel--workspace-name workspace-path))))))
+                                             workspace-name)))))
   (if (treebundel--project-clean-p project-path)
-      (let ((workspace-path (treebundel-current-workspace project-path)))
+      (let ((workspace-name (treebundel-current-workspace project-path)))
         (treebundel--worktree-remove project-path)
         (treebundel--message "Removed project '%s' from '%s'"
                              (treebundel--project-name project-path)
-                             (treebundel--workspace-name workspace-path)))
+                             workspace-name))
     (treebundel--error "Cannot remove '%s/%s' because the project is dirty"
-                       (treebundel--workspace-name (treebundel-current-workspace project-path))
+                       (treebundel-current-workspace project-path)
                        (treebundel--project-name project-path))))
 
 ;;;###autoload

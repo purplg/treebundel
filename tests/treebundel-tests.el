@@ -94,7 +94,7 @@
     (before-each (treebundel-clone (tt-remote-path remote)))
 
     (it "should prevent deletion of projects with uncommitted files"
-      (treebundel--project-add (tt-workspace-path workspace) remote)
+      (treebundel--project-add workspace remote)
       (with-temp-buffer
         (write-file (file-name-concat
                      (tt-project-path workspace remote)
@@ -104,7 +104,7 @@
        :type 'treebundel-error))
 
     (it "should prevent deletion of bares with unpushed commits"
-      (treebundel--project-add (tt-workspace-path workspace) remote)
+      (treebundel--project-add workspace remote)
       (with-temp-buffer
         (write-file (file-name-concat
                      (tt-project-path workspace remote)
@@ -121,26 +121,26 @@
   (describe "projects"
     (before-each (treebundel-clone (tt-remote-path remote)))
     (it "should be created in workspaces"
-      (treebundel--project-add (tt-workspace-path workspace) remote)
+      (treebundel--project-add workspace remote)
       (expect (file-directory-p (tt-project-path workspace
                                                  remote))))
       
     (it "should generate branch name"
-      (treebundel--project-add (tt-workspace-path workspace) remote)
+      (treebundel--project-add workspace remote)
       (expect (treebundel--git-with-repo (tt-project-path workspace
                                                           remote)
                 "rev-parse" "--abbrev-ref" "HEAD")
               :to-equal "feature/workspace-one"))
 
     (it "should use the specified branch"
-      (treebundel--project-add (tt-workspace-path workspace) remote "new-branch")
+      (treebundel--project-add workspace remote "new-branch")
       (expect (treebundel--git-with-repo (tt-project-path workspace
                                                           remote)
                 "rev-parse" "--abbrev-ref" "HEAD")
               :to-equal "new-branch"))
 
     (it "should use the specified project-name"
-      (treebundel--project-add (tt-workspace-path workspace)
+      (treebundel--project-add workspace
                                remote
                                nil
                                (tt-project-path workspace
@@ -164,15 +164,11 @@
 
     (it "should work in a workspace"
       (let ((default-directory (file-name-concat treebundel-workspace-root "workspace-one/")))
-        (expect (treebundel-current-workspace)
-                :to-equal
-                (file-name-concat tt-dir "workspaces/workspace-one/"))))
+        (expect "workspace-one" :to-equal (treebundel-current-workspace))))
 
     (it "should work in a project"
       (let ((default-directory (file-name-concat treebundel-workspace-root "workspace-one/feature")))
-        (expect (treebundel-current-workspace)
-                :to-equal
-                (file-name-concat tt-dir "workspaces/workspace-one/"))))))
+        (expect "workspace-one" :to-equal (treebundel-current-workspace))))))
 
 (provide 'treebundel-tests)
 ;;; treebundel-tests.el ends here.
