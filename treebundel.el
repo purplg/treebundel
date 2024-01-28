@@ -283,7 +283,7 @@ BARE-PATH is the main repository the worktree is being created from.
 
 WORKTREE-PATH is the path where the new worktree will be created.
 
-BRANCH-NAME is the name of branch to be created and checked out at PROJECT-PATH.
+BRANCH-NAME is the name of branch to be created and checked out at WORKTREE-PATH.
 
 Returns the path to the newly created worktree."
   (if (member branch-name (treebundel--branches bare-path))
@@ -339,7 +339,7 @@ If COMMIT-B is nil, count between HEAD Of default branch and COMMIT-A."
 
 ;; Repos
 (defun treebundel--repo-bare (repo-path)
-  "Return the name of the bare repo related to PROJECT-PATH."
+  "Return the name of the bare repo related to REPO-PATH."
   (thread-first (treebundel--git-with-repo repo-path
                   "rev-parse" "--path-format=absolute" "--git-common-dir")
                 (directory-file-name)
@@ -351,19 +351,9 @@ If COMMIT-B is nil, count between HEAD Of default branch and COMMIT-A."
    (lambda (str) (not (member "bare" str)))
    (treebundel--worktree-list repo-path)))
 
-(defun treebundel--has-worktrees-p (repo-path)
+(defun treebundel--repo-has-worktrees-p (repo-path)
   "Return t if REPO-PATH has any worktrees."
   (> (treebundel--repo-worktree-count repo-path) 0))
-
-(defun treebundel--project-clean-p (project-path)
-  "Return t if there are no uncommitted modifications in project.
-PROJECT-PATH is the worktree to check."
-  (length= (split-string
-            (treebundel--git-with-repo project-path
-              "status" "-z" "--porcelain")
-            "\0"
-            t)
-           0))
 
 ;; Bares
 (defun treebundel--bare-path (bare-name)
@@ -459,6 +449,16 @@ If FILE-PATH is non-nil, use the current buffer."
 (defun treebundel--project-path (workspace project)
   "Return the name of project at FILE-PATH."
   (file-name-concat treebundel-workspace-root workspace project))
+
+(defun treebundel--project-clean-p (project-path)
+  "Return t if there are no uncommitted modifications in project.
+PROJECT-PATH is the worktree to check."
+  (length= (split-string
+            (treebundel--git-with-repo project-path
+              "status" "-z" "--porcelain")
+            "\0"
+            t)
+           0))
 
 ;; Branches
 (defun treebundel--branch-name (workspace-path)
@@ -715,7 +715,7 @@ If INTERACTIVE is non-nil, prompt the user to force delete for any changes not
 on remote."
   (interactive
    (list (treebundel--read-bare "Select repo to delete: ") t))
-  (cond ((treebundel--has-worktrees-p (treebundel--bare-path bare-name))
+  (cond ((treebundel--repo-has-worktrees-p (treebundel--bare-path bare-name))
          (treebundel--error "This repository has worktrees checked out"))
         ((and (treebundel--bare-unpushed-commits-p bare-name)
               (not (if interactive
