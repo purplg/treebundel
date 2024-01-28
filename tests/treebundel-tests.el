@@ -4,8 +4,12 @@
 (require 'treebundel)
 (require 'vc)
 
-(setopt inhibit-message t) ;; Set to nil to print (message)'s
-(when nil ;; Set to t to log to a file for debugging tests failures.
+(defvar treebundel-test-debug nil
+  "Set to t to log to a file for debugging tests failures.")
+
+(setopt inhibit-message (not treebundel-test-debug))
+(when treebundel-test-debug
+  (setopt inhibit-message nil)
   (defun treebundel--gitlog (type &rest msg)
     "Overridden logging method to write to a file instead of buffer."
     (with-temp-buffer
@@ -90,7 +94,7 @@
     (before-each (treebundel-clone (tt-remote-path remote)))
 
     (it "should prevent deletion of projects with uncommitted files"
-      (treebundel--project-add (tt-workspace-path workspace) (tt-bare-path remote))
+      (treebundel--project-add (tt-workspace-path workspace) remote)
       (with-temp-buffer
         (write-file (file-name-concat
                      (tt-project-path workspace remote)
@@ -100,7 +104,7 @@
        :type 'treebundel-error))
 
     (it "should prevent deletion of bares with unpushed commits"
-      (treebundel--project-add (tt-workspace-path workspace) (tt-bare-path remote))
+      (treebundel--project-add (tt-workspace-path workspace) remote)
       (with-temp-buffer
         (write-file (file-name-concat
                      (tt-project-path workspace remote)
@@ -111,25 +115,25 @@
         "commit" "-m" "\"test message\"")
       (treebundel-remove-project (tt-project-path workspace remote))
       (should-error
-       (treebundel-delete-bare (tt-bare-path remote))
+       (treebundel-delete-bare remote)
        :type 'treebundel-error)))
   
   (describe "projects"
     (before-each (treebundel-clone (tt-remote-path remote)))
     (it "should be created in workspaces"
-      (treebundel--project-add (tt-workspace-path workspace) (tt-bare-path remote))
+      (treebundel--project-add (tt-workspace-path workspace) remote)
       (expect (file-directory-p (tt-project-path workspace
                                                  remote))))
       
     (it "should generate branch name"
-      (treebundel--project-add (tt-workspace-path workspace) (tt-bare-path remote))
+      (treebundel--project-add (tt-workspace-path workspace) remote)
       (expect (treebundel--git-with-repo (tt-project-path workspace
                                                           remote)
                 "rev-parse" "--abbrev-ref" "HEAD")
               :to-equal "feature/workspace-one"))
 
     (it "should use the specified branch"
-      (treebundel--project-add (tt-workspace-path workspace) (tt-bare-path remote) "new-branch")
+      (treebundel--project-add (tt-workspace-path workspace) remote "new-branch")
       (expect (treebundel--git-with-repo (tt-project-path workspace
                                                           remote)
                 "rev-parse" "--abbrev-ref" "HEAD")
@@ -137,7 +141,7 @@
 
     (it "should use the specified project-name"
       (treebundel--project-add (tt-workspace-path workspace)
-                               (tt-bare-path remote)
+                               remote
                                nil
                                (tt-project-path workspace
                                                 "test-project-name"))

@@ -1,2 +1,2 @@
-test:
-    eask exec buttercup -L . --traceback pretty
+test pattern="":
+    eask exec buttercup -L . --traceback pretty --only-error --pattern "{{ pattern }}"
