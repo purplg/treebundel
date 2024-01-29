@@ -590,7 +590,9 @@ workspace, use `treebundel-open-project'."
   (let* ((new-workspace-p (not (string= (treebundel-current-workspace) workspace)))
          (new-project-p (not (string= (treebundel--project-current) project))))
     (when new-workspace-p (run-hook-with-args 'treebundel-before-workspace-open-functions workspace))
-    (when new-project-p (run-hook-with-args 'treebundel-before-project-open-functions project))
+    (when new-project-p (run-hook-with-args
+                         'treebundel-before-project-open-functions
+                         (treebundel--project-path workspace project)))
 
     (funcall treebundel-project-open-function (treebundel--project-path workspace project))
 
