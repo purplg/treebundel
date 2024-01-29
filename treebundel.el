@@ -249,7 +249,7 @@ ARGS are the arguments passed to git."
            (output (string-trim-right (buffer-string))))
        (treebundel--gitlog 'output output)
        (when (> result 0)
-         (user-error "Git command error. See %s: %s" treebundel--gitlog-buffer output))
+         (user-error "Git command error.  See %s: %s" treebundel--gitlog-buffer output))
        output)))
 
 (defmacro treebundel--git-with-repo (repo-path &rest args)
@@ -279,11 +279,12 @@ When OMIT-MAIN is non-nil, exclude the default branch."
 
 (defun treebundel--worktree-add (bare worktree-path branch-name)
   "Create a worktree.
-BARE-PATH is the main repository the worktree is being created from.
+BARE is the main repository the worktree is being created from.
 
 WORKTREE-PATH is the path where the new worktree will be created.
 
-BRANCH-NAME is the name of branch to be created and checked out at WORKTREE-PATH.
+BRANCH-NAME is the name of branch to be created and checked out at
+WORKTREE-PATH.
 
 Returns the path to the newly created worktree."
   (let ((bare-path (treebundel-bare-path bare)))
@@ -351,7 +352,7 @@ If COMMIT-B is nil, count between HEAD Of default branch and COMMIT-A."
 
 (defun treebundel--repo-clean-p (repo-path)
   "Return t if there are no uncommitted modifications in project.
-PROJECT of the project in WORKSPACE to check."
+REPO-PATH is the absolute path of the repo to check."
   (length= (split-string
             (treebundel--git-with-repo repo-path
               "status" "-z" "--porcelain")
@@ -374,7 +375,7 @@ PROJECT of the project in WORKSPACE to check."
                       (concat bare ".git"))))
 
 (defun treebundel--bare-delete (bare)
-  "Delete the bare repository at BARE. "
+  "Delete the bare repository at BARE."
   (delete-directory (treebundel-bare-path bare) t))
 
 (defun treebundel--bare-list ()
@@ -455,7 +456,7 @@ If FILE-PATH is non-nil, use the current buffer."
       project)))
 
 (defun treebundel-project-path (workspace project)
-  "Return the name of project at FILE-PATH."
+  "Return the path of PROJECT in WORKSPACE."
   (file-name-concat treebundel-workspace-root workspace project))
 
 ;; Branches
@@ -576,11 +577,12 @@ The URL is returned for non-nil."
 ;;;###autoload
 (defun treebundel-open (workspace project)
   "Open or create a workspace and a project within it.
+This will always prompt for a workspace.  If you want to prefer your
+current workspace, use `treebundel-open-project'.
 
-WORKSPACE is the workspace to open.
+WORKSPACE is the name of the workspace to open.
 
-This will always prompt for a workspace.  If you want to prefer your current
-workspace, use `treebundel-open-project'."
+PROJECT is the name of the project within the workspace to open."
   (interactive
     (let ((workspace (treebundel-read-workspace "Open workspace")))
       (list workspace
@@ -603,7 +605,11 @@ workspace, use `treebundel-open-project'."
 (defun treebundel-open-project (workspace project)
   "Open a project in some treebundel workspace.
 This function will try to use your current workspace first if the
-current buffer is in one."
+current buffer is in one.
+
+WORKSPACE is the name of the workspace to open.
+
+PROJECT is the name of the project within the workspace to open."
   (interactive
    (let ((workspace (or (treebundel-current-workspace)
                         (treebundel-read-workspace))))
