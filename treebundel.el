@@ -539,7 +539,9 @@ inserted when the minibuffer prompt is shown."
                    (treebundel--branches repo-path)
                    nil
                    nil
-                   (or initial (treebundel--branch-name repo-path))))
+                   (or initial (treebundel--branch-name
+                                (treebundel--bare
+                                 repo-path)))))
 
 (defun treebundel-read-workspace (&optional prompt require-match)
   "Interactively find the path of a workspace.
