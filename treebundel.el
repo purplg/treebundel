@@ -553,9 +553,9 @@ to create a workspace with a new entry."
                              (treebundel--workspaces)))
          (default (treebundel-current-workspace))
          (prompt (if default (format "%s [%s]: " (or prompt "Workspace") default) "Workspace: "))
-         (selection (completing-read prompt candidates nil require-match nil nil default)))
-    (if-let ((existing (car (assoc selection candidates))))
-        existing
+         (workspace (completing-read prompt candidates nil require-match nil nil default)))
+    (if (eq 'existing (cdr (assoc workspace candidates)))
+        workspace
       (let ((workspace-path (treebundel-workspace-path workspace)))
         (when (y-or-n-p (format "Are you sure you want to create a new workspace '%s'?"
                                 workspace))
