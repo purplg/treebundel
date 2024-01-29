@@ -592,7 +592,7 @@ workspace, use `treebundel-open-project'."
     (when new-workspace-p (run-hook-with-args 'treebundel-before-workspace-open-functions workspace))
     (when new-project-p (run-hook-with-args
                          'treebundel-before-project-open-functions
-                         (treebundel--project-path workspace project)))
+                         workspace project))
 
     (funcall treebundel-project-open-function (treebundel--project-path workspace project))
 
