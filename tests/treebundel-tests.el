@@ -67,13 +67,13 @@
                        treebundel-tests-remotes
                        (file-name-with-extension remote ".git")))
          (project remote)
-         (project-path (treebundel--project-path workspace project)))
+         (project-path (treebundel-project-path workspace project)))
   (before-all (make-directory treebundel-tests-dir t)
               (make-directory treebundel-tests-remotes t)
               (treebundel-tests-setup remote "main")
               (treebundel-tests-setup remote "branch-1")
               (treebundel-tests-setup remote "branch-2"))
-  (before-each (make-directory (treebundel--workspace-path workspace) t))
+  (before-each (make-directory (treebundel-workspace-path workspace) t))
   (after-each (delete-directory treebundel-workspace-root t))
   (after-all (delete-directory treebundel-tests-dir t))
 
@@ -85,14 +85,14 @@
       (expect (treebundel--repo-clean-p project-path))
       (with-temp-buffer
         (write-file (file-name-concat
-                     (treebundel--project-path workspace remote)
+                     (treebundel-project-path workspace remote)
                      "test-file")))
       (expect :not (treebundel--repo-clean-p project-path)))
     
     (it "should prevent deletion of projects with uncommitted files"
       (with-temp-buffer
         (write-file (file-name-concat
-                     (treebundel--project-path workspace remote)
+                     (treebundel-project-path workspace remote)
                      "test-file")))
       (should-error
        (treebundel-remove-project workspace remote)
@@ -101,7 +101,7 @@
     (it "should prevent deletion of bares with unpushed commits"
       (with-temp-buffer
         (write-file (file-name-concat
-                     (treebundel--project-path workspace remote)
+                     (treebundel-project-path workspace remote)
                      "test-file")))
       (treebundel--git-with-repo project-path
         "add" "-A")
@@ -116,19 +116,19 @@
     (before-each (treebundel--clone remote-path))
     (it "should be created in workspaces"
       (treebundel--project-add workspace remote)
-      (expect (file-directory-p (treebundel--project-path workspace
+      (expect (file-directory-p (treebundel-project-path workspace
                                                  remote))))
       
     (it "should generate branch name"
       (treebundel--project-add workspace remote)
-      (expect (treebundel--git-with-repo (treebundel--project-path workspace
+      (expect (treebundel--git-with-repo (treebundel-project-path workspace
                                                           remote)
                 "rev-parse" "--abbrev-ref" "HEAD")
               :to-equal (concat treebundel-prefix workspace)))
 
     (it "should use the specified branch"
       (treebundel--project-add workspace remote "new-branch")
-      (expect (treebundel--git-with-repo (treebundel--project-path workspace
+      (expect (treebundel--git-with-repo (treebundel-project-path workspace
                                                           remote)
                 "rev-parse" "--abbrev-ref" "HEAD")
               :to-equal "new-branch"))
@@ -138,14 +138,14 @@
                                remote
                                nil
                                "test-project-name")
-      (expect (file-directory-p (treebundel--project-path workspace
+      (expect (file-directory-p (treebundel-project-path workspace
                                                  "test-project-name"))
               :to-be t)))
   
   (describe "cloning"
     (it "should create bare repo"
       (treebundel--clone remote-path)
-      (expect (file-directory-p (treebundel--bare-path remote)) :to-be t)))
+      (expect (file-directory-p (treebundel-bare-path remote)) :to-be t)))
 
   (describe "current-workspace"
     (it "should work with nil"

@@ -274,7 +274,7 @@ When OMIT-MAIN is non-nil, exclude the default branch."
 
 (defun treebundel--worktree-remove (repo-path)
   "Remove the worktree at REPO-PATH."
-  (treebundel--git-with-repo (treebundel--bare-path (treebundel--bare repo-path))
+  (treebundel--git-with-repo (treebundel-bare-path (treebundel--bare repo-path))
     "worktree" "remove" repo-path))
 
 (defun treebundel--worktree-add (bare worktree-path branch-name)
@@ -286,7 +286,7 @@ WORKTREE-PATH is the path where the new worktree will be created.
 BRANCH-NAME is the name of branch to be created and checked out at WORKTREE-PATH.
 
 Returns the path to the newly created worktree."
-  (let ((bare-path (treebundel--bare-path bare)))
+  (let ((bare-path (treebundel-bare-path bare)))
     (if (member branch-name (treebundel--branches bare-path))
         (treebundel--git-with-repo bare-path
           "worktree" "add" worktree-path branch-name)
@@ -314,7 +314,7 @@ Returns the path to the newly created worktree."
 Place the cloned repository as a bare repository in the directory declared in
 `treebundel-bare-dir' so worktrees can be created from it as workspace projects."
   (let* ((name (car (last (split-string url "/"))))
-         (dest (treebundel--bare-path name)))
+         (dest (treebundel-bare-path name)))
     (when (file-exists-p dest)
       (user-error "Repository with this name is already cloned"))
     (treebundel--git "clone" url "--bare" dest)
@@ -366,7 +366,7 @@ PROJECT of the project in WORKSPACE to check."
 ;; definitions of the terminology at the top of this package.
 
 ;; Bares
-(defun treebundel--bare-path (bare)
+(defun treebundel-bare-path (bare)
   "Return the path of bare repository with BARE."
   (file-name-concat treebundel-bare-dir
                     (if (string= "git" (file-name-extension bare))
@@ -375,7 +375,7 @@ PROJECT of the project in WORKSPACE to check."
 
 (defun treebundel--bare-delete (bare)
   "Delete the bare repository at BARE. "
-  (delete-directory (treebundel--bare-path bare) t))
+  (delete-directory (treebundel-bare-path bare) t))
 
 (defun treebundel--bare-list ()
   "Return a list of all existing bare repository directory names."
@@ -389,17 +389,17 @@ If BRANCH is nil, check all local BRANCHES.  If BRANCH is a string or list of
 strings, only check these local branches."
   (when (eq 'string (type-of branches))
     (setq branches (list branches)))
-  (> (length (treebundel--git-with-repo (treebundel--bare-path bare)
+  (> (length (treebundel--git-with-repo (treebundel-bare-path bare)
                "log" "--branches" "--not" "--remotes")) 0))
 
 ;; Workspaces
-(defun treebundel--workspace-path (name)
+(defun treebundel-workspace-path (name)
   "Return the path of a workspace named NAME."
   (file-name-concat treebundel-workspace-root name))
 
 (defun treebundel--workspace-projects (workspace)
   "Return a list of absolute paths to projects in WORKSPACE."
-  (thread-last (directory-files (treebundel--workspace-path workspace) t "^[^\\.]")
+  (thread-last (directory-files (treebundel-workspace-path workspace) t "^[^\\.]")
                (seq-filter #'file-directory-p)
                (seq-map (lambda (path) (file-name-base path)))))
 
@@ -435,7 +435,7 @@ workspace.
 
 PROJECT is the name of the worktrees' directory in the workspace."
   (treebundel--worktree-add bare
-                            (treebundel--project-path workspace
+                            (treebundel-project-path workspace
                                                       (or project bare))
                             (or branch-name
                                 (treebundel--branch-name workspace))))
@@ -445,7 +445,7 @@ PROJECT is the name of the worktrees' directory in the workspace."
 If FILE-PATH is non-nil, use the current buffer."
   (when-let* ((file-path (or (and file-path (expand-file-name file-path))
                              buffer-file-name))
-              (workspace-path (treebundel--workspace-path
+              (workspace-path (treebundel-workspace-path
                                (treebundel-current-workspace file-path))))
     (let ((project nil))
       ;; Traverse up parent directories until the current workspace is all that remains
@@ -454,7 +454,7 @@ If FILE-PATH is non-nil, use the current buffer."
         (setq file-path (file-name-directory (directory-file-name file-path))))
       project)))
 
-(defun treebundel--project-path (workspace project)
+(defun treebundel-project-path (workspace project)
   "Return the name of project at FILE-PATH."
   (file-name-concat treebundel-workspace-root workspace project))
 
@@ -475,7 +475,7 @@ bare repo points to."
 
 ;; This section provides the stable user interface.
 
-(defun treebundel--read-bare (&optional prompt clone omit)
+(defun treebundel-read-bare (&optional prompt clone omit)
   "Interactively find the path of a bare.
 PROMPT is the text prompt presented to the user in the minibuffer.
 
@@ -499,7 +499,7 @@ excluded from the candidates."
             (call-interactively #'treebundel-clone)
           selection))))
 
-(defun treebundel--read-project (workspace &optional prompt add initial)
+(defun treebundel-read-project (workspace &optional prompt add initial)
   "Interactively find the path of a project.
 WORKSPACE is the workspace to look for projects in.
 
@@ -518,13 +518,13 @@ inserted when the minibuffer prompt is shown."
     (let* ((selection (completing-read (or prompt "Project: ") candidates nil nil initial))
            (value (cdr (assoc selection candidates))))
       (if (equal value 'add)
-          (let ((bare (treebundel--read-bare prompt t)))
+          (let ((bare (treebundel-read-bare prompt t)))
             (treebundel--project-add workspace
                                      bare
                                      (treebundel--branch-name workspace)))
         selection))))
 
-(defun treebundel--read-branch (repo-path &optional prompt initial)
+(defun treebundel-read-branch (repo-path &optional prompt initial)
   "Interactively selected a branch to checkout for project.
 REPO-PATH is the path to project to list available branches for.
 
@@ -541,7 +541,7 @@ inserted when the minibuffer prompt is shown."
                    nil
                    (or initial (treebundel--branch-name repo-path))))
 
-(defun treebundel--read-workspace (&optional prompt require-match)
+(defun treebundel-read-workspace (&optional prompt require-match)
   "Interactively find the path of a workspace.
 PROMPT is the prompt to be presented to the user in the
 minibuffer.
@@ -557,7 +557,7 @@ to create a workspace with a new entry."
          (selection (completing-read prompt candidates nil require-match nil nil default)))
     (if-let ((existing (car (assoc selection candidates))))
         existing
-      (let ((workspace-path (treebundel--workspace-path workspace)))
+      (let ((workspace-path (treebundel-workspace-path workspace)))
         (when (y-or-n-p (format "Are you sure you want to create a new workspace '%s'?"
                                 workspace))
           (make-directory workspace-path)
@@ -582,9 +582,9 @@ WORKSPACE is the workspace to open.
 This will always prompt for a workspace.  If you want to prefer your current
 workspace, use `treebundel-open-project'."
   (interactive
-    (let ((workspace (treebundel--read-workspace "Open workspace")))
+    (let ((workspace (treebundel-read-workspace "Open workspace")))
       (list workspace
-            (treebundel--read-project workspace
+            (treebundel-read-project workspace
                                       (format "Open project in %s: " workspace)
                                       t))))
   (let* ((new-workspace-p (not (string= (treebundel-current-workspace) workspace)))
@@ -594,7 +594,7 @@ workspace, use `treebundel-open-project'."
                          'treebundel-before-project-open-functions
                          workspace project))
 
-    (funcall treebundel-project-open-function (treebundel--project-path workspace project))
+    (funcall treebundel-project-open-function (treebundel-project-path workspace project))
 
     (when new-project-p (run-hooks 'treebundel-after-project-open-hook))
     (when new-workspace-p (run-hooks 'treebundel-after-workspace-open-hook))))
@@ -606,8 +606,8 @@ This function will try to use your current workspace first if the
 current buffer is in one."
   (interactive
    (let ((workspace (or (treebundel-current-workspace)
-                        (treebundel--read-workspace))))
-     (list workspace (treebundel--read-project workspace
+                        (treebundel-read-workspace))))
+     (list workspace (treebundel-read-project workspace
                                                (format "Open project in %s: " workspace)
                                                t))))
   (treebundel-open workspace project))
@@ -619,8 +619,8 @@ This will check if all projects within the workspace are clean and if so, remove
 everything in the workspace.  Anything committed is still saved in the
 respective projects' bare repository located at `treebundel-bare-dir'."
   (interactive
-   (list (treebundel--read-workspace "Delete workspace" t)))
-  (let* ((workspace-path (treebundel--workspace-path workspace))
+   (list (treebundel-read-workspace "Delete workspace" t)))
+  (let* ((workspace-path (treebundel-workspace-path workspace))
          (project-paths (directory-files workspace-path t "^[^.].*")))
     (if (and (seq-every-p (lambda (project-path)
                             (treebundel--repo-clean-p project-path))
@@ -654,13 +654,13 @@ provided project should be in workspace WORKSPACE.
 PROJECT-BRANCH is the name of the branch to be checked out for
 this project."
   (interactive
-   (let* ((workspace (treebundel--read-workspace "Add project to" t))
-          (bare (treebundel--read-bare (format "Add project to %s: "
+   (let* ((workspace (treebundel-read-workspace "Add project to" t))
+          (bare (treebundel-read-bare (format "Add project to %s: "
                                                     workspace)
                                             t
                                             (treebundel--workspace-projects workspace)))
-          (project-branch (treebundel--read-branch (treebundel--bare-path bare)))
-          (project (treebundel--read-project workspace "Project name: "
+          (project-branch (treebundel-read-branch (treebundel-bare-path bare)))
+          (project (treebundel-read-project workspace "Project name: "
                                              nil
                                              bare)))
      (list workspace bare project project-branch)))
@@ -676,12 +676,12 @@ There must be no changes in the project to remove it."
   (interactive
    (let ((workspace (or (and (not current-prefix-arg)
                              (treebundel-current-workspace))
-                        (treebundel--read-workspace "Remove project from" t))))
+                        (treebundel-read-workspace "Remove project from" t))))
      (list workspace
-           (treebundel--read-project workspace
+           (treebundel-read-project workspace
                                      (format "Remove project from %s: "
                                              workspace)))))
-  (let ((project-path (treebundel--project-path workspace project)))
+  (let ((project-path (treebundel-project-path workspace project)))
     (if (and (treebundel--repo-clean-p project-path)
              (treebundel--worktree-remove project-path))
         (treebundel--message "Removed project '%s' from '%s'"
@@ -712,8 +712,8 @@ Existing worktrees or uncommitted changes will prevent you from deleting.
 If INTERACTIVE is non-nil, prompt the user to force delete for any changes not
 on remote."
   (interactive
-   (list (treebundel--read-bare "Select repo to delete: ") t))
-  (cond ((treebundel--has-worktrees-p (treebundel--bare-path bare))
+   (list (treebundel-read-bare "Select repo to delete: ") t))
+  (cond ((treebundel--has-worktrees-p (treebundel-bare-path bare))
          (treebundel--error "This repository has worktrees checked out"))
         ((and (treebundel--bare-unpushed-commits-p bare)
               (not (if interactive
@@ -728,7 +728,7 @@ BARE is the name of the bare repo to fetch.
 This command is normally not useful unless `treebundel-fetch-on-add' is
 disabled.  Use this command to manually control when git-fetch operations are
 performed."
-  (interactive (list (treebundel--read-bare "Select repo to fetch: ")))
+  (interactive (list (treebundel-read-bare "Select repo to fetch: ")))
   (treebundel--message "Fetching...")
   (treebundel--git-with-repo bare "fetch")
   (treebundel--message "%s updated" bare))
