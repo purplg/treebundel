@@ -163,12 +163,9 @@ To create a new tab for every project opened with treebundel:
 
 #+BEGIN_SRC emacs-lisp
 (add-hook 'treebundel-before-project-open-functions
-          (lambda (project-path)
-            (when-let* ((workspace-path (treebundel-current-workspace project-path))
-                        (workspace-name (treebundel--workspace-name workspace-path))
-                        (project-name (treebundel--project-name project-path)))
-              (tab-bar-select-tab-by-name
-               (format "%s/%s" workspace-name project-name)))))
+          (lambda (workspace project)
+            (tab-bar-select-tab-by-name
+             (format "%s/%s" workspace-name project-name))))
 #+END_SRC
 
 ** Workspace Notes
@@ -178,13 +175,13 @@ This snippet will open a file within a =projects= directory in your =org-directo
 #+BEGIN_SRC emacs-lisp
 (defun my/open-project-notes ()
     (interactive)
-    (if-let ((workspace-path (or (treebundel--workspace-current)
-                                 (treebundel--read-workspace))))
+    (if-let ((workspace (or (treebundel-current-workspace)
+                            (treebundel-read-workspace))))
         (find-file-other-window
          ;; e.g. ~/.org/projects/some-feature.org
          (file-name-concat org-directory
                            "projects"
-                           (file-name-with-extension (treebundel--workspace-name workspace-path) "org")))
+                           (file-name-with-extension workspace "org")))
       (user-error "Not in a workspace")))
 #+END_SRC
 
