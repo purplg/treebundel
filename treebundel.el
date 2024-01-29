@@ -434,11 +434,12 @@ BRANCH-NAME is the name of branch to be created and checked out in the
 workspace.
 
 PROJECT is the name of the worktrees' directory in the workspace."
-  (treebundel--worktree-add bare
-                            (treebundel-project-path workspace
+  (treebundel--project-name
+   (treebundel--worktree-add bare
+                             (treebundel-project-path workspace
                                                       (or project bare))
-                            (or branch-name
-                                (treebundel--branch-name workspace))))
+                             (or branch-name
+                                 (treebundel--branch-name workspace)))))
 
 (defun treebundel--project-current (&optional file-path)
   "Return the project path of FILE-PATH.
@@ -453,6 +454,10 @@ If FILE-PATH is non-nil, use the current buffer."
         (setq project (file-name-nondirectory (directory-file-name file-path)))
         (setq file-path (file-name-directory (directory-file-name file-path))))
       project)))
+
+(defun treebundel--project-name (project-path)
+  "Return the name of project at PROJECT-PATH."
+  (file-name-nondirectory (directory-file-name project-path)))
 
 (defun treebundel-project-path (workspace project)
   "Return the path of PROJECT in WORKSPACE."
