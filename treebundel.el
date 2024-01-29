@@ -670,10 +670,10 @@ this project."
                                             nil
                                             bare)))
      (list workspace bare project project-branch)))
-  (treebundel-open (treebundel--project-add workspace
-                                            bare
-                                            project-branch
-                                            project)))
+  (treebundel-open workspace (treebundel--project-add workspace
+                                                      bare
+                                                      project-branch
+                                                      project)))
 
 ;;;###autoload
 (defun treebundel-remove-project (workspace project)
