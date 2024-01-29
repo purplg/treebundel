@@ -274,7 +274,7 @@ When OMIT-MAIN is non-nil, exclude the default branch."
 
 (defun treebundel--worktree-remove (repo-path)
   "Remove the worktree at REPO-PATH."
-  (treebundel--git-with-repo (treebundel--bare-path (treebundel--repo-bare repo-path))
+  (treebundel--git-with-repo (treebundel--bare-path (treebundel--bare repo-path))
     "worktree" "remove" repo-path))
 
 (defun treebundel--worktree-add (bare-name worktree-path branch-name)
@@ -332,29 +332,22 @@ If COMMIT-B is nil, count between HEAD Of default branch and COMMIT-A."
    (treebundel--git-with-repo repo-path
      "rev-list" (concat commit-a ".." commit-b) "--count")))
 
-
-;;;; Workspace management
-
-;; These functions provide useful functions for and the rules to enforce the
-;; definitions of the terminology at the top of this package.
-
-;; Repos
-(defun treebundel--repo-bare (repo-path)
+(defun treebundel--bare (repo-path)
   "Return the name of the bare repo related to REPO-PATH."
   (thread-first (treebundel--git-with-repo repo-path
                   "rev-parse" "--path-format=absolute" "--git-common-dir")
                 (directory-file-name)
                 (file-name-base)))
 
-(defun treebundel--repo-worktree-count (repo-path)
+(defun treebundel--worktree-count (repo-path)
   "Return the number of worktrees that exist for REPO-PATH."
   (seq-count
    (lambda (str) (not (member "bare" str)))
    (treebundel--worktree-list repo-path)))
 
-(defun treebundel--repo-has-worktrees-p (repo-path)
+(defun treebundel--has-worktrees-p (repo-path)
   "Return t if REPO-PATH has any worktrees."
-  (> (treebundel--repo-worktree-count repo-path) 0))
+  (> (treebundel--worktree-count repo-path) 0))
 
 (defun treebundel--repo-clean-p (repo-path)
   "Return t if there are no uncommitted modifications in project.
@@ -365,6 +358,12 @@ PROJECT of the project in WORKSPACE to check."
             "\0"
             t)
            0))
+
+
+;;;; Workspace management
+
+;; These functions provide useful functions for and the rules to enforce the
+;; definitions of the terminology at the top of this package.
 
 ;; Bares
 (defun treebundel--bare-path (bare-name)
@@ -469,7 +468,7 @@ If FILE-PATH is non-nil, use the current buffer."
 The bare repository should have it's HEAD set to the HEAD of remote, which is
 the default branch.  So this function just gets the branch that the HEAD of the
 bare repo points to."
-  (treebundel--branch (treebundel--repo-bare repo-path)))
+  (treebundel--branch (treebundel--bare repo-path)))
 
 
 ;;;; User functions
@@ -712,7 +711,7 @@ If INTERACTIVE is non-nil, prompt the user to force delete for any changes not
 on remote."
   (interactive
    (list (treebundel--read-bare "Select repo to delete: ") t))
-  (cond ((treebundel--repo-has-worktrees-p (treebundel--bare-path bare-name))
+  (cond ((treebundel--has-worktrees-p (treebundel--bare-path bare-name))
          (treebundel--error "This repository has worktrees checked out"))
         ((and (treebundel--bare-unpushed-commits-p bare-name)
               (not (if interactive
