@@ -141,8 +141,7 @@
   (if (version< emacs-version "28")
       (lambda (dir)
         (find-file (read-file-name
-                    (format "Find file in %s: "
-                            (treebundel--project dir))
+                    "Find file: "
                     (file-name-as-directory dir))))
     'project-switch-project)
   "Function called to switch to a new project."
