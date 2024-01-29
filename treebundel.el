@@ -277,7 +277,7 @@ When OMIT-MAIN is non-nil, exclude the default branch."
   (treebundel--git-with-repo (treebundel--bare-path (treebundel--bare repo-path))
     "worktree" "remove" repo-path))
 
-(defun treebundel--worktree-add (bare-name worktree-path branch-name)
+(defun treebundel--worktree-add (bare worktree-path branch-name)
   "Create a worktree.
 BARE-PATH is the main repository the worktree is being created from.
 
@@ -286,7 +286,7 @@ WORKTREE-PATH is the path where the new worktree will be created.
 BRANCH-NAME is the name of branch to be created and checked out at WORKTREE-PATH.
 
 Returns the path to the newly created worktree."
-  (let ((bare-path (treebundel--bare-path bare-name)))
+  (let ((bare-path (treebundel--bare-path bare)))
     (if (member branch-name (treebundel--branches bare-path))
         (treebundel--git-with-repo bare-path
           "worktree" "add" worktree-path branch-name)
@@ -366,30 +366,30 @@ PROJECT of the project in WORKSPACE to check."
 ;; definitions of the terminology at the top of this package.
 
 ;; Bares
-(defun treebundel--bare-path (bare-name)
-  "Return the path of bare repository with BARE-NAME."
+(defun treebundel--bare-path (bare)
+  "Return the path of bare repository with BARE."
   (file-name-concat treebundel-bare-dir
-                    (if (string= "git" (file-name-extension bare-name))
-                        bare-name
-                      (concat bare-name ".git"))))
+                    (if (string= "git" (file-name-extension bare))
+                        bare
+                      (concat bare ".git"))))
 
-(defun treebundel--bare-delete (bare-name)
-  "Delete the bare repository at BARE-NAME. "
-  (delete-directory (treebundel--bare-path bare-name) t))
+(defun treebundel--bare-delete (bare)
+  "Delete the bare repository at BARE. "
+  (delete-directory (treebundel--bare-path bare) t))
 
 (defun treebundel--bare-list ()
   "Return a list of all existing bare repository directory names."
   (directory-files treebundel-bare-dir nil "^[^.].*"))
 
-(defun treebundel--bare-unpushed-commits-p (bare-name &optional branches)
+(defun treebundel--bare-unpushed-commits-p (bare &optional branches)
   "Return t if there are commits not on remote.
-BARE-NAME is the bare repo to check.
+BARE is the bare repo to check.
 
 If BRANCH is nil, check all local BRANCHES.  If BRANCH is a string or list of
 strings, only check these local branches."
   (when (eq 'string (type-of branches))
     (setq branches (list branches)))
-  (> (length (treebundel--git-with-repo (treebundel--bare-path bare-name)
+  (> (length (treebundel--git-with-repo (treebundel--bare-path bare)
                "log" "--branches" "--not" "--remotes")) 0))
 
 ;; Workspaces
@@ -422,21 +422,21 @@ If FILE-PATH is non-nil, use the current buffer instead."
       workspace)))
 
 ;; Projects
-(defun treebundel--project-add (workspace bare-name &optional branch-name project)
+(defun treebundel--project-add (workspace bare &optional branch-name project)
   "Add a project to a workspace.
 Defines the way project worktrees are added and named in workspaces.
 
 WORKSPACE is the name of the workspace to place the new project in.
 
-BARE-NAME is the name of the bare repository the worktree is being created from.
+BARE is the name of the bare repository the worktree is being created from.
 
 BRANCH-NAME is the name of branch to be created and checked out in the
 workspace.
 
 PROJECT is the name of the worktrees' directory in the workspace."
-  (treebundel--worktree-add bare-name
+  (treebundel--worktree-add bare
                             (treebundel--project-path workspace
-                                                      (or project bare-name))
+                                                      (or project bare))
                             (or branch-name
                                 (treebundel--branch-name workspace))))
 
@@ -486,8 +486,8 @@ instead.
 When OMIT is non-nil, it should be a list of a candidates to be
 excluded from the candidates."
   (let* ((candidates (mapcar (lambda (bare)
-                               (let ((bare-name (replace-regexp-in-string "\\.git$" "" bare)))
-                                 (cons bare-name 'existing)))
+                               (let ((bare (replace-regexp-in-string "\\.git$" "" bare)))
+                                 (cons bare 'existing)))
                              (treebundel--bare-list))))
     (when omit
       (setq candidates (seq-remove (lambda (bare) (member (car bare) omit))
@@ -518,9 +518,9 @@ inserted when the minibuffer prompt is shown."
     (let* ((selection (completing-read (or prompt "Project: ") candidates nil nil initial))
            (value (cdr (assoc selection candidates))))
       (if (equal value 'add)
-          (let ((bare-name (treebundel--read-bare prompt t)))
+          (let ((bare (treebundel--read-bare prompt t)))
             (treebundel--project-add workspace
-                                     bare-name
+                                     bare
                                      (treebundel--branch-name workspace)))
         selection))))
 
@@ -638,7 +638,7 @@ respective projects' bare repository located at `treebundel-bare-dir'."
       (user-error "There must not be any unsaved changes to delete a workspace"))))
 
 ;;;###autoload
-(defun treebundel-add-project (workspace bare-name project project-branch)
+(defun treebundel-add-project (workspace bare project project-branch)
   "Add a project to a workspace.
 This will create a worktree in WORKSPACE with a branch named
 after the workspace with `treebundel-prefix' prefixed.
@@ -646,7 +646,7 @@ after the workspace with `treebundel-prefix' prefixed.
 WORKSPACE is the name of the workspace where the worktree will be
 created.
 
-BARE-NAME is the bare git repository where the worktree is derived.
+BARE is the bare git repository where the worktree is derived.
 
 PROJECT is the project where the worktree will be created.  The
 provided project should be in workspace WORKSPACE.
@@ -655,17 +655,17 @@ PROJECT-BRANCH is the name of the branch to be checked out for
 this project."
   (interactive
    (let* ((workspace (treebundel--read-workspace "Add project to" t))
-          (bare-name (treebundel--read-bare (format "Add project to %s: "
+          (bare (treebundel--read-bare (format "Add project to %s: "
                                                     workspace)
                                             t
                                             (treebundel--workspace-projects workspace)))
-          (project-branch (treebundel--read-branch (treebundel--bare-path bare-name)))
+          (project-branch (treebundel--read-branch (treebundel--bare-path bare)))
           (project (treebundel--read-project workspace "Project name: "
                                              nil
-                                             bare-name)))
-     (list workspace bare-name project project-branch)))
+                                             bare)))
+     (list workspace bare project project-branch)))
   (treebundel-open (treebundel--project-add workspace
-                                            bare-name
+                                            bare
                                             project-branch
                                             project)))
 
@@ -700,38 +700,38 @@ with `treebundel-add-project'"
    (list (read-string "URL: " (or (treebundel--git-url-like-p (gui-get-selection 'CLIPBOARD 'STRING))
                                   (treebundel--git-url-like-p (gui-get-selection 'PRIMARY 'STRING))))))
   (treebundel--message "Cloning %s..." url)
-  (let ((bare-name (treebundel--clone url)))
-    (treebundel--message "Finished cloning %s." bare-name)
-    bare-name))
+  (let ((bare (treebundel--clone url)))
+    (treebundel--message "Finished cloning %s." bare)
+    bare))
 
 ;;;###autoload
-(defun treebundel-delete-bare (bare-name &optional interactive)
-  "Delete a bare repository BARE-NAME.
+(defun treebundel-delete-bare (bare &optional interactive)
+  "Delete a bare repository BARE.
 Existing worktrees or uncommitted changes will prevent you from deleting.
 
 If INTERACTIVE is non-nil, prompt the user to force delete for any changes not
 on remote."
   (interactive
    (list (treebundel--read-bare "Select repo to delete: ") t))
-  (cond ((treebundel--has-worktrees-p (treebundel--bare-path bare-name))
+  (cond ((treebundel--has-worktrees-p (treebundel--bare-path bare))
          (treebundel--error "This repository has worktrees checked out"))
-        ((and (treebundel--bare-unpushed-commits-p bare-name)
+        ((and (treebundel--bare-unpushed-commits-p bare)
               (not (if interactive
-                       (yes-or-no-p (format "%s has unpushed commits on some branches.  Delete anyway?" bare-name))
-                     (treebundel--error (format "%s has unpushed commits on some branches" bare-name))))))
-        (t (treebundel--bare-delete bare-name))))
+                       (yes-or-no-p (format "%s has unpushed commits on some branches.  Delete anyway?" bare))
+                     (treebundel--error (format "%s has unpushed commits on some branches" bare))))))
+        (t (treebundel--bare-delete bare))))
 
-(defun treebundel-fetch-bare (bare-name)
+(defun treebundel-fetch-bare (bare)
   "Perform a git-fetch on bare repo.
-BARE-NAME is the name of the bare repo to fetch.
+BARE is the name of the bare repo to fetch.
 
 This command is normally not useful unless `treebundel-fetch-on-add' is
 disabled.  Use this command to manually control when git-fetch operations are
 performed."
   (interactive (list (treebundel--read-bare "Select repo to fetch: ")))
   (treebundel--message "Fetching...")
-  (treebundel--git-with-repo bare-name "fetch")
-  (treebundel--message "%s updated" bare-name))
+  (treebundel--git-with-repo bare "fetch")
+  (treebundel--message "%s updated" bare))
 
 (provide 'treebundel)
 
