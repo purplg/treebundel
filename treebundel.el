@@ -662,13 +662,13 @@ this project."
   (interactive
    (let* ((workspace (treebundel-read-workspace "Add project to" t))
           (bare (treebundel-read-bare (format "Add project to %s: "
-                                                    workspace)
-                                            t
-                                            (treebundel--workspace-projects workspace)))
+                                              workspace)
+                                      t
+                                      (treebundel--workspace-projects workspace)))
           (project-branch (treebundel-read-branch (treebundel-bare-path bare)))
           (project (treebundel-read-project workspace "Project name: "
-                                             nil
-                                             bare)))
+                                            nil
+                                            bare)))
      (list workspace bare project project-branch)))
   (treebundel-open (treebundel--project-add workspace
                                             bare
