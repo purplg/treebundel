@@ -63,7 +63,7 @@
 
 ;;;; Configuration:
 
-;; `treebundel-prefix'
+;; `treebundel-branch-prefix'
 ;;  Default: 'feature/'
 ;;
 ;; This is probably the most subjective variable you'd want to customize.  With
@@ -130,7 +130,7 @@
   :group 'convenience
   :prefix "treebundel-")
 
-(defcustom treebundel-prefix "feature/"
+(defcustom treebundel-branch-prefix "feature/"
   "The string prefix before every new project branch."
   :group 'treebundel
   :type 'string)
@@ -480,7 +480,7 @@ If FILE-PATH is non-nil, use the current buffer."
 ;; Branches
 (defun treebundel--branch-name (workspace)
   "Generate a branch name for WORKSPACE."
-  (concat treebundel-prefix workspace))
+  (concat treebundel-branch-prefix workspace))
 
 (defun treebundel--branch-default (repo-path)
   "Return the default branch at REPO-PATH.
@@ -666,7 +666,7 @@ respective projects' bare repository located at `treebundel-bare-dir'."
 (defun treebundel-add-project (workspace bare project project-branch)
   "Add a project to a workspace.
 This will create a worktree in WORKSPACE with a branch named
-after the workspace with `treebundel-prefix' prefixed.
+after the workspace with `treebundel-branch-prefix' prefixed.
 
 WORKSPACE is the name of the workspace where the worktree will be
 created.

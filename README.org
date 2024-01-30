@@ -98,7 +98,7 @@ URL to =~/workspaces/.bare/<repo-name>.git=, then create and open a worktree for
 3. Select =[ clone ]=.
 4. Enter the URL to clone for the repository to be added to the workspace.
 5. Specify the name of the branch to checkout. By default, it'll pre-fill with
-   <treebundel-prefix>/<workspace-name>. You can also select an existing branch.
+   <treebundel-branch-prefix>/<workspace-name>. You can also select an existing branch.
 6. Specify the project name which will be the name of the worktree is created in.
 
 You should then be prompted with your ~project-switch-project~ prompt to begin editing.
@@ -131,7 +131,7 @@ project in your current workspace or ~treebundel-open~ to open a project in a di
   This is the directory that bare repository get cloned to. The intent is for
   this to be mostly transparent, hence the =.= prefix to make it hidden by default.
 
-- treebundel-prefix :: *Default*: =“feature/”=
+- treebundel-branch-prefix :: *Default*: =“feature/”=
 
   A string used to generate a default branch name created with treebundel. By default, it's
   =feature/= such that when you add a new project to a workspace, the new branch is name
