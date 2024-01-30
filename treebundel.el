@@ -204,7 +204,7 @@ be opened."
 
 (defun treebundel--gitlog (type &rest msg)
   "Insert a message in the treebundel git log buffer.
-TYPE is the type of log message.  Can be either \='command or \='output.
+TYPE is the type of log message.  Can be either \\='command or \\='output.
 
 MSG is the text to be inserted into the log."
   (with-current-buffer (treebundel--gitlog-buffer)
@@ -380,7 +380,7 @@ REPO-PATH is the absolute path of the repo to check."
 
 (defun treebundel--bare-list ()
   "Return a list of all existing bare repository directory names."
-  (directory-files treebundel-bare-dir nil "^[^.].*"))
+  (directory-files treebundel-bare-dir nil "\\`[^.].*"))
 
 (defun treebundel--bare-unpushed-commits-p (bare &optional branches)
   "Return t if there are commits not on remote.
@@ -400,7 +400,7 @@ strings, only check these local branches."
 
 (defun treebundel--workspace-projects (workspace)
   "Return a list of absolute paths to projects in WORKSPACE."
-  (thread-last (directory-files (treebundel-workspace-path workspace) t "^[^\\.]")
+  (thread-last (directory-files (treebundel-workspace-path workspace) t "\\`[^\\.]")
                (seq-filter #'file-directory-p)
                (seq-map (lambda (path) (file-name-base path)))))
 
@@ -408,7 +408,7 @@ strings, only check these local branches."
   "Return a list of all existing workspace names."
   (seq-map #'file-name-nondirectory
            (seq-filter #'file-directory-p
-                       (directory-files treebundel-workspace-root t "^[^.].*"))))
+                       (directory-files treebundel-workspace-root t "\\`[^.].*"))))
 
 (defun treebundel-current-workspace (&optional file-path)
   "Return the name of the current workspace.
@@ -633,7 +633,7 @@ respective projects' bare repository located at `treebundel-bare-dir'."
   (interactive
    (list (treebundel-read-workspace "Delete workspace" t)))
   (let* ((workspace-path (treebundel-workspace-path workspace))
-         (project-paths (directory-files workspace-path t "^[^.].*")))
+         (project-paths (directory-files workspace-path t "\\`[^.].*")))
     (if (and (seq-every-p (lambda (project-path)
                             (treebundel--repo-clean-p project-path))
                           project-paths)
