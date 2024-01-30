@@ -96,14 +96,26 @@
 ;; name opened.
 
 ;;;; Usage:
-
-;; | Command                     | Description                                 |
-;; |-----------------------------+---------------------------------------------|
-;; | ~treebundel-open~             | Open a project in a workspace               |
-;; | ~treebundel-open-project~     | Open other project within current workspace |
-;; | ~treebundel-add-project~      | Add a project to a workspace                |
-;; | ~treebundel-remove-project~   | Remove a project from a workspace           |
-;; | ~treebundel-delete-workspace~ | Delete a workspace                          |
+;;
+;; The following functions are the commands you should use (and
+;; probably bind) to make use of this package.
+;;
+;; `treebundel-open'
+;;   Open a project in a workspace.
+;;
+;; `treebundel-open-project'
+;;   Open other project within current workspace.
+;;
+;; `treebundel-add-project'
+;;   Add a project to a workspace.
+;;
+;; `treebundel-remove-project'
+;;   Remove a project from a workspace. This will check if the project
+;;   has any changes before removing it.
+;;
+;; `treebundel-delete-workspace'
+;;   Delete a workspace. This will also remove all projects in a
+;;   workspace if they don't have any changes.
 
 ;;; Code:
 (require 'subr-x)
