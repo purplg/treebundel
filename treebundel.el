@@ -4,6 +4,7 @@
 ;; Version: 0.1.0
 ;; Author: Ben Whitley
 ;; Homepage: https://github.com/purplg/treebundel
+;; Keywords: convenience vc
 ;; SPDX-License-Identifier: MIT
 
 ;;; Commentary:

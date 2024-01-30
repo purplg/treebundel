@@ -6,7 +6,7 @@
          "Bundle related git-worktrees together")
 
 (website-url "https://github.com/purplg/treebundel")
-;; (keywords "")
+(keywords "convenience" "vc")
 
 (package-file "treebundel.el")
 
