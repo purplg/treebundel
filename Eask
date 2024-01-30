@@ -14,5 +14,4 @@
 (depends-on "compat" "29.1.4.2")
 
 (development
- (depends-on "buttercup")
- (script "test" "eask exec buttercup -L . --traceback pretty"))
+ (depends-on "buttercup"))
