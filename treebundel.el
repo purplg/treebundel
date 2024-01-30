@@ -589,11 +589,11 @@ WORKSPACE is the name of the workspace to open.
 
 PROJECT is the name of the project within the workspace to open."
   (interactive
-    (let ((workspace (treebundel-read-workspace "Open workspace")))
-      (list workspace
-            (treebundel-read-project workspace
-                                      (format "Open project in %s: " workspace)
-                                      t))))
+   (let ((workspace (treebundel-read-workspace "Open workspace")))
+     (list workspace
+           (treebundel-read-project workspace
+                                    (format "Open project in %s: " workspace)
+                                    t))))
   (let* ((new-workspace-p (not (string= (treebundel-current-workspace) workspace)))
          (new-project-p (not (string= (treebundel--project-current) project))))
     (when new-workspace-p (run-hook-with-args 'treebundel-before-workspace-open-functions workspace))
@@ -619,8 +619,8 @@ PROJECT is the name of the project within the workspace to open."
    (let ((workspace (or (treebundel-current-workspace)
                         (treebundel-read-workspace))))
      (list workspace (treebundel-read-project workspace
-                                               (format "Open project in %s: " workspace)
-                                               t))))
+                                              (format "Open project in %s: " workspace)
+                                              t))))
   (treebundel-open workspace project))
 
 ;;;###autoload
@@ -690,8 +690,8 @@ There must be no changes in the project to remove it."
                         (treebundel-read-workspace "Remove project from" t))))
      (list workspace
            (treebundel-read-project workspace
-                                     (format "Remove project from %s: "
-                                             workspace)))))
+                                    (format "Remove project from %s: "
+                                            workspace)))))
   (let ((project-path (treebundel-project-path workspace project)))
     (if (and (treebundel--repo-clean-p project-path)
              (treebundel--worktree-remove project-path))
