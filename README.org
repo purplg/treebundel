@@ -147,11 +147,15 @@ project in your current workspace or ~treebundel-open~ to open a project in a di
 - ~treebundel-after-project-open-hook~
 - ~treebundel-after-workspace-open-hook~
 
-These hooks are called in the order listed above. The =-functions=-suffixed hooks take a single
-argument, which is the path to the project directory or workspace directory to be opened.
+These hooks are called before or after a project or workspace is
+opened. =treebundel-before-workspace-open-functions= receives the name
+of the workspace to be opened as a single argument and
+=treebundel-before-project-open-functions= receives the workspace and
+project name opened.
 
 See the [[#project-tabs][Project Tabs]] example to see an example on how to use
-=treebundel-before-project-open-functions= to create a new tab for every project.
+=treebundel-before-project-open-functions= to create a new tab for every
+project.
 
 * Nifty snippets
 

@@ -89,10 +89,11 @@
 ;; `treebundel-after-project-open-hook'
 ;; `treebundel-after-workspace-open-hook'
 ;;
-;; These hooks are called before or after a project or workspace is opened.  The
-;; `-functions'-suffixed hooks take a single argument, which is the path to the
-;; project directory or workspace directory to be opened.
-
+;; These hooks are called before or after a project or workspace is
+;; opened. `treebundel-before-workspace-open-functions' receives the name of the
+;; workspace to be opened as a single argument and
+;; `treebundel-before-project-open-functions' receives the workspace and project
+;; name opened.
 
 ;;;; Usage:
 
