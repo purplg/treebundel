@@ -200,7 +200,7 @@ be opened."
 
 ;;;; Logging
 (defface treebundel--gitlog-heading
-  '((t (:inherit mode-line :extend t)))
+  '((t (:inherit outline-1 :box t :extend t)))
   "Face for widget group labels in treebundel's dashboard."
   :group 'treebundel)
 
