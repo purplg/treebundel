@@ -754,6 +754,32 @@ into."
                        workspace
                        new-workspace))
 
+(defun treebundel-rename-project (workspace project new-name)
+  "Rename a project.
+WORKSPACE is the name of the workspace that contains the project to be
+renamed.
+
+PROJECT is name of the project in WORKSPACE to be renamed.
+
+NEW-NAME is the new name PROJECT will be renamed to."
+  (interactive
+   (let* ((workspace (treebundel-read-workspace "Move project from workspace" t))
+          (project (treebundel-read-project workspace
+                                            (format "Move project from %s: " workspace)
+                                            nil
+                                            nil
+                                            t))
+          (new-name (read-string "New name: " project)))
+     (list workspace project new-name)))
+  (treebundel--git-with-repo (treebundel-project-path workspace project)
+    "worktree"
+    "move"
+    (treebundel-project-path workspace project)
+    (treebundel-project-path workspace new-name))
+  (treebundel--message "Renamed project '%s' -> '%s'"
+                       project
+                       new-name))
+
 ;;;###autoload
 (defun treebundel-clone (url)
   "Clone URL to the collection of bare repos.
