@@ -90,10 +90,10 @@
 ;; `treebundel-after-workspace-open-hook'
 ;;
 ;; These hooks are called before or after a project or workspace is
-;; opened. `treebundel-before-workspace-open-functions' receives the name of the
-;; workspace to be opened as a single argument and
-;; `treebundel-before-project-open-functions' receives the workspace and project
-;; name opened.
+;; opened.  `treebundel-before-workspace-open-functions' receives the
+;; name of the workspace to be opened as a single argument and
+;; `treebundel-before-project-open-functions' receives the workspace
+;; and project name opened.
 
 ;;;; Usage:
 ;;
@@ -110,11 +110,11 @@
 ;;   Add a project to a workspace.
 ;;
 ;; `treebundel-remove-project'
-;;   Remove a project from a workspace. This will check if the project
+;;   Remove a project from a workspace.  This will check if the project
 ;;   has any changes before removing it.
 ;;
 ;; `treebundel-delete-workspace'
-;;   Delete a workspace. This will also remove all projects in a
+;;   Delete a workspace.  This will also remove all projects in a
 ;;   workspace if they don't have any changes.
 
 ;;; Code:
