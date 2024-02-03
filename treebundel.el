@@ -518,7 +518,7 @@ excluded from the candidates."
             (call-interactively #'treebundel-clone)
           selection))))
 
-(defun treebundel-read-project (workspace &optional prompt add initial)
+(defun treebundel-read-project (workspace &optional prompt add initial require-match)
   "Interactively find the path of a project.
 WORKSPACE is the workspace to look for projects in.
 
@@ -528,13 +528,20 @@ minibuffer.
 When ADD is non-nil, add an option for the user to add a project
 that isn't in the workspace.
 
-INITIAL is the default value for the name of the project that is automatically
-inserted when the minibuffer prompt is shown."
+INITIAL is the default value for the name of the project that is
+automatically inserted when the minibuffer prompt is shown.
+
+REQUIRE-MATCH forces a valid workspace to be selected.  This removes
+the ability to create a workspace with a new entry."
   (let* ((candidates (mapcar (lambda (project)
                                (cons project 'existing))
                              (treebundel--workspace-projects workspace))))
     (when add (setq candidates (append candidates '(("[ add ]" . add)))))
-    (let* ((selection (completing-read (or prompt "Project: ") candidates nil nil initial))
+    (let* ((selection (completing-read (or prompt "Project: ")
+                                       candidates
+                                       nil
+                                       require-match
+                                       initial))
            (value (cdr (assoc selection candidates))))
       (if (equal value 'add)
           (let ((bare (treebundel-read-bare prompt t)))
