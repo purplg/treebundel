@@ -724,6 +724,37 @@ There must be no changes in the project to remove it."
                          project))))
 
 ;;;###autoload
+(defun treebundel-move-project (workspace project new-workspace)
+  "Move a project from one workspace to another.
+WORKSPACE is the name of the workspace that contains the project to be
+moved.
+
+PROJECT is name of the project to move to a new workspace.
+
+NEW-WORKSPACE is the name of the workspace the project will be moved
+into."
+  (interactive
+   (let* ((workspace (treebundel-read-workspace "Move project from workspace" t))
+          (project (treebundel-read-project workspace
+                                            (format "Move project from %s: " workspace)
+                                            nil
+                                            nil
+                                            t))
+          (new-workspace (treebundel-read-workspace
+                          (format "Move %s to workspace" project)
+                          t)))
+     (list workspace project new-workspace)))
+  (treebundel--git-with-repo (treebundel-project-path workspace project)
+    "worktree"
+    "move"
+    (treebundel-project-path workspace project)
+    (file-name-concat (treebundel-workspace-path new-workspace) project))
+  (treebundel--message "Moved project '%s' from workspace '%s' -> '%s'"
+                       project
+                       workspace
+                       new-workspace))
+
+;;;###autoload
 (defun treebundel-clone (url)
   "Clone URL to the collection of bare repos.
 Once a repository is in the bare repos collection, you can add it to a project
