@@ -791,9 +791,10 @@ with `treebundel-add-project'"
    (list (read-string "URL: " (or (treebundel--git-url-like-p (gui-get-selection 'CLIPBOARD 'STRING))
                                   (treebundel--git-url-like-p (gui-get-selection 'PRIMARY 'STRING))))))
   (treebundel--message "Cloning %s..." url)
-  (let ((bare-name (file-name-nondirectory
-                    (directory-file-name
-                     (treebundel--clone url)))))
+  (let ((bare-name (string-remove-suffix ".git"
+                                         (file-name-nondirectory
+                                          (directory-file-name
+                                           (treebundel--clone url))))))
     (treebundel--message "Finished cloning %s." bare-name)
     bare-name))
 
