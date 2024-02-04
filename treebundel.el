@@ -513,10 +513,11 @@ excluded from the candidates."
                                    candidates)))
     (when clone
       (setq candidates (append candidates '(("[ clone ]" . clone)))))
-    (if-let ((selection (car (assoc (completing-read (or prompt "Select project: ") candidates) candidates))))
-        (if (equal selection 'clone)
-            (call-interactively #'treebundel-clone)
-          selection))))
+    (let ((selection (assoc (completing-read (or prompt "Select project: ") candidates)
+                            candidates)))
+      (if (equal (cdr selection) 'clone)
+          (call-interactively #'treebundel-clone)
+        (car selection)))))
 
 (defun treebundel-read-project (workspace &optional prompt add initial require-match)
   "Interactively find the path of a project.
@@ -537,18 +538,18 @@ the ability to create a workspace with a new entry."
                                (cons project 'existing))
                              (treebundel--workspace-projects workspace))))
     (when add (setq candidates (append candidates '(("[ add ]" . add)))))
-    (let* ((selection (completing-read (or prompt "Project: ")
-                                       candidates
-                                       nil
-                                       require-match
-                                       initial))
-           (value (cdr (assoc selection candidates))))
-      (if (equal value 'add)
+    (let ((selection (assoc (completing-read (or prompt "Project: ")
+                                             candidates
+                                             nil
+                                             require-match
+                                             initial)
+                            candidates)))
+      (if (equal (cdr selection) 'add)
           (let ((bare (treebundel-read-bare prompt t)))
             (treebundel--project-add workspace
                                      bare
                                      (treebundel--branch-name workspace)))
-        selection))))
+        (car selection)))))
 
 (defun treebundel-read-branch (repo-path &optional prompt initial)
   "Interactively selected a branch to checkout for project.
@@ -581,14 +582,15 @@ to create a workspace with a new entry."
                              (treebundel--workspaces)))
          (default (treebundel-current-workspace))
          (prompt (if default (format "%s [%s]: " (or prompt "Workspace") default) "Workspace: "))
-         (workspace (completing-read prompt candidates nil require-match nil nil default)))
-    (if (eq 'existing (cdr (assoc workspace candidates)))
-        workspace
-      (let ((workspace-path (treebundel-workspace-path workspace)))
+         (selection (assoc (completing-read prompt candidates nil require-match nil nil default)
+                           candidates)))
+    (if (eq (cdr selection) 'existing)
+        (car selection)
+      (let ((workspace-path (treebundel-workspace-path (car selection))))
         (when (y-or-n-p (format "Are you sure you want to create a new workspace '%s'?"
-                                workspace))
+                                (car selection)))
           (make-directory workspace-path)
-          workspace)))))
+          (car selection))))))
 
 (defun treebundel--git-url-like-p (url)
   "Return non-nil if URL seems like a git-clonable URL.
@@ -789,9 +791,11 @@ with `treebundel-add-project'"
    (list (read-string "URL: " (or (treebundel--git-url-like-p (gui-get-selection 'CLIPBOARD 'STRING))
                                   (treebundel--git-url-like-p (gui-get-selection 'PRIMARY 'STRING))))))
   (treebundel--message "Cloning %s..." url)
-  (let ((bare (treebundel--clone url)))
-    (treebundel--message "Finished cloning %s." bare)
-    bare))
+  (let ((bare-name (file-name-nondirectory
+                    (directory-file-name
+                     (treebundel--clone url)))))
+    (treebundel--message "Finished cloning %s." bare-name)
+    bare-name))
 
 ;;;###autoload
 (defun treebundel-delete-bare (bare &optional interactive)
