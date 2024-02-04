@@ -582,15 +582,15 @@ to create a workspace with a new entry."
                              (treebundel--workspaces)))
          (default (treebundel-current-workspace))
          (prompt (if default (format "%s [%s]: " (or prompt "Workspace") default) "Workspace: "))
-         (selection (assoc (completing-read prompt candidates nil require-match nil nil default)
-                           candidates)))
+         (read (completing-read prompt candidates nil require-match nil nil default))
+         (selection (assoc read candidates)))
     (if (eq (cdr selection) 'existing)
         (car selection)
-      (let ((workspace-path (treebundel-workspace-path (car selection))))
+      (let ((workspace-path (treebundel-workspace-path read)))
         (when (y-or-n-p (format "Are you sure you want to create a new workspace '%s'?"
-                                (car selection)))
+                                read))
           (make-directory workspace-path)
-          (car selection))))))
+          read)))))
 
 (defun treebundel--git-url-like-p (url)
   "Return non-nil if URL seems like a git-clonable URL.
