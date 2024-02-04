@@ -756,6 +756,7 @@ into."
                        workspace
                        new-workspace))
 
+;;;###autoload
 (defun treebundel-rename-project (workspace project new-name)
   "Rename a project.
 WORKSPACE is the name of the workspace that contains the project to be
