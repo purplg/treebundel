@@ -260,7 +260,7 @@ ARGS are the arguments passed to git."
      (treebundel--gitlog 'command (string-join (list ,@args) " "))
      (let ((result (vc-git--call t ,@args))
            (output (string-trim-right (buffer-string))))
-       (treebundel--gitlog 'output output)
+       (treebundel--gitlog 'output (string-replace "%" "%%" output))
        (when (> result 0)
          (user-error "Git command error.  See %s: %s" treebundel--gitlog-buffer output))
        output)))
