@@ -766,9 +766,9 @@ PROJECT is name of the project in WORKSPACE to be renamed.
 
 NEW-NAME is the new name PROJECT will be renamed to."
   (interactive
-   (let* ((workspace (treebundel-read-workspace "Move project from workspace" t))
+   (let* ((workspace (treebundel-read-workspace "Rename project in workspace" t))
           (project (treebundel-read-project workspace
-                                            (format "Move project from %s: " workspace)
+                                            (format "Rename project in %s: " workspace)
                                             nil
                                             nil
                                             t))
