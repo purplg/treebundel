@@ -124,7 +124,7 @@
       (expect (treebundel--git-with-repo (treebundel-project-path workspace
                                                           remote)
                 "rev-parse" "--abbrev-ref" "HEAD")
-              :to-equal (concat treebundel-prefix workspace)))
+              :to-equal (concat treebundel-branch-prefix workspace)))
 
     (it "should use the specified branch"
       (treebundel--project-add workspace remote "new-branch")
