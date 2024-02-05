@@ -393,6 +393,8 @@ REPO-PATH is the absolute path of the repo to check."
 
 (defun treebundel--bare-list ()
   "Return a list of all existing bare repository directory names."
+  (unless (file-exists-p treebundel-bare-dir)
+    (make-directory treebundel-bare-dir))
   (directory-files treebundel-bare-dir nil "\\`[^.].*"))
 
 (defun treebundel--bare-unpushed-commits-p (bare &optional branches)
