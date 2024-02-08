@@ -1,7 +1,7 @@
 ;;; treebundel.el --- Bundle related git-worktrees together -*- lexical-binding: t; -*-
 
 ;; Package-Requires: ((emacs "27.1") (compat "29.1.4.2"))
-;; Version: 0.2.0
+;; Version: 0.3.0
 ;; Author: Ben Whitley
 ;; Homepage: https://github.com/purplg/treebundel
 ;; Keywords: convenience vc

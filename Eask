@@ -2,7 +2,7 @@
 (source "melpa")
 
 (package "treebundel"
-         "0.2.0"
+         "0.3.0"
          "Bundle related git-worktrees together")
 
 (website-url "https://github.com/purplg/treebundel")
