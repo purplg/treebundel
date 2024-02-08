@@ -579,6 +579,10 @@ minibuffer.
 
 REQUIRE-MATCH forces a valid workspace to be selected.  This removes the ability
 to create a workspace with a new entry."
+  (when (and (not (file-exists-p treebundel-workspace-root))
+             (y-or-n-p (format "%s directory doesn't exist. Create?"
+                               treebundel-workspace-root)))
+    (make-directory treebundel-workspace-root))
   (let* ((candidates (mapcar (lambda (workspace)
                                (cons workspace 'existing))
                              (treebundel--workspaces)))
