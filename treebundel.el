@@ -348,10 +348,11 @@ If COMMIT-B is nil, count between HEAD Of default branch and COMMIT-A."
 
 (defun treebundel--bare (repo-path)
   "Return the name of the bare repo related to REPO-PATH."
-  (thread-first (treebundel--git-with-repo repo-path
-                  "rev-parse" "--path-format=absolute" "--git-common-dir")
-                (directory-file-name)
-                (file-name-base)))
+  (when (file-exists-p (file-name-concat repo-path ".git"))
+    (thread-first (treebundel--git-with-repo repo-path
+                    "rev-parse" "--path-format=absolute" "--git-common-dir")
+                  (directory-file-name)
+                  (file-name-base))))
 
 (defun treebundel--worktree-count (repo-path)
   "Return the number of worktrees that exist for REPO-PATH."
