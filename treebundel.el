@@ -417,7 +417,7 @@ strings, only check these local branches."
   "Return a list of absolute paths to projects in WORKSPACE."
   (thread-last (directory-files (treebundel-workspace-path workspace) t "\\`[^\\.]")
                (seq-filter #'file-directory-p)
-               (seq-map (lambda (path) (file-name-base path)))))
+               (seq-map (lambda (path) (file-name-nondirectory path)))))
 
 (defun treebundel--workspaces ()
   "Return a list of all existing workspace names."
