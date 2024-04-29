@@ -4,6 +4,8 @@
 (require 'treebundel)
 (require 'vc)
 
+(setq buttercup-stack-frame-style 'full)
+
 (defvar treebundel-test-debug nil
   "Set to t to log to a file for debugging tests failures.")
 
