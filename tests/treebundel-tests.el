@@ -161,7 +161,23 @@
 
     (it "should work in a project"
       (let ((default-directory (file-name-concat treebundel-workspace-root workspace "feature")))
-        (expect "workspace-one" :to-equal (treebundel-current-workspace))))))
+        (expect "workspace-one" :to-equal (treebundel-current-workspace)))))
+
+  (describe "project-current"
+    (it "should work with nil"
+      (expect (treebundel--project-current nil) :to-be nil))
+
+    (it "should not work outside root"
+      (let ((buffer-file-name (expand-file-name "../" treebundel-workspace-root)))
+        (expect (treebundel--project-current) :to-be nil)))
+
+    (it "should not work in a workspace"
+      (let ((buffer-file-name (file-name-concat treebundel-workspace-root workspace)))
+        (expect (treebundel--project-current) :to-be nil)))
+
+    (it "should work in a project"
+      (let ((buffer-file-name (file-name-concat treebundel-workspace-root workspace "feature")))
+        (expect "feature" :to-equal (treebundel--project-current))))))
 
 (provide 'treebundel-tests)
 ;;; treebundel-tests.el ends here.
