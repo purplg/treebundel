@@ -624,7 +624,8 @@ PROJECT is the name of the project within the workspace to open."
                                     (format "Open project in %s: " workspace)
                                     t))))
   (let* ((new-workspace-p (not (string= (treebundel-current-workspace) workspace)))
-         (new-project-p (not (string= (treebundel--project-current) project))))
+         (new-project-p (or new-workspace-p
+                            (not (string= (treebundel--project-current) project)))))
     (when new-workspace-p (run-hook-with-args 'treebundel-before-workspace-open-functions workspace))
     (when new-project-p (run-hook-with-args
                          'treebundel-before-project-open-functions
