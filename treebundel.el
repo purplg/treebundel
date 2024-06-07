@@ -338,7 +338,7 @@ Place the cloned repository as a bare repository in the directory declared in
 
 (defun treebundel--rev-count (repo-path commit-a &optional commit-b)
   "Return the number of commits between COMMIT-A and COMMIT-B at REPO-PATH.
-If COMMIT-B is nil, count between HEAD Of default branch and COMMIT-A."
+If COMMIT-B is nil, count between HEAD of default branch and COMMIT-A."
   (unless commit-b
     (setq commit-b commit-a)
     (setq commit-a (treebundel--branch-default repo-path)))
