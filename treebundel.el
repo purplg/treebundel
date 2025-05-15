@@ -143,13 +143,10 @@
          (set option (file-name-as-directory (expand-file-name
                                               value)))))
 
-(defcustom treebundel-bare-dir (file-name-concat treebundel-workspace-root ".bare")
+(defcustom treebundel-bare-dir ".bare"
   "The path where bare repositories are stored."
   :group 'treebundel
-  :type 'string
-  :set (lambda (option value)
-         (set option (file-name-as-directory (expand-file-name
-                                              value)))))
+  :type 'string)
 
 (defcustom treebundel-project-open-function
   (if (version< emacs-version "28")
@@ -326,7 +323,8 @@ Returns the path to the newly created worktree."
 (defun treebundel--clone (url)
   "Clone a repository from URL to the bare repo directory.
 Place the cloned repository as a bare repository in the directory declared in
-`treebundel-bare-dir' so worktrees can be created from it as workspace projects."
+`treebundel-bare-dir' within `treebundel-workspace-root' so worktrees can be
+created from it as workspace projects."
   (let* ((name (car (last (split-string url "/"))))
          (dest (treebundel-bare-path name)))
     (when (file-exists-p dest)
@@ -383,7 +381,7 @@ REPO-PATH is the absolute path of the repo to check."
 ;; Bares
 (defun treebundel-bare-path (bare)
   "Return the path of bare repository with BARE."
-  (file-name-concat treebundel-bare-dir
+  (file-name-concat treebundel-workspace-root treebundel-bare-dir
                     (if (string= "git" (file-name-extension bare))
                         bare
                       (concat bare ".git"))))
@@ -394,9 +392,10 @@ REPO-PATH is the absolute path of the repo to check."
 
 (defun treebundel--bare-list ()
   "Return a list of all existing bare repository directory names."
-  (unless (file-exists-p treebundel-bare-dir)
-    (make-directory treebundel-bare-dir))
-  (directory-files treebundel-bare-dir nil "\\`[^.].*"))
+  (let ((bare-dir  (file-name-concat treebundel-workspace-root treebundel-bare-dir)))
+    (unless (file-exists-p bare-dir)
+      (make-directory bare-dir))
+    (directory-files bare-dir nil "\\`[^.].*")))
 
 (defun treebundel--bare-unpushed-commits-p (bare &optional branches)
   "Return t if there are commits not on remote.
@@ -657,8 +656,9 @@ PROJECT is the name of the project within the workspace to open."
 (defun treebundel-delete-workspace (workspace)
   "Delete workspace at WORKSPACE.
 This will check if all projects within the workspace are clean and if so, remove
-everything in the workspace.  Anything committed is still saved in the
-respective projects' bare repository located at `treebundel-bare-dir'."
+everything in the workspace. Anything committed is still saved in the respective
+projects' bare repository located at `treebundel-bare-dir' within
+`treebundel-workspace-root'."
   (interactive
    (list (treebundel-read-workspace "Delete workspace" t)))
   (let* ((workspace-path (treebundel-workspace-path workspace))
