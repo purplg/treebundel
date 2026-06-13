@@ -1,6 +1,6 @@
 ;;; treebundel.el --- Bundle related git-worktrees together -*- lexical-binding: t; -*-
 
-;; Package-Requires: ((emacs "29.1"))
+;; Package-Requires: ((emacs "30.1"))
 ;; Version: 0.3.0
 ;; Author: Ben Whitley
 ;; Homepage: https://github.com/purplg/treebundel
@@ -120,6 +120,7 @@
 ;;; Code:
 (require 'subr-x)
 (require 'vc-git)
+(require 'transient)
 
 
 ;;;; Customization
@@ -518,7 +519,6 @@ excluded from the candidates."
       (if (equal (cdr selection) 'clone)
           (call-interactively #'treebundel-clone)
         (car selection)))))
-
 (defun treebundel-read-project (workspace &optional prompt add initial require-match)
   "Interactively find the path of a project.
 WORKSPACE is the workspace to look for projects in.
@@ -550,7 +550,6 @@ the ability to create a workspace with a new entry."
                                      bare
                                      (treebundel--branch-name workspace)))
         (car selection)))))
-
 (defun treebundel-read-branch (repo-path &optional prompt initial)
   "Interactively selected a branch to checkout for project.
 REPO-PATH is the path to project to list available branches for.
@@ -569,7 +568,6 @@ inserted when the minibuffer prompt is shown."
                    (or initial (treebundel--branch-name
                                 (treebundel--bare
                                  repo-path)))))
-
 (defun treebundel-read-workspace (&optional prompt require-match)
   "Interactively find the path of a workspace.
 PROMPT is the prompt to be presented to the user in the
@@ -595,7 +593,6 @@ to create a workspace with a new entry."
                                 read))
           (make-directory workspace-path)
           read)))))
-
 (defun treebundel--git-url-like-p (url)
   "Return non-nil if URL seems like a git-clonable URL.
 The URL is returned for non-nil."
@@ -607,7 +604,36 @@ The URL is returned for non-nil."
        url))
 
 ;;;###autoload
-(defun treebundel-open (workspace project)
+(transient-define-prefix treebundel ()
+  ""
+  ["Quick"
+   ("w" "Switch workspace" treebundel-open-workspace)
+   ("p" "Switch project" treebundel-open-project)]
+
+  ["Transient Commands"
+   ("W" "Workspace" treebundel-workspace)
+   ("P" "Project" treebundel-project :if (lambda () (treebundel--project-current)))
+   [ :if (lambda () (treebundel--project-current))
+       :description (lambda () (format "Scope: %s" (transient-scope)))]
+   ("b" "Bare" treebundel-bare)
+   ("l" "Log" treebundel-open-gitlog)])
+
+
+;;;###autoload
+(transient-define-prefix treebundel-workspace ()
+  ""
+  ["Arguments"
+   ("-f" "Ignore errors" ("-f" "--force"))
+   ("-r" "Recursive" ("-r" "--recursive"))
+   ("-F" (lambda () (propertize "Delete data" 'face 'transient-disabled-suffix)) (nil "--force-delete-unpushed-commits"))]
+
+  [("w" "Switch" treebundel-open-workspace)
+   ("k" "Remove" treebundel-delete-workspace)
+   ("m" (lambda () (propertize "Rename" 'face 'transient-key-noop)) (lambda () (interactive)))]
+  (interactive)
+  (transient-setup 'treebundel-workspace))
+
+(transient-define-suffix treebundel-open-workspace (workspace project)
   "Open or create a workspace and a project within it.
 This will always prompt for a workspace.  If you want to prefer your
 current workspace, use `treebundel-open-project'.
@@ -633,26 +659,9 @@ PROJECT is the name of the project within the workspace to open."
 
     (when new-project-p (run-hooks 'treebundel-after-project-open-hook))
     (when new-workspace-p (run-hooks 'treebundel-after-workspace-open-hook))))
+(defalias 'treebundel-open 'treebundel-open-workspace)
 
-;;;###autoload
-(defun treebundel-open-project (workspace project)
-  "Open a project in some treebundel workspace.
-This function will try to use your current workspace first if the
-current buffer is in one.
-
-WORKSPACE is the name of the workspace to open.
-
-PROJECT is the name of the project within the workspace to open."
-  (interactive
-   (let ((workspace (or (treebundel-current-workspace)
-                        (treebundel-read-workspace))))
-     (list workspace (treebundel-read-project workspace
-                                              (format "Open project in %s: " workspace)
-                                              t))))
-  (treebundel-open workspace project))
-
-;;;###autoload
-(defun treebundel-delete-workspace (workspace)
+(transient-define-suffix treebundel-delete-workspace (workspace)
   "Delete workspace at WORKSPACE.
 This will check if all projects within the workspace are clean and if so, remove
 everything in the workspace. Anything committed is still saved in the respective
@@ -677,8 +686,25 @@ projects' bare repository located at `treebundel-bare-dir' within
           (treebundel--message "Deleted workspace '%s'" workspace))
       (user-error "There must not be any unsaved changes to delete a workspace"))))
 
+
 ;;;###autoload
-(defun treebundel-add-project (workspace bare project project-branch)
+(transient-define-prefix treebundel-project ()
+  "Working with projects"
+  [:description (lambda ()
+                  (if-let* ((workspace (treebundel-current-workspace))
+                            (project (treebundel--project-current)))
+                      (concat
+                       (propertize "Update " 'face 'transient-heading)
+                       (propertize workspace 'face 'transient-key)
+                       (propertize "/" 'face 'transient-heading)
+                       (propertize project   'face 'transient-value))
+                    (propertize "Update" 'face 'transient-heading)))
+   ("k" "Remove" treebundel-remove-project)
+   ("m" "Move" treebundel-move-project)
+   ("r" "Rename" treebundel-move-project)]
+  [("a" "Add" treebundel-clone)])
+
+(transient-define-suffix treebundel-add-project (workspace bare project project-branch)
   "Add a project to a workspace.
 This will create a worktree in WORKSPACE with a branch named
 after the workspace with `treebundel-branch-prefix' prefixed.
@@ -709,8 +735,23 @@ this project."
                                                       project-branch
                                                       project)))
 
-;;;###autoload
-(defun treebundel-remove-project (workspace project)
+(transient-define-suffix treebundel-open-project (workspace project)
+  "Open a project in some treebundel workspace.
+This function will try to use your current workspace first if the
+current buffer is in one.
+
+WORKSPACE is the name of the workspace to open.
+
+PROJECT is the name of the project within the workspace to open."
+  (interactive
+   (let ((workspace (or (treebundel-current-workspace)
+                        (treebundel-read-workspace))))
+     (list workspace (treebundel-read-project workspace
+                                              (format "Open project in %s: " workspace)
+                                              t))))
+  (treebundel-open workspace project))
+
+(transient-define-suffix treebundel-remove-project (workspace project)
   "Remove PROJECT from workspace WORKSPACE.
 There must be no changes in the project to remove it."
   (interactive
@@ -731,8 +772,7 @@ There must be no changes in the project to remove it."
                          (treebundel-current-workspace project-path)
                          project))))
 
-;;;###autoload
-(defun treebundel-move-project (workspace project new-workspace)
+(transient-define-suffix treebundel-move-project (workspace project new-workspace)
   "Move a project from one workspace to another.
 WORKSPACE is the name of the workspace that contains the project to be
 moved.
@@ -762,8 +802,7 @@ into."
                        workspace
                        new-workspace))
 
-;;;###autoload
-(defun treebundel-rename-project (workspace project new-name)
+(transient-define-suffix treebundel-rename-project (workspace project new-name)
   "Rename a project.
 WORKSPACE is the name of the workspace that contains the project to be
 renamed.
@@ -789,8 +828,22 @@ NEW-NAME is the new name PROJECT will be renamed to."
                        project
                        new-name))
 
+
 ;;;###autoload
-(defun treebundel-clone (url)
+(transient-define-prefix treebundel-bare ()
+  "Prefix for working with bare repositories."
+  [("-f" "Force" ("-f" "--force"))
+   ("-F" "Force" ("-F" "--force-delete-unpushed-commits"))
+   ("-y" "Yank From Clipboard" ("-y" "--yank"))]
+
+  ["Bare"
+   ("c" "Clone" treebundel-clone)
+   ("k" "Delete" treebundel-delete-bare)
+   ("f" "Fetch" treebundel-fetch-bare)]
+  (interactive)
+  (transient-setup 'treebundel-bare))
+
+(transient-define-suffix treebundel-clone-bare (url)
   "Clone URL to the collection of bare repos.
 Once a repository is in the bare repos collection, you can add it to a project
 with `treebundel-add-project'"
@@ -804,16 +857,17 @@ with `treebundel-add-project'"
                                            (treebundel--clone url))))))
     (treebundel--message "Finished cloning %s." bare-name)
     bare-name))
+(defalias 'treebundel-clone 'treebundel-clone-bare)
 
-;;;###autoload
-(defun treebundel-delete-bare (bare &optional interactive)
+(transient-define-suffix treebundel-delete-bare (bare &optional interactive force)
   "Delete a bare repository BARE.
 Existing worktrees or uncommitted changes will prevent you from deleting.
 
 If INTERACTIVE is non-nil, prompt the user to force delete for any changes not
-on remote."
-  (interactive
-   (list (treebundel-read-bare "Select repo to delete: ") t))
+on remote.
+
+When FORCE is t, continue deleting even if"
+  (interactive (list (treebundel-read-bare "Select bare to delete: ") t))
   (cond ((treebundel--has-worktrees-p (treebundel-bare-path bare))
          (treebundel--error "This repository has worktrees checked out"))
         ((and (treebundel--bare-unpushed-commits-p bare)
@@ -822,18 +876,22 @@ on remote."
                      (treebundel--error (format "%s has unpushed commits on some branches" bare))))))
         (t (treebundel--bare-delete bare))))
 
-(defun treebundel-fetch-bare (bare)
+(transient-define-suffix treebundel-fetch-bare (bare)
   "Perform a git-fetch on bare repo.
 BARE is the name of the bare repo to fetch.
 
 This command is normally not useful unless `treebundel-fetch-on-add' is
 disabled.  Use this command to manually control when git-fetch operations are
 performed."
-  (interactive (list (treebundel-read-bare "Select repo to fetch: ")))
+  (interactive (list (treebundel-read-bare "Select bare to fetch: ")))
   (treebundel--message "Fetching...")
   (treebundel--git-with-repo bare "fetch")
   (treebundel--message "%s updated" bare))
 
-(provide 'treebundel)
+(transient-define-suffix treebundel-open-gitlog ()
+  ""
+  (interactive)
+  (display-buffer (treebundel--gitlog-buffer)))
 
+(provide 'treebundel)
 ;;; treebundel.el ends here
