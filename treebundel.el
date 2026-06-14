@@ -603,7 +603,7 @@ The URL is returned for non-nil."
        (string-suffix-p ".git" url)
        url))
 
-;;;###autoload
+;;;###autoload(autoload 'treebundel "treebundel" nil t)
 (transient-define-prefix treebundel ()
   ""
   ["Quick"
@@ -619,7 +619,6 @@ The URL is returned for non-nil."
    ("l" "Log" treebundel-open-gitlog)])
 
 
-;;;###autoload
 (transient-define-prefix treebundel-workspace ()
   ""
   ["Arguments"
@@ -687,7 +686,6 @@ projects' bare repository located at `treebundel-bare-dir' within
       (user-error "There must not be any unsaved changes to delete a workspace"))))
 
 
-;;;###autoload
 (transient-define-prefix treebundel-project ()
   "Working with projects"
   [:description (lambda ()
@@ -829,7 +827,6 @@ NEW-NAME is the new name PROJECT will be renamed to."
                        new-name))
 
 
-;;;###autoload
 (transient-define-prefix treebundel-bare ()
   "Prefix for working with bare repositories."
   [("-f" "Force" ("-f" "--force"))
