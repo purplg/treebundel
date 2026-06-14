@@ -1,6 +1,6 @@
 ;;; treebundel.el --- Bundle related git-worktrees together -*- lexical-binding: t; -*-
 
-;; Package-Requires: ((emacs "30.1"))
+;; Package-Requires: ((emacs "30.1") (transient "0.13.4"))
 ;; Version: 0.3.0
 ;; Author: Ben Whitley
 ;; Homepage: https://github.com/purplg/treebundel
