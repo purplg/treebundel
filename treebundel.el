@@ -622,28 +622,19 @@ The URL is returned for non-nil."
 
 ;;;###autoload(autoload 'treebundel "treebundel" nil t)
 (transient-define-prefix treebundel ()
-  ["Quick"
-   ("w" "Open workspace" treebundel-open-workspace)
-   ("p" "Open project" treebundel-open-project)]
+  [
+   ["Switch"
+    ("w" "Open workspace" treebundel-open-workspace)
+    ("p" "Open project" treebundel-open-project)
+    ("W" "Workspace" treebundel-workspace :if treebundel-current-workspace
+     :description (lambda () (format "Workspace: %s" (propertize (treebundel-current-workspace) 'face 'transient-argument))))
+    ("P" "Project" treebundel-project :if treebundel--project-current
+     :description (lambda () (format "Project: %s" (propertize (treebundel--project-current) 'face 'transient-argument))))]
 
-  ["Transient Commands"
-   ("W" "Workspace" treebundel-workspace :if treebundel-current-workspace
-    :description (lambda () (format "Workspace: %s" (propertize (treebundel-current-workspace) 'face 'transient-argument))))
-
-   ("P" "Project" treebundel-project :if treebundel--project-current
-    :description (lambda () (format "Project: %s" (propertize (treebundel--project-current) 'face 'transient-argument))))
-
-   ("o" "Open"
-    (lambda () (interactive)
-      (funcall treebundel-project-open-function (treebundel-project-path (treebundel-current-workspace)
-                                                                         (treebundel--project-current))))
-    :if treebundel--project-current)
-
-   ("f" "Open File" projectile-find-file :if treebundel--project-current) ;; TODO replace with find-file variable
-
-   ("b" "Bare" treebundel-bare :if treebundel--project-current)
-
-   ("l" "Log" treebundel-open-gitlog)])
+   ["Open"
+    ("f" "Project" project-find-file :if treebundel--project-current)
+    ("b" "Bare" treebundel-bare :if treebundel--project-current)
+    ("l" "Log" treebundel-open-gitlog)]])
 
 ;;;;; Bare
 (transient-define-prefix treebundel-bare ()
