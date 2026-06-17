@@ -124,7 +124,6 @@
 
 
 ;;;; Customization
-
 (defgroup treebundel nil
   "Exploit git-worktrees to create inter-related project workspaces."
   :group 'convenience
@@ -169,7 +168,7 @@ operations when adding projects to your workspaces."
   :group 'treebundel
   :type 'boolean)
 
-;; Hooks
+;;;;; Hooks
 (defcustom treebundel-before-project-open-functions nil
   "Hook which is run before a project is opened.
 A single argument is passed which is the path to the project to
@@ -249,6 +248,7 @@ ARGS is same arguments as `message'."
 ;; section. Additional git operations should have their own accompanying
 ;; function instead of using a macro directly.
 
+;;;;; Git macros
 (defmacro treebundel--git (&rest args)
   "Base macro for all treebundel git commands.
 ARGS are the arguments passed to git."
@@ -270,6 +270,7 @@ ARGS are the arguments passed to git."
   (declare (indent defun))
   `(treebundel--git "-C" ,repo-path ,@args))
 
+;;;;; Branches
 (defun treebundel--branches (repo-path &optional omit-main)
   "Return a list of branches for repository at REPO-PATH.
 When OMIT-MAIN is non-nil, exclude the default branch."
@@ -282,6 +283,12 @@ When OMIT-MAIN is non-nil, exclude the default branch."
                       (remove main-branch branches))
                   branches))))
 
+(defun treebundel--branch (repo-path)
+  "Return the branch checked out REPO-PATH."
+  (treebundel--git-with-repo repo-path
+    "branch" "--show-current"))
+
+;;;;; Worktrees
 (defun treebundel--worktree-remove (repo-path &optional force)
   "Remove the worktree at REPO-PATH.
 If FORCE is t, then add --force to the command."
@@ -316,11 +323,7 @@ Returns the path to the newly created worktree."
                  "\0\0"
                  t)))
 
-(defun treebundel--branch (repo-path)
-  "Return the branch checked out REPO-PATH."
-  (treebundel--git-with-repo repo-path
-    "branch" "--show-current"))
-
+;;;;; Bares
 (defun treebundel--clone (url)
   "Clone a repository from URL to the bare repo directory.
 Place the cloned repository as a bare repository in the directory declared in
@@ -335,6 +338,14 @@ created from it as workspace projects."
     (treebundel--git-with-repo dest "fetch")
     dest))
 
+(defun treebundel--bare (repo-path)
+  "Return the name of the bare repo related to REPO-PATH."
+  (let ((bare-name (thread-first (treebundel--git-with-repo repo-path
+                                   "rev-parse" "--path-format=absolute" "--git-common-dir")
+                                 (directory-file-name)
+                                 (file-name-base))))
+    (unless (string= ".git" bare-name) bare-name)))
+
 (defun treebundel--rev-count (repo-path commit-a &optional commit-b)
   "Return the number of commits between COMMIT-A and COMMIT-B at REPO-PATH.
 If COMMIT-B is nil, count between HEAD Of default branch and COMMIT-A."
@@ -345,14 +356,7 @@ If COMMIT-B is nil, count between HEAD Of default branch and COMMIT-A."
    (treebundel--git-with-repo repo-path
      "rev-list" (concat commit-a ".." commit-b) "--count")))
 
-(defun treebundel--bare (repo-path)
-  "Return the name of the bare repo related to REPO-PATH."
-  (let ((bare-name (thread-first (treebundel--git-with-repo repo-path
-                                   "rev-parse" "--path-format=absolute" "--git-common-dir")
-                                 (directory-file-name)
-                                 (file-name-base))))
-    (unless (string= ".git" bare-name) bare-name)))
-
+;;;;; Utility
 (defun treebundel--worktree-count (repo-path)
   "Return the number of worktrees that exist for REPO-PATH."
   (seq-count
@@ -383,7 +387,7 @@ REPO-PATH is the absolute path of the repo to check."
 ;; These functions provide useful functions for and the rules to enforce the
 ;; definitions of the terminology at the top of this package.
 
-;; Bares
+;;;;; Bares
 (defun treebundel-bare-path (bare)
   "Return the path of bare repository with BARE."
   (file-name-concat treebundel-workspace-root treebundel-bare-dir
@@ -413,7 +417,7 @@ strings, only check these local branches."
   (> (length (treebundel--git-with-repo (treebundel-bare-path bare)
                "log" "--branches" "--not" "--remotes")) 0))
 
-;; Workspaces
+;;;;; Workspaces
 (defun treebundel-workspace-path (name)
   "Return the path of a workspace named NAME."
   (file-name-concat treebundel-workspace-root name))
@@ -442,7 +446,7 @@ If FILE-PATH is non-nil, use the current buffer instead."
         (setq file-path (file-name-directory (directory-file-name file-path))))
       workspace)))
 
-;; Projects
+;;;;; Projects
 (defun treebundel--project-add (workspace bare &optional branch-name project)
   "Add a project to a workspace.
 Defines the way project worktrees are added and named in workspaces.
@@ -483,7 +487,7 @@ If FILE-PATH is non-nil, use the current buffer."
   "Return the path of PROJECT in WORKSPACE."
   (file-name-concat treebundel-workspace-root workspace project))
 
-;; Branches
+;;;;; Branches
 (defun treebundel--branch-name (workspace)
   "Generate a branch name for WORKSPACE."
   (concat treebundel-branch-prefix workspace))
@@ -524,6 +528,7 @@ excluded from the candidates."
       (if (equal (cdr selection) 'clone)
           (call-interactively #'treebundel-clone)
         (car selection)))))
+
 (defun treebundel-read-project (workspace &optional prompt add initial require-match)
   "Interactively find the path of a project.
 WORKSPACE is the workspace to look for projects in.
@@ -555,6 +560,7 @@ the ability to create a workspace with a new entry."
                                      bare
                                      (treebundel--branch-name workspace)))
         (car selection)))))
+
 (defun treebundel-read-branch (repo-path &optional prompt initial)
   "Interactively selected a branch to checkout for project.
 REPO-PATH is the path to project to list available branches for.
@@ -573,6 +579,7 @@ inserted when the minibuffer prompt is shown."
                    (or initial (treebundel--branch-name
                                 (treebundel--bare
                                  repo-path)))))
+
 (defun treebundel-read-workspace (&optional prompt require-match)
   "Interactively find the path of a workspace.
 PROMPT is the prompt to be presented to the user in the
@@ -598,6 +605,7 @@ to create a workspace with a new entry."
                                 read))
           (make-directory workspace-path)
           read)))))
+
 (defun treebundel--git-url-like-p (url)
   "Return non-nil if URL seems like a git-clonable URL.
 The URL is returned for non-nil."
@@ -619,7 +627,6 @@ The URL is returned for non-nil."
 
 ;;;###autoload(autoload 'treebundel "treebundel" nil t)
 (transient-define-prefix treebundel ()
-  ""
   ["Quick"
    ("w" "Open workspace" treebundel-open-workspace)
    ("p" "Open project" treebundel-open-project)]
@@ -630,7 +637,6 @@ The URL is returned for non-nil."
 
    ("P" "Project" treebundel-project :if treebundel--project-current
     :description (##format "Project: %s" (propertize (treebundel--project-current) 'face 'transient-argument)))
-
 
    ("o" "Open"
     (lambda () (interactive)
@@ -644,7 +650,7 @@ The URL is returned for non-nil."
 
    ("l" "Log" treebundel-open-gitlog)])
 
-
+;;;;; Workspaces
 (transient-define-prefix treebundel-workspace ()
   ""
   ["Arguments"
@@ -715,7 +721,7 @@ projects' bare repository located at `treebundel-bare-dir' within
             (treebundel--message "Deleted workspace '%s'" workspace))
         (user-error "There must not be any unsaved changes to delete a workspace")))))
 
-
+;;;;; Projects
 (transient-define-prefix treebundel-project ()
   "Working with projects"
   [:description (lambda ()
@@ -856,7 +862,7 @@ NEW-NAME is the new name PROJECT will be renamed to."
                        project
                        new-name))
 
-
+;;;;; Bare
 (transient-define-prefix treebundel-bare ()
   "Prefix for working with bare repositories."
   [("-f" "Force" ("-f" "--force"))
@@ -916,6 +922,7 @@ performed."
   (treebundel--git-with-repo bare "fetch")
   (treebundel--message "%s updated" bare))
 
+;;;;; Log
 (transient-define-suffix treebundel-open-gitlog ()
   ""
   (interactive)
