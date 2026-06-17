@@ -188,7 +188,19 @@ be opened."
   :group 'treebundel
   :type 'hook)
 
-
+;;;;; Faces
+(defface treebundel-workspace '((t :inherit bold :foreground "#0098CF" :box t))
+  "Face used for workspaces."
+  :group 'treebundel-faces)
+
+(defface treebundel-bare '((t :inherit bold :foreground "#C300FF" :box t))
+  "Face used for projects."
+  :group 'treebundel-faces)
+
+(defface treebundel-project '((t :inherit bold :foreground "#24A600" :box t))
+  "Face used for projects."
+  :group 'treebundel-faces)
+
 ;;;; Logging
 (defface treebundel--gitlog-heading
   '((t (:inherit outline-1 :box t :extend t)))
@@ -440,10 +452,8 @@ workspace.
 PROJECT is the name of the worktrees' directory in the workspace."
   (treebundel--project-name
    (treebundel--worktree-add bare
-                             (treebundel-project-path workspace
-                                                      (or project bare))
-                             (or branch-name
-                                 (treebundel--branch-name workspace)))))
+                             (treebundel-project-path workspace (or project bare))
+                             (or branch-name (treebundel--branch-name workspace)))))
 
 (defun treebundel--project-current (&optional file-path)
   "Return the project path of FILE-PATH.
@@ -462,9 +472,11 @@ If FILE-PATH is non-nil, use the current buffer."
   "Return the name of project at PROJECT-PATH."
   (file-name-nondirectory (directory-file-name project-path)))
 
-(defun treebundel-project-path (workspace project)
+(defun treebundel-project-path (&optional workspace project)
   "Return the path of PROJECT in WORKSPACE."
-  (file-name-concat treebundel-workspace-root workspace project))
+  (when-let* ((workspace (or workspace (treebundel-current-workspace)))
+              (project (or project (treebundel--project-current))))
+    (file-name-concat treebundel-workspace-root workspace project)))
 
 ;;;;; Workspaces
 (defun treebundel-workspace-path (name)
@@ -622,19 +634,24 @@ The URL is returned for non-nil."
 
 ;;;###autoload(autoload 'treebundel "treebundel" nil t)
 (transient-define-prefix treebundel ()
-  [
-   ["Switch"
-    ("w" "Open workspace" treebundel-open-workspace)
-    ("p" "Open project" treebundel-open-project)
-    ("W" "Workspace" treebundel-workspace :if treebundel-current-workspace
-     :description (lambda () (format "Workspace: %s" (propertize (treebundel-current-workspace) 'face 'transient-argument))))
-    ("P" "Project" treebundel-project :if treebundel--project-current
-     :description (lambda () (format "Project: %s" (propertize (treebundel--project-current) 'face 'transient-argument))))]
+  [["Open"
+    ("w" "workspace" treebundel-open-workspace)
+    ("p" "project" treebundel-open-project)
+    ("f" "Project file" project-find-file :if treebundel--project-current)
+    ("l" "Log" treebundel-open-gitlog)]
 
-   ["Open"
-    ("f" "Project" project-find-file :if treebundel--project-current)
-    ("b" "Bare" treebundel-bare :if treebundel--project-current)
-    ("l" "Log" treebundel-open-gitlog)]])
+   ["Edit"
+    ("W" "Workspace" treebundel-workspace :if treebundel-current-workspace
+     :description (lambda () (format "Workspace: %s" (propertize (treebundel-current-workspace)
+                                                      'face 'treebundel-workspace))))
+
+    ("P" "Project" treebundel-project :if treebundel--project-current
+     :description (lambda () (format "Project: %s" (propertize (treebundel--project-current)
+                                                    'face 'treebundel-project))))
+
+    ("B" "Bare" treebundel-bare :if (lambda () (treebundel-managed-p (treebundel-project-path)))
+     :description (lambda () (format "Bare: %s" (propertize (treebundel--bare (treebundel-project-path))
+                                                 'face 'treebundel-bare))))]])
 
 ;;;;; Bare
 (transient-define-prefix treebundel-bare ()
@@ -643,10 +660,15 @@ The URL is returned for non-nil."
    ("-F" "Force" ("-F" "--force-delete-unpushed-commits"))
    ("-y" "Yank From Clipboard" ("-y" "--yank"))]
 
-  ["Bare"
+  [:description (lambda () (format "Bare: %s" (propertize (treebundel--bare (treebundel-bare-path (treebundel--project-current))) 'face 'treebundel-bare)))
    ("c" "Clone" treebundel-clone)
-   ("k" "Delete" treebundel-delete-bare)
-   ("f" "Fetch" treebundel-fetch-bare)
+   ("k" "Delete" treebundel-delete-bare
+    :description (lambda ()
+                   (format "Delete: (in use by %s projects)"
+                           (propertize (format "%d" (treebundel--worktree-count (treebundel-project-path)))
+                                       'face 'transient-argument))))
+   ("f" "Fetch" treebundel-fetch-bare)  ;; TODO Automatically fetch bare of current project
+   ("v" "Visit (TODO)" treebundel--not-implemented)
    ("r" "List repos (TODO)" treebundel--not-implemented)]
   (interactive)
   (transient-setup 'treebundel-bare))
@@ -704,9 +726,9 @@ performed."
                             (project (treebundel--project-current)))
                       (concat
                        (propertize "Update " 'face 'transient-heading)
-                       (propertize workspace 'face 'transient-key)
+                       (propertize workspace 'face 'treebundel-workspace)
                        (propertize "/" 'face 'transient-heading)
-                       (propertize project   'face 'transient-value))
+                       (propertize project   'face 'treebundel-project))
                     (propertize "Update" 'face 'transient-heading)))
                 ("k" "Remove" treebundel-remove-project)
                 ("m" "Move" treebundel-move-project)
