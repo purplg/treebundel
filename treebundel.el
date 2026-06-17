@@ -633,10 +633,10 @@ The URL is returned for non-nil."
 
   ["Transient Commands"
    ("W" "Workspace" treebundel-workspace :if treebundel-current-workspace
-    :description (##format "Workspace: %s" (propertize (treebundel-current-workspace) 'face 'transient-argument)))
+    :description (lambda () (format "Workspace: %s" (propertize (treebundel-current-workspace) 'face 'transient-argument))))
 
    ("P" "Project" treebundel-project :if treebundel--project-current
-    :description (##format "Project: %s" (propertize (treebundel--project-current) 'face 'transient-argument)))
+    :description (lambda () (format "Project: %s" (propertize (treebundel--project-current) 'face 'transient-argument))))
 
    ("o" "Open"
     (lambda () (interactive)
