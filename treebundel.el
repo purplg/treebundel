@@ -153,7 +153,7 @@
   :group 'treebundel
   :type 'function)
 
-(defcustom treebundel-fetch-on-add t
+(defcustom treebundel-fetch-on-add nil
   "When t, perform a git-fetch before adding a project to a workspace.
 This allows the latest branches on remote to appear when selecting a branch to
 checkout.
@@ -246,7 +246,7 @@ MSG is the text to be inserted into the log."
 (defun treebundel--message (&rest args)
   "Format a message with a treebundel prefix.
 ARGS is same arguments as `message'."
-  (message "treebundel: %s" (apply #'format args)))
+  (message "%s" (apply #'format args)))
 
 (define-error 'treebundel-error "treebundel error")
 
@@ -467,7 +467,7 @@ strings, only check these local branches."
      "log" "--branches" "--not" "--remotes")
    0))
 
-(defun treebundel--bare-read (prompt _initial-input _history)
+(defun treebundel--bare-read (prompt initial-input history)
   ""
   (let* ((candidates (mapcar (lambda (bare)
                                (let ((bare (replace-regexp-in-string "\\.git$" "" bare)))
@@ -569,7 +569,7 @@ If FILE-PATH is non-nil, use the current buffer instead."
 (defun treebundel-read-bare (&optional prompt)
   "Interactively find the path of a bare.
 PROMPT is the text prompt presented to the user in the minibuffer."
-  (treebundel--bare-read (or prompt "Select project: ")))
+  (treebundel--bare-read (or prompt "Select project: ") nil nil))
 
 (defun treebundel-read-project (workspace &optional prompt initial require-match)
   "Interactively find the path of a project.
@@ -813,7 +813,7 @@ this project."
           (project-branch (treebundel-read-branch (treebundel-bare-path bare)))
           (project (treebundel-read-project workspace "Project name: ")))
      (list workspace bare project project-branch)))
-  (treebundel-open workspace (treebundel--project-add workspace
+  (treebundel-open-workspace workspace (treebundel--project-add workspace
                                                       bare
                                                       project-branch
                                                       project)))
@@ -847,7 +847,7 @@ There must be no changes in the project to remove it."
   (let ((project-path (treebundel-project-path workspace project)))
     (if (and (treebundel--repo-clean-p project-path)
              (treebundel--worktree-remove project-path))
-        (treebundel--message "Removed project '%s' from '%s'" project workspace)
+        (treebundel--message "Removed %s" (treebundel--fmt-workspace-project project workspace))
       (treebundel--message "Cannot remove %s because the project is dirty"
                            (treebundel--fmt-workspace-project (treebundel-current-workspace project-path) project)))))
 
