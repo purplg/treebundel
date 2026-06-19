@@ -433,7 +433,24 @@ If BRANCH is nil, check all local BRANCHES.  If BRANCH is a string or list of
 strings, only check these local branches."
   (when (eq 'string (type-of branches))
     (setq branches (list branches)))
-  (> (length (treebundel--git-with-repo (treebundel-bare-path bare))
+  (> (length (treebundel--git-with-repo (treebundel-bare-path bare)))))
+
+(defun treebundel--bare-read (prompt initial-input history)
+  ""
+  (let* ((candidates (mapcar (lambda (bare)
+                               (let ((bare (replace-regexp-in-string "\\.git$" "" bare)))
+                                 (cons bare 'existing)))
+                             (treebundel--bare-list))))
+    (when omit
+      (setq candidates (seq-remove (lambda (bare) (member (car bare) omit))
+                                   candidates)))
+    (when clone
+      (setq candidates (append candidates '(("[ clone ]" . clone)))))
+    (let ((selection (assoc (completing-read (or prompt "Select project: ") candidates)
+                            candidates)))
+      (if (equal (cdr selection) 'clone)
+          (call-interactively #'treebundel-clone)
+        (car selection)))))
 
 ;;;;; Branches
 (defun treebundel--branch-name (workspace)
@@ -534,20 +551,7 @@ instead.
 
 When OMIT is non-nil, it should be a list of a candidates to be
 excluded from the candidates."
-  (let* ((candidates (mapcar (lambda (bare)
-                               (let ((bare (replace-regexp-in-string "\\.git$" "" bare)))
-                                 (cons bare 'existing)))
-                             (treebundel--bare-list))))
-    (when omit
-      (setq candidates (seq-remove (lambda (bare) (member (car bare) omit))
-                                   candidates)))
-    (when clone
-      (setq candidates (append candidates '(("[ clone ]" . clone)))))
-    (let ((selection (assoc (completing-read (or prompt "Select project: ") candidates)
-                            candidates)))
-      (if (equal (cdr selection) 'clone)
-          (call-interactively #'treebundel-clone)
-        (car selection)))))
+  (treebundel--read-bare prompt))
 
 (defun treebundel-read-project (workspace &optional prompt add initial require-match)
   "Interactively find the path of a project.
@@ -642,36 +646,39 @@ The URL is returned for non-nil."
 
 ;;;###autoload(autoload 'treebundel "treebundel" nil t)
 (transient-define-prefix treebundel ()
-  [["Open"
+  ["Open"
     ("w" "Workspace" treebundel-open-workspace)
     ("p" "Project" treebundel-open-project)
     ("f" "Project file" project-find-file :if treebundel--project-current)]
 
-   ["Configure"
-    ("W" "Workspace" treebundel-workspace
-     :description (lambda () (format "Workspace %s" (if-let* ((workspace (treebundel-current-workspace)))
-                                                        (propertize workspace 'face 'treebundel-workspace)
-                                                      (propertize "None" 'face 'treebundel-disabled)))))
-    ("P" "Project" treebundel-project
-     :description (lambda () (format "Project %s" (if-let* ((project (treebundel--project-current)))
-                                                        (propertize project 'face 'treebundel-project)
-                                                      (propertize "None" 'face 'treebundel-disabled)))))
-    ("B" "Bare" treebundel-bare
-     :description (lambda () (format "Bare %s" (if-let* ((bare (treebundel--bare-current)))
-                                                        (propertize bare 'face 'treebundel-bare)
-                                                      (propertize "None" 'face 'treebundel-disabled)))))]
+  ["Configure"
+   ("W" "Workspace" treebundel-workspace
+    :description (lambda () (format "Workspace %s" (if-let* ((workspace (treebundel-current-workspace)))
+                                                       (propertize workspace 'face 'treebundel-workspace)
+                                                     (propertize "None" 'face 'treebundel-disabled)))))
+   ("P" "Project" treebundel-project
+    :description (lambda () (format "Project %s" (if-let* ((project (treebundel--project-current)))
+                                                     (propertize project 'face 'treebundel-project)
+                                                   (propertize "None" 'face 'treebundel-disabled)))))
+   ("B" "Bare" treebundel-bare
+    :description (lambda () (format "Bare %s" (if-let* ((bare (treebundel--bare-current)))
+                                                  (propertize bare 'face 'treebundel-bare)
+                                                (propertize "None" 'face 'treebundel-disabled)))))]
 
-   ["Debug" :level 6
-    ("l" "Log" treebundel-open-gitlog)]])
+  ["Debug" :level 6
+   ("l" "Log" treebundel-open-gitlog)])
 
 ;;;;; Bare
-(transient-define-prefix treebundel-bare ()
+(defvar treebundel-current-bare nil)
+
+(transient-define-prefix treebundel-bare (bare-scope)
   "Prefix for working with bare repositories."
   [("-f" "Force" ("-f" "--force"))
    ("-F" "Force" ("-F" "--force-delete-unpushed-commits"))
    ("-y" "Yank From Clipboard" ("-y" "--yank"))]
 
-  [["Bares"
+  [[:description (lambda () (format "Scope: " (transient-scope)))
+    ("b" "Bare" treebundel--bare-select :transient t)
     ("c" "Clone" treebundel-clone)]
 
    [:description (lambda () (propertize (treebundel--bare-current) 'face 'treebundel-bare))
@@ -694,8 +701,17 @@ The URL is returned for non-nil."
     ;; List projects checked out that are currently associated with this bare repo.
     ("p" "Projects" treebundel--not-implemented
      :description  (lambda () (propertize "Projects (TODO)" 'face 'treebundel-disabled)))]]
-  (interactive)
-  (transient-setup 'treebundel-bare))
+  (interactive "P")
+  (transient-setup 'treebundel-bare nil nil :scope bare-scope))
+
+(transient-define-infix treebundel--bare-select ()
+  "The buffer to be acted on."
+  :class 'transient-lisp-variable
+  :description "bare"
+  :variable 'treebundel-current-bare
+  :reader 'treebundel--read-bare
+  :init-value (lambda (obj)
+                (oset obj value (treebundel--bare-current))))
 
 (transient-define-suffix treebundel-clone-bare (url)
   "Clone URL to the collection of bare repos.
@@ -709,8 +725,7 @@ with `treebundel-add-project'"
                                          (file-name-nondirectory
                                           (directory-file-name
                                            (treebundel--bare-clone url))))))
-    (treebundel--message "Finished cloning %s." bare-name)
-    bare-name))
+    (treebundel--message "Finished cloning %s." bare-name)))
 (defalias 'treebundel-clone 'treebundel-clone-bare)
 
 (transient-define-suffix treebundel-delete-bare (force)
@@ -747,25 +762,25 @@ performed."
 (transient-define-suffix treebundel-visit-bare ()
   "Find a file in the bare repository at BARE."
   (interactive)
-  (when-let* ((bare (treebundel-bare-path)))
-    (funcall-interactively 'find-file (treebundel-bare-path bare))))
+  ;; (when-let* ((bare (treebundel-bare-path)))
+  ;;   (funcall-interactively 'find-file (treebundel-bare-path bare)))
+  (transient-setup treebundel-current-bare))
 
 ;;;;; Projects
 (transient-define-prefix treebundel-project ()
   "Working with projects"
+  ["Projects"
+   ("a" "Add" treebundel-add-project)]
   [:description (lambda ()
-                  (if-let* ((workspace (treebundel-current-workspace))
+                  (when-let* ((workspace (treebundel-current-workspace))
                             (project (treebundel--project-current)))
                       (concat
-                       (propertize "Project " 'face 'transient-heading)
                        (propertize workspace 'face 'treebundel-workspace)
                        (propertize "/" 'face 'transient-heading)
-                       (propertize project   'face 'treebundel-project))
-                    (propertize "Update" 'face 'transient-heading)))
+                       (propertize project   'face 'treebundel-project))))
                 ("k" "Remove" treebundel-remove-project)
                 ("m" "Move" treebundel-move-project)
-                ("r" "Rename" treebundel-rename-project)]
-  [("a" "Add" treebundel-add-project)])
+                ("r" "Rename" treebundel-rename-project)])
 
 (transient-define-suffix treebundel-add-project (workspace bare project project-branch)
   "Add a project to a workspace.
@@ -901,7 +916,7 @@ NEW-NAME is the new name PROJECT will be renamed to."
    ("--delete-all" (lambda () (propertize "Delete data" 'face 'transient-disabled)) (nil "--delete-all"))]
 
   [:description
-   (lambda () (format "Workspace %s" (propertize (treebundel-current-workspace) 'face 'treebundel-workspace)))
+   (lambda () (propertize (treebundel-current-workspace) 'face 'treebundel-workspace))
    ("w" "Switch" treebundel-open-workspace)
    ("k" "Delete" treebundel-delete-workspace)
    ("m" "Rename" treebundel--not-implemented :description  (lambda () (propertize "Rename (TODO)" 'face 'treebundel-disabled)))]
