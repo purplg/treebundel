@@ -389,7 +389,7 @@ Returns the path to the newly created worktree."
                  t)))
 
 ;;;; Format
-(cl-defun treebundel--fmt-bare (&optional bare)
+(defun treebundel--fmt-bare (&optional bare)
   "Format the text of a BARE name."
   (let ((bare (or bare (treebundel--bare-current))))
     (format "%s" (propertize bare 'face 'treebundel-bare))))
@@ -865,10 +865,10 @@ into."
     "move"
     (treebundel-project-path workspace project)
     (file-name-concat (treebundel-workspace-path new-workspace) project))
-  (treebundel--message "Moved project '%s' from workspace '%s' -> '%s'"
-                       project
-                       workspace
-                       new-workspace))
+  (treebundel--message "Moved project %s from workspace %s -> %s"
+                       (treebundel--fmt-project project)
+                       (treebundel--fmt-workspace workspace)
+                       (treebundel--fmt-workspace new-workspace)))
 
 (transient-define-suffix treebundel-rename-project (new-name)
   "Rename a project.
