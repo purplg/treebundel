@@ -484,7 +484,7 @@ strings, only check these local branches."
                                (let ((bare (replace-regexp-in-string "\\.git$" "" bare)))
                                  (cons bare 'existing)))
                              (treebundel--bare-list))))
-    (let ((selection (assoc (completing-read prompt candidates) candidates)))
+    (let ((selection (assoc (completing-read prompt candidates nil nil initial-input history) candidates)))
       (car selection))))
 
 ;;;;; Branches
