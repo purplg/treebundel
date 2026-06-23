@@ -439,6 +439,8 @@ The URL is returned for non-nil."
       (unless (string= ".git" bare-name) bare-name))))
 
 ;;;;; Bares
+(defvar treebundel--last-bare nil)
+
 (defun treebundel-bare-path (&optional bare)
   "Return the path of bare repository with BARE."
   (when-let* ((bare (or bare (treebundel--bare-current))))
@@ -484,8 +486,7 @@ strings, only check these local branches."
                                (let ((bare (replace-regexp-in-string "\\.git$" "" bare)))
                                  (cons bare 'existing)))
                              (treebundel--bare-list))))
-    (let ((selection (assoc (completing-read prompt candidates nil nil initial-input history) candidates)))
-      (car selection))))
+    (car (assoc (completing-read prompt candidates nil nil initial-input history) candidates))))
 
 ;;;;; Branches
 (defun treebundel--branch-name (workspace)
@@ -501,6 +502,8 @@ bare repo points to."
 
 
 ;;;;; Projects
+(defvar treebundel--last-project nil)
+
 (defun treebundel--project-add (workspace bare &optional branch-name project)
   "Add a project to a workspace.
 Defines the way project worktrees are added and named in workspaces.
@@ -529,7 +532,7 @@ If FILE-PATH is non-nil, use the current buffer."
     (when (string-prefix-p workspace-path file-path)
       (let* ((relative (string-remove-prefix (file-name-directory workspace-path) file-path))
              (split (string-split relative "/")))
-        (cadr split)))))
+        (or (cadr split) treebundel--last-project)))))
 
 (defun treebundel--project-name (project-path)
   "Return the name of project at PROJECT-PATH."
@@ -541,9 +544,11 @@ Leave either PROJECT or WORKSPACE nil to try to use current."
   (when-let* ((workspace (or workspace (treebundel-current-workspace)))
               (project (or project (treebundel--project-current))))
     (file-name-concat treebundel-workspace-root workspace project)))
-(defalias 'treebundel--project-path 'treebundel-project-path)
+(defalias 'treebundel--project-path #'treebundel-project-path)
 
 ;;;;; Workspaces
+(defvar treebundel--last-workspace nil)
+
 (defun treebundel-workspace-path (name)
   "Return the path of a workspace named NAME."
   (file-name-concat treebundel-workspace-root name))
@@ -571,7 +576,7 @@ If FILE-PATH is non-nil, use the current buffer instead."
       (while (string-prefix-p treebundel-workspace-root (directory-file-name file-path))
         (setq workspace (file-name-nondirectory (directory-file-name file-path)))
         (setq file-path (file-name-directory (directory-file-name file-path))))
-      workspace)))
+      (or workspace treebundel--last-workspace))))
 
 ;;;; User functions
 
@@ -608,8 +613,6 @@ If FILE-PATH is non-nil, use the current buffer instead."
   (treebundel--message "This command is not yet implemented"))
 
 ;;;;; Bare
-(defvar treebundel--current-bare nil)
-
 (transient-define-prefix treebundel-bare (bare-scope)
   "Prefix for working with bare repositories."
   [("-f" "Force" ("-f" "--force"))
@@ -649,10 +652,10 @@ If FILE-PATH is non-nil, use the current buffer instead."
   :class 'transient-lisp-variable
   :description "bare"
   :prompt "Select bare: "
-  :variable 'treebundel--current-bare
+  :variable 'treebundel--last-bare
   :reader 'treebundel--bare-read
   :init-value (lambda (obj)
-                (oset obj value (or treebundel--current-bare (treebundel--bare-current)))))
+                (oset obj value (or treebundel--last-bare (treebundel--bare-current)))))
 
 (transient-define-suffix treebundel-clone-bare (url)
   "Clone URL to the collection of bare repos.
@@ -667,7 +670,7 @@ with `treebundel-add-project'"
                                           (directory-file-name
                                            (treebundel--bare-clone url))))))
     (treebundel--message "Finished cloning %s." bare-name)))
-(defalias 'treebundel-clone 'treebundel-clone-bare)
+(defalias 'treebundel-clone #'treebundel-clone-bare)
 
 (transient-define-suffix treebundel-delete-bare ()
   "Delete a bare repository BARE.
@@ -763,7 +766,7 @@ PROJECT is the name of the project within the workspace to open."
                                             nil
                                             t)))
      (list workspace project)))
-  (treebundel-open workspace project))
+  (treebundel-open-workspace workspace project))
 
 (transient-define-suffix treebundel-remove-project (workspace project)
   "Remove PROJECT from workspace WORKSPACE.
@@ -792,11 +795,11 @@ NEW-WORKSPACE is the name of the workspace the project will be moved
 into."
   (interactive
    (when-let* ((workspace (or (treebundel-current-workspace) (treebundel-read-workspace "Move project from %s" t)))
-          (project (treebundel-read-project workspace
-                                            (format "Move project from %s" (treebundel--fmt-workspace workspace))
-                                            nil
-                                            t))
-          (new-workspace (treebundel-read-workspace (format "Move %s to: " (treebundel--fmt-workspace-project workspace project)) t)))
+               (project (treebundel-read-project workspace
+                                                 (format "Move project from %s" (treebundel--fmt-workspace workspace))
+                                                 nil
+                                                 t))
+               (new-workspace (treebundel-read-workspace (format "Move %s to: " (treebundel--fmt-workspace-project workspace project)) t)))
      (list workspace project new-workspace)))
   (treebundel--git-with-repo (treebundel-project-path workspace project)
     "worktree"
@@ -902,17 +905,19 @@ PROJECT is the name of the project within the workspace to open."
      (list workspace project)))
   (let* ((new-workspace-p (not (string= (treebundel-current-workspace) workspace)))
          (new-project-p (or new-workspace-p
-                            (not (string= (treebundel--project-current) project)))))
+                            (not (string= (treebundel--project-current) project))))
+         (project-path (treebundel-project-path workspace project)))
     (when new-workspace-p (run-hook-with-args 'treebundel-before-workspace-open-functions workspace))
-    (when new-project-p (run-hook-with-args
-                         'treebundel-before-project-open-functions
-                         workspace project))
+    (when new-project-p (run-hook-with-args 'treebundel-before-project-open-functions workspace project))
 
-    (funcall treebundel-project-open-function (treebundel-project-path workspace project))
+    (setq treebundel--last-workspace workspace)
+    (setq treebundel--last-project project)
+    (setq treebundel--last-bare (treebundel--repo-bare project-path))
+    (funcall treebundel-project-open-function project-path)
 
     (when new-project-p (run-hooks 'treebundel-after-project-open-hook))
     (when new-workspace-p (run-hooks 'treebundel-after-workspace-open-hook))))
-(defalias 'treebundel-open 'treebundel-open-workspace)
+(defalias 'treebundel-open #'treebundel-open-workspace)
 
 (transient-define-suffix treebundel-delete-workspace (args)
   "Delete workspace at WORKSPACE.
