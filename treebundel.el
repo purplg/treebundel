@@ -582,7 +582,13 @@ If FILE-PATH is non-nil, use the current buffer instead."
 
 ;; This section provides the stable user interface.
 
-;;;;; Top
+;;;;; not-implemented
+(defun treebundel--not-implemented ()
+  "A placeholder command for unimplemented transient commands."
+  (interactive)
+  (treebundel--message "This command is not yet implemented"))
+
+;;;;; Entry
 ;;;###autoload(autoload 'treebundel "treebundel" nil t)
 (transient-define-prefix treebundel ()
   ["Quick"
@@ -606,11 +612,6 @@ If FILE-PATH is non-nil, use the current buffer instead."
 
   ["Debug" :level 6
    ("l" "Log" treebundel-open-gitlog)])
-
-(defun treebundel--not-implemented ()
-  "A placeholder command for unimplemented transient commands."
-  (interactive)
-  (treebundel--message "This command is not yet implemented"))
 
 ;;;;; Bare
 (transient-define-prefix treebundel-bare (bare-scope)
