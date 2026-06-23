@@ -938,7 +938,7 @@ projects' bare repository located at `treebundel-bare-dir' within
             (dolist (repo-path project-paths)
               (treebundel--worktree-remove repo-path ignore-errors))
             (delete-directory workspace-path)
-            (treebundel--message "Deleted workspace '%s'" workspace))
+            (treebundel--message "Deleted workspace %s" (treebundel--fmt-workspace workspace)))
         (user-error "There must not be any unsaved changes to delete a workspace")))))
 
 (defun treebundel-read-workspace (&optional prompt require-match)
