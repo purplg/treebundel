@@ -805,22 +805,19 @@ PROJECT is name of the project to move to a new workspace.
 NEW-WORKSPACE is the name of the workspace the project will be moved
 into."
   (interactive
-   (when-let* ((workspace (or (treebundel-current-workspace) (treebundel-read-workspace "Move project from %s" t)))
-               (project (treebundel-read-project workspace
-                                                 (format "Move project from %s" (treebundel--fmt-workspace workspace))
-                                                 nil
-                                                 t))
+   (when-let* ((workspace (treebundel-current-workspace))
+               (project (treebundel--project-current))
                (new-workspace (treebundel-read-workspace (format "Move %s to: " (treebundel--fmt-workspace-project workspace project)) t)))
      (list workspace project new-workspace)))
+
   (treebundel--git-with-repo (treebundel-project-path workspace project)
     "worktree"
     "move"
     (treebundel-project-path workspace project)
     (file-name-concat (treebundel-workspace-path new-workspace) project))
-  (treebundel--message "Moved project %s from workspace %s -> %s"
-                       (treebundel--fmt-project project)
-                       (treebundel--fmt-workspace workspace)
-                       (treebundel--fmt-workspace new-workspace)))
+  (treebundel--message "Moved project %s -> %s"
+                       (treebundel--fmt-workspace-project workspace project)
+                       (treebundel--fmt-workspace-project new-workspace project)))
 
 (transient-define-suffix treebundel-rename-project (new-name)
   "Rename a project.
