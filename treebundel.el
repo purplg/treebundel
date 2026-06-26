@@ -783,8 +783,8 @@ PROJECT is the name of the project within the workspace to open."
   "Remove PROJECT from workspace WORKSPACE.
 There must be no changes in the project to remove it."
   (interactive
-   (let ((workspace (or (and (not current-prefix-arg)
-                             (treebundel-current-workspace))
+   ;; TODO Replace CURRENT-PREFIX-ARG with a transient-infix (-argument?)
+   (let ((workspace (or (and (not current-prefix-arg) (treebundel-current-workspace))
                         (treebundel-read-workspace "Remove project from workspace" t)))
          (project (treebundel--project-current)))
      (list workspace project)))
