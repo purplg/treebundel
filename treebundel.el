@@ -604,7 +604,7 @@ If FILE-PATH is non-nil, use the current buffer instead."
    ("a" "Add project" treebundel-add-project :if treebundel-current-workspace
     :description (lambda () (format "Add project to %s" (treebundel--fmt-workspace))))]
 
-  ["Configure"
+  ["Edit"
    ("W" "Workspace" treebundel-workspace :if treebundel-current-workspace
     :description (lambda () (format "Workspace %s" (treebundel--fmt-workspace))))
 
@@ -649,6 +649,7 @@ If FILE-PATH is non-nil, use the current buffer instead."
                 ;; List projects checked out that are currently associated with this bare repo.
                 ("p" "Projects" treebundel--not-implemented
                  :description  (lambda () (propertize "Projects (TODO)" 'face 'treebundel-disabled)))]
+
   (interactive "P")
   (transient-setup 'treebundel-bare nil nil :scope bare-scope))
 
@@ -724,11 +725,16 @@ PROMPT is the text prompt presented to the user in the minibuffer."
 ;;;;; Projects
 (transient-define-prefix treebundel-project ()
   "Working with projects."
-  [:description (lambda () (treebundel--fmt-workspace-project))
-   ("k" "Remove" treebundel-remove-project
-    :description  (lambda () (format "Remove%s" (propertize " (Dirty)" 'face 'treebundel-error))))
-   ("m" "Move" treebundel-move-project)
-   ("r" "Rename" treebundel-rename-project)])
+  [ :description
+    (lambda ()
+      (concat (if-let* ((project-path (treebundel--project-path))
+                        (dirty (not (treebundel--repo-clean-p project-path))))
+                  (concat (treebundel--fmt-workspace-project) (propertize " (Dirty worktree)" 'face 'treebundel-error))
+                (treebundel--fmt-workspace-project))
+              "\n"))
+    ("k" "Remove" treebundel-remove-project)
+    ("m" "Move" treebundel-move-project)
+    ("r" "Rename" treebundel-rename-project)])
 
 (transient-define-suffix treebundel-add-project (workspace bare project project-branch)
   "Add a project to a workspace.
