@@ -616,18 +616,16 @@ If FILE-PATH is non-nil, use the current buffer instead."
     :description (lambda () (format "Bare %s" (treebundel--fmt-bare))))]
 
   ["Debug" :level 6
-   ("l" "Log" treebundel-open-gitlog)])
+   ("l" "Log" treebundel-open-gitlog)]
+  (interactive)
+  (transient-setup 'treebundel))
 
 ;;;;; Bare
-(transient-define-prefix treebundel-bare (bare-scope)
+(transient-define-prefix treebundel-bare (scope)
   "Prefix for working with bare repositories."
   [("-f" "Force" ("-f" "--force"))
    ("-F" "Force" ("-F" "--force-delete-unpushed-commits"))
    ("-y" "Yank From Clipboard" ("-y" "--yank"))]
-
-  [:description (lambda () (treebundel--fmt-bare))
-                ("b" "Bare" treebundel--bare-select)
-                ("c" "Clone" treebundel-clone-bare)]
 
   [:description (lambda () (treebundel--fmt-bare))
 
@@ -640,29 +638,16 @@ If FILE-PATH is non-nil, use the current buffer instead."
                 ;; Open a file in this bare's directory
                 ("v" "Visit" treebundel-visit-bare)
 
-                ("b" "Switch" treebundel--not-implemented
-                 :description (lambda () (propertize "Switch (TODO)" 'face 'treebundel-disabled)))
-
-                ;; Automatically fetch bare of current project
+                ;; TODO Git-fetch to update bare
                 ("f" "Fetch" treebundel--not-implemented
                  :description (lambda () (propertize "Fetch (TODO)" 'face 'treebundel-disabled)))
 
-                ;; List projects checked out that are currently associated with this bare repo.
+                ;; TODO treebundel-read-project that are currently associated with this bare repo.
                 ("p" "Projects" treebundel--not-implemented
                  :description  (lambda () (propertize "Projects (TODO)" 'face 'treebundel-disabled)))]
 
   (interactive "P")
-  (transient-setup 'treebundel-bare nil nil :scope bare-scope))
-
-(transient-define-infix treebundel--bare-select ()
-  "The buffer to be acted on."
-  :class 'transient-lisp-variable
-  :description "bare"
-  :prompt "Select bare: "
-  :variable 'treebundel--last-bare
-  :reader 'treebundel--bare-read
-  :init-value (lambda (obj)
-                (oset obj value (or treebundel--last-bare (treebundel--bare-current)))))
+  (transient-setup 'treebundel-bare nil nil :scope scope))
 
 (transient-define-suffix treebundel-clone-bare (url)
   "Clone URL to the collection of bare repos.
@@ -896,6 +881,7 @@ inserted when the minibuffer prompt is shown."
    ("--delete-all" (lambda () (propertize "Delete data" 'face 'transient-disabled)) (nil "--delete-all"))]
 
   [:description (lambda () (treebundel--fmt-workspace))
+   ("a" "Add project" treebundel-add-project)
    ("k" "Delete" treebundel-delete-workspace)
    ("m" "Rename" treebundel--not-implemented
     :description  (lambda () (propertize "Rename (TODO)" 'face 'treebundel-disabled)))])
