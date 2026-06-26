@@ -589,15 +589,18 @@ If FILE-PATH is non-nil, use the current buffer instead."
   (interactive)
   (treebundel--message "This command is not yet implemented"))
 
-;;;;; Entry
+;;;;; Entrypoint
 ;;;###autoload(autoload 'treebundel "treebundel" nil t)
 (transient-define-prefix treebundel ()
   ["Quick"
    ("w" "Open workspace" treebundel-open-workspace)
+
    ("p" "Project" treebundel-open-project :if treebundel-current-workspace
     :description (lambda () (format "Open project in %s" (treebundel--fmt-workspace))))
+
    ("f" "Find file" project-find-file :if treebundel--project-current
     :description (lambda () (format "Find file in %s" (treebundel--fmt-workspace-project))))
+
    ("a" "Add project" treebundel-add-project :if treebundel-current-workspace
     :description (lambda () (format "Add project to %s" (treebundel--fmt-workspace))))]
 
