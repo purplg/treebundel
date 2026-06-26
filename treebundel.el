@@ -526,7 +526,8 @@ PROJECT is the name of the worktrees' directory in the workspace."
   "Return the project name of FILE-PATH.
 If FILE-PATH is non-nil, use the current buffer."
   (when-let* ((file-path (or (and file-path (expand-file-name file-path))
-                             buffer-file-name))
+                             buffer-file-name
+                             default-directory))
               (file-path (directory-file-name file-path))
               (workspace-path (treebundel-workspace-path
                                (treebundel-current-workspace file-path))))
