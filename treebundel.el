@@ -626,7 +626,7 @@ If FILE-PATH is non-nil, use the current buffer instead."
 
   [:description (lambda () (treebundel--fmt-bare))
                 ("b" "Bare" treebundel--bare-select)
-                ("c" "Clone" treebundel-clone)]
+                ("c" "Clone" treebundel-clone-bare)]
 
   [:description (lambda () (treebundel--fmt-bare))
 
