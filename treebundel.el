@@ -755,7 +755,7 @@ this project."
    (let* ((workspace (or (treebundel-current-workspace) (treebundel-read-workspace "Add to workspace" t)))
           (bare (treebundel-read-bare (format "Add project to %s" (treebundel--fmt-workspace workspace))))
           (project-branch (treebundel-read-branch (treebundel-bare-path bare)))
-          (project (treebundel-read-project workspace "Project name: ")))
+          (project (treebundel-read-project workspace "Project name: " bare)))
      (list workspace bare project project-branch)))
   (treebundel-open-workspace workspace (treebundel--project-add workspace
                                                       bare
