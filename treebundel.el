@@ -417,11 +417,12 @@ The URL is returned for non-nil."
 
 (defun treebundel--fmt-workspace-project (&optional workspace project)
   "Format the text of a WORKSPACE and PROJECT pair."
-  (let ((workspace (or workspace (treebundel-current-workspace)))
-        (project (or project (treebundel--project-current))))
-    (format "%s/%s"
-            (propertize workspace 'face 'treebundel-workspace)
-            (propertize project 'face 'treebundel-project))))
+  (if-let* ((workspace (or workspace (treebundel-current-workspace)))
+            (project (or project (treebundel--project-current))))
+      (format "%s/%s"
+              (propertize workspace 'face 'treebundel-workspace)
+              (propertize project 'face 'treebundel-project))
+    ""))
 
 ;;;; Workspace management
 
