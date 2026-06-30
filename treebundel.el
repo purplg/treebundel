@@ -540,6 +540,18 @@ If FILE-PATH is non-nil, use the current buffer."
   "Return the name of project at PROJECT-PATH."
   (file-name-nondirectory (directory-file-name project-path)))
 
+(defun treebundel--project-move (src-path dst-path)
+  "Move a repo from SRC-PATH to DST-PATH."
+  (treebundel--git-with-repo (treebundel-bare-path (treebundel--repo-bare src-path))
+    "worktree" "move" src-path dst-path)
+  ;; Updated related open buffers file location
+  (dolist (buf (buffer-list))
+    (when-let* ((src-path (file-name-as-directory src-path))
+                (suffix (and (string-prefix-p src-path (buffer-file-name buf))
+                             (string-remove-prefix src-path (buffer-file-name buf)) ))
+                (dst-path (file-name-concat dst-path suffix)))
+      (with-current-buffer buf (set-visited-file-name dst-path nil t)))))
+
 (defun treebundel-project-path (&optional workspace project)
   "Return the path of PROJECT in WORKSPACE.
 Leave either PROJECT or WORKSPACE nil to try to use current."
@@ -795,12 +807,9 @@ into."
                (project (treebundel--project-current))
                (new-workspace (treebundel-read-workspace (format "Move %s to: " (treebundel--fmt-workspace-project workspace project)) t)))
      (list workspace project new-workspace)))
-
-  (treebundel--git-with-repo (treebundel-project-path workspace project)
-    "worktree"
-    "move"
-    (treebundel-project-path workspace project)
-    (file-name-concat (treebundel-workspace-path new-workspace) project))
+  (treebundel--project-move
+   (treebundel-project-path workspace project)
+   (file-name-concat (treebundel-workspace-path new-workspace) project))
   (treebundel--message "Moved project %s -> %s"
                        (treebundel--fmt-workspace-project workspace project)
                        (treebundel--fmt-workspace-project new-workspace project)))
@@ -815,16 +824,12 @@ PROJECT is name of the project in WORKSPACE to be renamed.
 NEW-NAME is the new name PROJECT will be renamed to."
   (interactive
    (list (read-string "New name: " (treebundel--project-current))))
-  (let ((workspace (treebundel-current-workspace))
-        (project (treebundel--project-current)) )
-    (treebundel--git-with-repo (treebundel-project-path workspace project)
-      "worktree"
-      "move"
-      (treebundel-project-path workspace project)
-      (treebundel-project-path workspace new-name))
-    (treebundel--message "Renamed project '%s' -> '%s'"
-                         project
-                         new-name)))
+  (when-let* ((workspace (treebundel-current-workspace))
+              (project (treebundel--project-current)))
+    (when (treebundel--project-move
+           (treebundel-project-path workspace project)
+           (treebundel-project-path workspace new-name))
+      (treebundel--message "Renamed project '%s' -> '%s'" project new-name))))
 
 (defun treebundel-read-project (workspace &optional prompt initial require-match)
   "Interactively find the path of a project.
