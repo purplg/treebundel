@@ -120,6 +120,13 @@
 (require 'transient)
 
 
+;;;; Variables
+(defvar treebundel--last-project nil
+  "The last known project of the user.")
+
+(defvar treebundel--last-workspace nil
+  "The last known project of the user.")
+
 ;;;; Customization
 (defgroup treebundel nil
   "Exploit git-worktrees to create inter-related project workspaces."
@@ -437,8 +444,6 @@ The URL is returned for non-nil."
       (unless (string= ".git" bare-name) bare-name))))
 
 ;;;;; Bares
-(defvar treebundel--last-bare nil)
-
 (defun treebundel-bare-path (&optional bare)
   "Return the path of bare repository with BARE."
   (when-let* ((bare (or bare (treebundel--bare-current))))
@@ -500,8 +505,6 @@ bare repo points to."
 
 
 ;;;;; Projects
-(defvar treebundel--last-project nil)
-
 (defun treebundel--project-add (workspace bare &optional branch-name project)
   "Add a project to a workspace.
 Defines the way project worktrees are added and named in workspaces.
@@ -558,8 +561,6 @@ Leave either PROJECT or WORKSPACE nil to try to use current."
 (defalias 'treebundel--project-path #'treebundel-project-path)
 
 ;;;;; Workspaces
-(defvar treebundel--last-workspace nil)
-
 (defun treebundel-workspace-path (name)
   "Return the path of a workspace named NAME."
   (file-name-concat treebundel-workspace-root name))
@@ -909,7 +910,6 @@ PROJECT is the name of the project within the workspace to open."
 
     (setq treebundel--last-workspace workspace)
     (setq treebundel--last-project project)
-    (setq treebundel--last-bare (treebundel--repo-bare project-path))
     (funcall treebundel-project-open-function project-path)
 
     (when new-project-p (run-hooks 'treebundel-after-project-open-hook))
