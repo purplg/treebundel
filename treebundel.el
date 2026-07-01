@@ -100,9 +100,6 @@
 ;; The following functions are the commands you should use (and
 ;; probably bind) to make use of this package.
 ;;
-;; `treebundel-open'
-;;   Open a project in a workspace.
-;;
 ;; `treebundel-open-project'
 ;;   Open other project within current workspace.
 ;;
