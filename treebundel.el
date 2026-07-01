@@ -169,7 +169,10 @@ operations when adding projects to your workspaces."
   :type 'boolean)
 
 ;;;;; Hooks
-(defcustom treebundel-before-project-open-functions nil
+(defcustom treebundel-before-project-open-functions
+  (list (lambda (workspace project)
+          (setq treebundel--last-project project)
+          (setq treebundel--last-workspace workspace)))
   "Hook which is run before a project is opened.
 A single argument is passed which is the path to the project to
 be opened."
