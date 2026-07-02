@@ -609,7 +609,7 @@ If FILE-PATH is non-nil, use the current buffer instead."
   ["Quick"
    ("w" "Open workspace" treebundel-open-workspace)
 
-   ("p" "Project" treebundel-open-project :if treebundel-current-workspace
+   ("p" "Open Project" treebundel-open-project :if treebundel-current-workspace
     :description (lambda () (format "Open project in %s" (treebundel--fmt-workspace))))
 
    ("f" "Find file" project-find-file :if treebundel--project-current
