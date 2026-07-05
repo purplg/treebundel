@@ -531,15 +531,15 @@ PROJECT is the name of the worktrees' directory in the workspace."
 (defun treebundel--project-current (&optional file-path)
   "Return the project name of FILE-PATH.
 If FILE-PATH is non-nil, use the current buffer."
-  (unless treebundel--workspace-override
-      (when-let* ((workspace (treebundel-current-workspace file-path))
-                  (project (when (string-prefix-p (treebundel-workspace-path workspace) file-path)
-                             (string-remove-prefix (treebundel-workspace-path workspace) file-path)))
-                  (workspace-path (treebundel-workspace-path workspace)))
-        (when (string-prefix-p workspace-path file-path)
-          (let* ((relative (string-remove-prefix (file-name-directory workspace-path) file-path))
-                 (split (string-split relative "/")))
-            (cadr split))))))
+  (when-let* ((file-path (or file-path buffer-file-name default-directory))
+              (workspace (treebundel-current-workspace file-path))
+              (workspace-path (treebundel-workspace-path workspace))
+              (relative-path (when (string-prefix-p workspace-path file-path)
+                               (string-remove-prefix workspace-path file-path)))
+              (parts (split-string relative-path "/")))
+    (if (length> (car parts) 0)
+        (car parts)
+      (cadr parts))))
 
 (defun treebundel--project-name (project-path)
   "Return the name of project at PROJECT-PATH."
