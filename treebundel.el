@@ -610,7 +610,7 @@ If FILE-PATH is non-nil, use the current buffer instead."
 ;;;###autoload(autoload 'treebundel "treebundel" nil t)
 (transient-define-prefix treebundel ()
   ["Quick"
-   ("w" "Switch workspace/project" treebundel-switch-workspace-project)
+   ("o" "Other project" treebundel-open-in-workspace)
 
    ("p" "Open Project"
     (lambda ()
@@ -767,10 +767,10 @@ this project."
           (project-branch (treebundel-read-branch (treebundel-bare-path bare)))
           (project (treebundel-read-project workspace "Project name: " bare)))
      (list workspace bare project project-branch)))
-  (treebundel-open-workspace workspace (treebundel--project-add workspace
-                                                                bare
-                                                                project-branch
-                                                                project)))
+  (treebundel--project-add workspace
+                           bare
+                           project-branch
+                           project))
 
 (transient-define-suffix treebundel-switch-project (project)
   "Open a project in the current treebundel workspace.
@@ -786,19 +786,6 @@ PROJECT is the name of the project within the workspace to open."
   (treebundel--project-open (treebundel--project-path (treebundel-current-workspace) project))
   (run-hooks 'treebundel-after-project-open-hook project))
 (defalias 'treebundel-open-project #'treebundel-switch-project)
-
-(transient-define-suffix treebundel-switch-workspace-project (workspace project)
-  "Select and WORKSPACE and PROJECT to open."
-  (interactive (let* ((workspace (treebundel-switch-workspace (treebundel-read-workspace "Switch workspace: ")))
-                      (project (treebundel-switch-project (treebundel-read-project
-                                                           workspace
-                                                           (format "Open %s" (treebundel--fmt-workspace workspace))
-                                                           nil
-                                                           t))))
-                 (list workspace project)))
-  (run-hook-with-args 'treebundel-before-project-open-functions project)
-  (treebundel--project-open (treebundel--project-path workspace project))
-  (run-hooks 'treebundel-after-project-open-hook project))
 
 (transient-define-suffix treebundel-remove-project (project)
   "Remove PROJECT from workspace WORKSPACE.
@@ -913,7 +900,7 @@ inserted when the minibuffer prompt is shown."
    ("-r" "Recursive" ("-r" "--recursive"))
    ("--delete-all" (lambda () (propertize "Delete data" 'face 'treebundel-disabled)) (nil "--delete-all"))]
 
-  [("w" (lambda () (treebundel--fmt-workspace)) treebundel-switch-workspace-project)
+  [("w" (lambda () (treebundel--fmt-workspace)) treebundel-switch-workspace)
    ("p" "Open project" treebundel-switch-project :if treebundel-current-workspace)
    ("a" "Add project" treebundel-add-project :if treebundel-current-workspace)
    ("k" "Delete" treebundel-delete-workspace :if treebundel-current-workspace)
@@ -923,7 +910,6 @@ inserted when the minibuffer prompt is shown."
 (transient-define-suffix treebundel-switch-workspace (workspace)
   "Switch to a workspace.
 WORKSPACE is the name of the workspace to open."
-  :transient t
   (interactive (list (treebundel-read-workspace "Switch workspace: ")))
   (run-hook-with-args 'treebundel-before-workspace-open-functions workspace)
   (setq treebundel--workspace-last (treebundel-current-workspace))
@@ -931,7 +917,7 @@ WORKSPACE is the name of the workspace to open."
   (run-hooks 'treebundel-after-workspace-open-hook)
   workspace)
 
-(transient-define-suffix treebundel-open-workspace (workspace project)
+(transient-define-suffix treebundel-open-in-workspace ()
   "Switch to a workspace and open a project within it.
 This will always prompt for a workspace.  If you want to prefer your
 current workspace, use `treebundel-switch-project'.
@@ -939,13 +925,10 @@ current workspace, use `treebundel-switch-project'.
 WORKSPACE is the name of the workspace to open.
 
 PROJECT is the name of the project within the workspace to open."
-  (interactive
-   (let* ((workspace (treebundel-read-workspace))
-          (project (treebundel-read-project workspace (format "Open project in %s" (treebundel--fmt-workspace workspace)))))
-     (list workspace project)))
-  (treebundel-switch-workspace workspace)
-  (treebundel-switch-project workspace project))
-(defalias 'treebundel-open #'treebundel-open-workspace)
+  (interactive)
+  (call-interactively #'treebundel-switch-workspace)
+  (call-interactively #'treebundel-switch-project))
+(defalias 'treebundel-open #'treebundel-open-in-workspace)
 
 (transient-define-suffix treebundel-delete-workspace (args)
   "Delete workspace at WORKSPACE.
