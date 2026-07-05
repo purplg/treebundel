@@ -388,28 +388,24 @@ The URL is returned for non-nil."
 ;;;; Format
 (defun treebundel--fmt-bare (&optional bare)
   "Format the text of a BARE name."
-  (let ((bare (or bare (treebundel--bare-current))))
-    (format "%s" (propertize bare 'face 'treebundel-bare))))
+  (format "%s" (propertize (or bare "⸺")
+                           'face 'treebundel-bare)))
 
 (defun treebundel--fmt-workspace (&optional workspace)
   "Format the text of a WORKSPACE name."
-  (concat (propertize (or workspace (treebundel-current-workspace) "⸺")
-                      'face 'treebundel-workspace)
+  (concat (propertize (or workspace "⸺") 'face 'treebundel-workspace)
           "/"))
 
 (defun treebundel--fmt-project (&optional project)
   "Format the text of a PROJECT name."
-  (propertize (or project (treebundel--project-current) "⸺")
-              'face 'treebundel-project))
+  (propertize (or project "⸺") 'face 'treebundel-project))
 
 (defun treebundel--fmt-workspace-project (&optional workspace project)
   "Format the text of a WORKSPACE and PROJECT pair."
-  (if-let* ((workspace (or workspace (treebundel-current-workspace)))
-            (project (or project (treebundel--project-current))))
-      (format "%s/%s"
-              (propertize workspace 'face 'treebundel-workspace)
-              (propertize project 'face 'treebundel-project))
-    ""))
+  (cond ((eq (type-of workspace) 'cons)
+         (concat (treebundel--fmt-workspace (car workspace)) (treebundel--fmt-project (cdr workspace))))
+        (t
+         (concat (treebundel--fmt-workspace workspace) (treebundel--fmt-project project)))))
 
 ;;;; Workspace management
 
@@ -544,7 +540,8 @@ Leave either PROJECT or WORKSPACE nil to try to use current."
 
 (defun treebundel--project-open (workspace project)
   "Call the project open function on WORKSPACE/PROJECT."
-  (funcall treebundel-project-open-function (treebundel--project-path workspace project)))
+  (when (and workspace project)
+    (funcall treebundel-project-open-function (treebundel--project-path workspace project))))
 
 ;;;;; Workspaces
 (defun treebundel-workspace-path (name)
@@ -566,16 +563,15 @@ Leave either PROJECT or WORKSPACE nil to try to use current."
 (defun treebundel-current-workspace (&optional file-path)
   "Return the name of the current workspace.
 If FILE-PATH is non-nil, use the current buffer instead."
-  (or (transient-scope 'treebundel-workspace)
-      (let* ((file-path (or (when file-path (expand-file-name file-path))
-                            default-directory
-                            buffer-file-name))
-             (workspace nil))
-        ;; Traverse up parent directories until the workspace root is all that remains
-        (while (string-prefix-p treebundel-workspace-root (directory-file-name file-path))
-          (setq workspace (file-name-nondirectory (directory-file-name file-path)))
-          (setq file-path (file-name-directory (directory-file-name file-path))))
-        workspace)))
+  (let* ((file-path (or (when file-path (expand-file-name file-path))
+                        default-directory
+                        buffer-file-name))
+         (workspace nil))
+    ;; Traverse up parent directories until the workspace root is all that remains
+    (while (string-prefix-p treebundel-workspace-root (directory-file-name file-path))
+      (setq workspace (file-name-nondirectory (directory-file-name file-path)))
+      (setq file-path (file-name-directory (directory-file-name file-path))))
+    workspace))
 
 ;;;; User Interface
 
@@ -589,33 +585,58 @@ If FILE-PATH is non-nil, use the current buffer instead."
 
 ;;;;; Entrypoint
 ;;;###autoload(autoload 'treebundel "treebundel" nil t)
-(transient-define-prefix treebundel ()
+(transient-define-prefix treebundel (&optional workspace project)
   ""
-  ["Quick"
-   ("w" "Switch workspace" treebundel-open-in-workspace)
-   ("p" "Switch project" treebundel-project :if treebundel-current-workspace)
-   ("f" (lambda () (format "Find file in %s" (or (transient-scope 'treebundel-project)
-                                                 (treebundel--project-current))))
+  [:description
+   (lambda () (format "Quick %s" (treebundel--fmt-workspace-project (transient-scope))))
+   ("w" "Open in workspace" treebundel-open-in-workspace)
+   ("p" "Open other project" (lambda () (interactive)
+                               (when-let* ((workspace (car (transient-scope)))
+                                           (project (treebundel-read-project workspace)))
+                                 (treebundel-open-project workspace project))))
+   ("g" "Magit status"
     (lambda () (interactive)
-      (funcall treebundel-project-open-function (treebundel--project-path)))
-    :if treebundel--project-current
-    :description (lambda () (format "Find file in %s" (treebundel--fmt-workspace-project))))
+      (require 'magit-mode)
+      (require 'magit-status)
+      (if-let* ((workspace (car (transient-scope)))
+                (project (cdr (transient-scope)))
+                (magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1))
+          (magit-status-setup-buffer (treebundel-project-path workspace project))
+        (treebundel--error "No project is currently active")))
+    :if (lambda () (and (featurep 'magit) (treebundel--project-current))))
+
+   ("o" "Open project"
+    (lambda () (interactive)
+      (if-let* ((workspace (car (transient-scope 'treebundel)))
+                (project (cdr (transient-scope 'treebundel))))
+          (funcall treebundel-project-open-function (treebundel--project-path workspace project))
+        (treebundel--error "No project is currently active")))
+    :if treebundel--project-current)
 
    ("a" "Add project" treebundel-add-project :if treebundel-current-workspace
-    :description (lambda () (format "Add project to %s" (treebundel--fmt-workspace))))]
+    :description (lambda () (format "Add project to %s" (treebundel--fmt-workspace (or (car (transient-scope)) (treebundel-current-workspace))))))]
 
-  ["Edit"
+  ["Configure"
    ("W" "Workspace" treebundel-workspace
-    :description (lambda () (format "Workspace %s" (treebundel--fmt-workspace))))
+    :description (lambda () (treebundel--fmt-workspace (or (car (transient-scope)) (treebundel-current-workspace)))))
 
-   ("P" "Project" treebundel-project :if treebundel-current-workspace
-    :description (lambda () (format "Project %s" (treebundel--fmt-project))))
+   ("P" "Project" treebundel-project :if (lambda () (or (cdr (transient-scope)) (treebundel--project-current)))
+    :description (lambda () (treebundel--fmt-project (cdr (transient-scope)))))
 
-   ("B" "Bare" treebundel-bare :if treebundel--bare-current
-    :description (lambda () (format "Bare %s" (treebundel--fmt-bare))))]
+   ("B" "Bare" treebundel-bare :if (lambda () (or (cdr (transient-scope)) (treebundel--project-current)))
+    :description
+    (lambda ()
+      (format "Bare %s"
+              (treebundel--fmt-bare (treebundel--repo-bare (treebundel--project-path
+                                                            (car (transient-scope))
+                                                            (cdr (transient-scope))))))))]
 
   ["Debug" :level 6
-   ("l" "Log" treebundel-open-gitlog)])
+   ("l" "Log" treebundel-open-gitlog)]
+  (interactive (if-let* ((scope (transient-scope)))
+                   (list (car scope) (cdr scope))
+                 (list (treebundel-current-workspace) (treebundel--project-current))))
+  (transient-setup 'treebundel nil nil :scope (cons workspace project)))
 
 ;;;;; Bare
 (transient-define-prefix treebundel-bare ()
@@ -703,27 +724,34 @@ PROMPT is the text prompt presented to the user in the minibuffer."
   (treebundel--bare-read (or prompt "Select project: ") nil nil))
 
 ;;;;; Projects
-(transient-define-prefix treebundel-project (project)
+(transient-define-prefix treebundel-project (workspace project)
   "Working with a PROJECT."
   [:description
-   (lambda () (format "Configuring %s" (treebundel--fmt-project (transient-scope 'treebundel-project))))
+   (lambda () (format "Configuring %s" (treebundel--fmt-workspace-project (transient-scope))))
    ("p" "Switch to other project" treebundel-switch-project)]
 
   [("RET" "Open project" treebundel-open-project)
-   ("f" "Open project file" project-find-file)
+   ("f" "Open project file" (lambda () (interactive)
+                              (when-let* ((project-current-directory-override (treebundel-project-path (car (transient-scope))
+                                                                                                       (cdr (transient-scope)))))
+                                (project-find-file))))
    ("v" "Visit" treebundel-visit-project)
    ("k" "Remove" treebundel-remove-project)
    ("m" "Move" treebundel-move-project)
    ("r" "Rename" treebundel-rename-project)]
+  (interactive (when-let* ((workspace (or (car (transient-scope))
+                                          (treebundel-current-workspace)))
+                           (project (treebundel-read-project workspace)))
+                 (list workspace project)))
+  (transient-setup 'treebundel-project nil nil :scope (cons workspace project)))
 
-  (interactive (list (treebundel--project-current)))
-  (transient-setup 'treebundel-project nil nil :scope project))
-
-(transient-define-suffix treebundel-switch-project (project)
+(transient-define-suffix treebundel-switch-project (workspace project)
   "Open PROJECT in the current workspace."
   :transient 'transient--do-exit
-  (interactive (list (treebundel-read-project (treebundel-current-workspace (transient-scope 'treebundel-workspace)) nil t)))
-  (transient-setup transient-current-command nil nil :scope project))
+  (interactive (when-let* ((workspace (or (car (transient-scope)) (treebundel-current-workspace)))
+                           (project (treebundel-read-project workspace nil nil t)))
+                 (list workspace project)))
+  (transient-setup transient-current-command nil nil :scope (cons workspace project)))
 
 (transient-define-suffix treebundel-add-project (workspace bare project project-branch)
   "Add a project to a workspace.
@@ -742,7 +770,7 @@ PROJECT-BRANCH is the name of the branch to be checked out for
 this project."
   :transient 'transient--do-stack
   (interactive
-   (let* ((workspace (or (treebundel-current-workspace (transient-scope 'treebundel-workspace)) (treebundel-read-workspace "Add to workspace" t)))
+   (when-let* ((workspace (or (car (transient-scope)) (treebundel-current-workspace)))
                (bare (treebundel-read-bare (format "Add project to %s" (treebundel--fmt-workspace workspace))))
                (project-branch (treebundel-read-branch (treebundel-bare-path bare)))
                (project (treebundel-read-project workspace "Project name: " bare)))
@@ -757,8 +785,8 @@ this project."
 There must be no changes in the project to remove it."
   (interactive
    ;; TODO Replace CURRENT-PREFIX-ARG with a transient-infix (-argument?)
-   (when-let* ((workspace (treebundel-current-workspace (transient-scope 'treebundel-workspace)))
-               (project (or (transient-scope 'treebundel-project) (treebundel--project-current))))
+   (when-let* ((workspace (car (transient-scope 'treebundel)))
+               (project (cdr (transient-scope 'treebundel))))
      (list workspace project)))
   (let* ((project-path (treebundel-project-path workspace project)))
     (if (and (treebundel--repo-clean-p project-path)
@@ -777,8 +805,8 @@ PROJECT is name of the project to move to a new workspace.
 NEW-WORKSPACE is the name of the workspace the project will be moved
 into."
   (interactive
-   (when-let* ((workspace (treebundel-current-workspace))
-               (project (or (transient-scope 'treebundel-project) (treebundel--project-current)))
+   (when-let* ((workspace (car (transient-scope 'treebundel)))
+               (project (cdr (transient-scope 'treebundel)))
                (new-workspace (treebundel-read-workspace (format "Move %s to: " (treebundel--fmt-workspace-project workspace project)) t)))
      (list workspace project new-workspace)))
   (treebundel--project-move
@@ -797,7 +825,7 @@ PROJECT is name of the project in WORKSPACE to be renamed.
 
 NEW-NAME is the new name PROJECT will be renamed to."
   (interactive
-   (let ((project (or (transient-scope 'treebundel-project) (treebundel--project-current))))
+   (let ((project (cdr (transient-scope 'treebundel))))
      (list project (read-string "New name: " project))))
   (when-let* ((workspace (treebundel-current-workspace)))
     (if (treebundel--project-move
@@ -810,19 +838,19 @@ NEW-NAME is the new name PROJECT will be renamed to."
                            (treebundel--fmt-project project)
                            (treebundel--fmt-project new-name)))))
 
-(transient-define-suffix treebundel-open-project ()
+(transient-define-suffix treebundel-open-project (workspace project)
   "Switch to and focus a PROJECT by opening a file."
-  :transient 'transient--do-replace
-  (interactive)
-  (treebundel--project-open
-   (treebundel-current-workspace (transient-scope 'treebundel-workspace))
-   (treebundel--project-current (transient-scope 'treebundel-project))))
+  :transient 'transient--do-exit
+  (interactive (list (car (transient-scope))
+                     (cdr (transient-scope))))
+  (treebundel--project-open workspace project))
 
-(transient-define-suffix treebundel-visit-project (project)
+(transient-define-suffix treebundel-visit-project (workspace project)
   "Open dired to PROJECT within the current workspace."
-  (interactive
-   (list (treebundel-read-project (treebundel-current-workspace (transient-scope 'treebundel-workspace)) nil nil t)))
-  (funcall-interactively #'find-file (treebundel--project-path (treebundel-current-workspace) project)))
+  (interactive (if (transient-scope)
+                   (list (car (transient-scope)) (cdr (transient-scope)))
+                 (list (treebundel-current-workspace) (treebundel--project-current))))
+  (funcall-interactively #'find-file (treebundel--project-path workspace project)))
 
 (defun treebundel-read-project (workspace &optional prompt initial require-match)
   "Interactively find the path of a project.
@@ -837,12 +865,11 @@ automatically inserted when the minibuffer prompt is shown.
 REQUIRE-MATCH forces a valid workspace to be selected.  This removes
 the ability to create a workspace with a new entry."
   (let* ((candidates (treebundel--workspace-projects workspace)))
-    (car (assoc (completing-read (or prompt "Select project: ")
-                                 candidates
-                                 nil
-                                 require-match
-                                 initial)
-                candidates))))
+    (completing-read (or prompt (format "Project in %s" (treebundel--fmt-workspace workspace)))
+                     candidates
+                     nil
+                     require-match
+                     initial)))
 
 (defun treebundel-read-branch (project-path &optional prompt initial)
   "Interactively selected a branch to checkout for project.
@@ -872,23 +899,25 @@ inserted when the minibuffer prompt is shown."
 (transient-define-prefix treebundel-workspace (workspace)
   "Working with a workspace."
   [:description
-   (lambda () (format "Configuring %s" (treebundel--fmt-workspace (transient-scope))))
+   (lambda () (format "Configuring %s" (treebundel--fmt-workspace (car (transient-scope)))))
    ("w" "Switch to other workspace" treebundel-switch-workspace)]
 
-  [("p" "Edit project" treebundel-project)
-   ("a" "Add project" treebundel-add-project :if treebundel-current-workspace)
-   ("k" "Delete" treebundel-delete-workspace :if treebundel-current-workspace)
-   ("m" "Rename" treebundel--not-implemented :if treebundel-current-workspace
+  [("p" "Configure project" treebundel-project)
+   ("a" "Add project" treebundel-add-project)
+   ("k" "Delete" treebundel-delete-workspace)
+   ("m" "Rename" treebundel--not-implemented
     :description  (lambda () (propertize "Rename (TODO)" 'face 'treebundel-disabled)))]
 
-  (interactive (list (treebundel-current-workspace)))
-  (transient-setup 'treebundel-workspace nil nil :scope workspace))
+  (interactive (list (or (car (transient-scope))
+                         (treebundel-current-workspace)
+                         (treebundel-read-workspace nil t))))
+  (transient-setup 'treebundel-workspace nil nil :scope (cons workspace nil)))
 
 (transient-define-suffix treebundel-switch-workspace (workspace)
   "Switch to WORKSPACE."
   :transient 'transient--do-exit
   (interactive (list (treebundel-read-workspace nil t)))
-  (transient-setup transient-current-command nil nil :scope workspace))
+  (transient-setup transient-current-command nil nil :scope (cons workspace nil)))
 
 (transient-define-suffix treebundel-open-in-workspace ()
   "Switch to a workspace and open a project within it.
@@ -899,22 +928,23 @@ WORKSPACE is the name of the workspace to open.
 
 PROJECT is the name of the project within the workspace to open."
   (interactive)
-  (call-interactively #'treebundel-switch-workspace)
-  (call-interactively #'treebundel-switch-project))
+  (when-let* ((workspace (treebundel-read-workspace nil t))
+              (project (treebundel-read-project workspace nil nil t)))
+    (treebundel-open-project workspace project)))
+
 (defalias 'treebundel-open #'treebundel-open-in-workspace)
 
-(transient-define-suffix treebundel-delete-workspace (args)
+(transient-define-suffix treebundel-delete-workspace (workspace)
   "Delete workspace at WORKSPACE.
 This will check if all projects within the workspace are clean and if so, remove
 everything in the workspace. Anything committed is still saved in the respective
 projects' bare repository located at `treebundel-bare-dir' within
 `treebundel-workspace-root'."
-  (interactive (list (transient-args 'treebundel-workspace)))
-  (when-let* ((workspace (or (treebundel-current-workspace)
-                             (treebundel-read-workspace "Delete workspace: " t)))
+  (interactive (list (car (transient-scope))))
+  (when-let* ((workspace (or workspace (treebundel-read-workspace "Delete workspace: " t)))
               (workspace-path (treebundel-workspace-path workspace))
               (project-paths (directory-files workspace-path t "\\`[^.].*")))
-    (let* ((ignore-errors (transient-arg-value "--force" args)))
+    (let* ((ignore-errors (transient-arg-value "--force" workspace)))
       (if (and (seq-every-p (lambda (project-path)
                               (treebundel--repo-clean-p project-path))
                             project-paths)
