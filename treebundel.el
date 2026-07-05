@@ -114,6 +114,31 @@
 ;;   Delete a workspace.  This will also remove all projects in a
 ;;   workspace if they don't have any changes.
 
+;;;; Dev notes:
+;;
+;; Some information about how this package is organized and common conventions
+;; and patterns throughout to not only try to help others understand the code,
+;; but also as a way to reference and aim for consistent usage.
+;;
+;;;;; Naming conventions:
+;;
+;;  This section describes the few rules on how symbols are named through this
+;;  package.
+;;
+;; `treebundel--' private symbols
+;;   Any symbol in this package that starts with `treebundel--'.
+;;   The 2 dashes signifies these are functions that are not intended for
+;;   external use. They may change or get removed at any time.
+;;
+;; `treebundel--symbols-private'
+;;   These since these are internal, they are more useful to be more organized
+;;   and hierachical. So these symbols generally follow a struct like
+;;   `treebundel--subject-adjective'
+;;
+;; `treebundel-public-symbols'
+;;   Public API's are intended to be more readable so they flip their order so
+;;   it reads more like plain English. `treebundel-adjective-subject'
+;;
 ;;; Code:
 (require 'subr-x)
 (require 'vc-git)
