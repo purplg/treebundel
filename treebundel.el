@@ -701,7 +701,7 @@ performed."
 (defun treebundel-read-bare (&optional prompt)
   "Interactively find the path of a bare.
 PROMPT is the text prompt presented to the user in the minibuffer."
-  (treebundel--bare-read (or prompt "Select project: ") nil nil))
+  (treebundel--bare-read (or prompt "Select bare: ") nil nil))
 
 ;;;;; Projects
 (transient-define-prefix treebundel-project (workspace project)
@@ -751,7 +751,7 @@ this project."
   :transient 'transient--do-stack
   (interactive
    (when-let* ((workspace (or (car (transient-scope)) (treebundel-current-workspace)))
-               (bare (treebundel-read-bare (format "Add project to %s" (treebundel--fmt-workspace workspace))))
+               (bare (treebundel-read-bare))
                (project-branch (treebundel-read-branch (treebundel-bare-path bare)))
                (project (treebundel-read-project workspace "Project name: " bare)))
      (list workspace bare project project-branch)))
