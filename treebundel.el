@@ -415,12 +415,12 @@ The URL is returned for non-nil."
 ;;;;; Repos
 (defun treebundel--repo-bare (repo-path)
   "Return the name of the bare repo related to REPO-PATH."
-  (when repo-path
-    (let ((bare-name (thread-first (treebundel--git-with-repo repo-path
-                                     "rev-parse" "--path-format=absolute" "--git-common-dir")
-                                   (directory-file-name)
-                                   (file-name-base))))
-      (unless (string= ".git" bare-name) bare-name))))
+  (let ((bare-name (thread-first repo-path
+                                 (treebundel--git-with-repo
+                                   "rev-parse" "--path-format=absolute" "--git-common-dir")
+                                 (directory-file-name)
+                                 (file-name-base))))
+    (unless (string= ".git" bare-name) bare-name)))
 
 ;;;;; Bares
 (defun treebundel-bare-path (&optional bare)
@@ -635,14 +635,16 @@ If FILE-PATH is non-nil, use the current buffer instead."
   "Prefix for working with bare repositories."
   [:description
    (lambda () (format "Configuring %s" (treebundel--fmt-bare (transient-scope))))
-   ("b" "Switch to other bare" treebundel-switch-bare)
+   ("b" "Switch to other bare" treebundel-switch-bare)]
 
-   ("k" "Delete" treebundel-delete-bare
+  [("k" "Delete" treebundel-delete-bare
     :description (lambda ()
-                   (format "Delete (in use by %s projects)"
-                           (propertize (format "%d" (treebundel--worktree-count (treebundel--project-path (car (transient-scope))
-                                                                                                          (cdr (transient-scope)))))
-                                       'face 'transient-argument))))
+                   (if-let* ((use-count (length (treebundel--worktree-list (treebundel-bare-path (transient-scope)))))
+                             ((> use-count 0)))
+                       (format "%s (in use by %s projects)"
+                               (propertize "Delete" 'face 'treebundel-disabled)
+                               (propertize (format "%d" use-count) 'face 'treebundel-argument))
+                     "Delete")))
 
    ;; Open a file in this bare's directory
    ("v" "Visit" treebundel-visit-bare)
@@ -654,9 +656,12 @@ If FILE-PATH is non-nil, use the current buffer instead."
    ;; TODO treebundel-read-project that are currently associated with this bare repo.
    ("p" "Projects" treebundel--not-implemented
     :description  (lambda () (propertize "Projects" 'face 'treebundel-disabled)))]
-  (interactive (list (when-let* ((workspace (car (transient-scope)))
-                                 (project (cdr (transient-scope))))
-                       (treebundel--repo-bare (treebundel--project-path workspace project)))))
+  (interactive
+   (list (cond ((string= treebundel-bare-dir (car (transient-scope)))
+                (cdr (transient-scope)))
+               ((and (car (transient-scope)) (cdr (transient-scope)))
+                (treebundel--repo-bare (treebundel--project-path (car (transient-scope)) (cdr (transient-scope)))))
+               ((treebundel-read-bare)))))
   (transient-setup 'treebundel-bare nil nil :scope bare))
 
 (transient-define-suffix treebundel-switch-bare (bare)
@@ -746,9 +751,7 @@ PROMPT is the text prompt presented to the user in the minibuffer."
    ("m" "Move" treebundel-move-project)
    ("r" "Rename" treebundel-rename-project)]
   (interactive (when-let* ((workspace (or (car (transient-scope)) (treebundel-current-workspace)))
-                           (project (or (cdr (transient-scope))
-                                        (treebundel--project-current)
-                                        (treebundel-read-project workspace))))
+                           (project (or (cdr (transient-scope)) (treebundel-read-project workspace))))
                  (list workspace project)))
   (transient-setup 'treebundel-project nil nil :scope (cons workspace project)))
 
@@ -909,7 +912,7 @@ inserted when the minibuffer prompt is shown."
    ("a" "Add project" treebundel-add-project)
    ("k" "Delete" treebundel-delete-workspace)
    ("m" "Rename" treebundel--not-implemented
-    :description  (lambda () (propertize "Rename (TODO)" 'face 'treebundel-disabled)))]
+    :description  (lambda () (propertize "Rename (not implemented)" 'face 'treebundel-disabled)))]
 
   (interactive (list (or (car (transient-scope))
                          (treebundel-current-workspace)
