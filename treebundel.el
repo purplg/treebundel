@@ -496,7 +496,7 @@ BRANCH-NAME is the name of branch to be created and checked out in the
 workspace.
 
 PROJECT is the name of the worktrees' directory in the workspace."
-  (treebundel--project-name
+  (treebundel--project-current
    (treebundel--worktree-add bare
                              (treebundel--project-path workspace (or project bare))
                              (or branch-name (treebundel--branch-name workspace)))))
@@ -509,14 +509,8 @@ If FILE-PATH is non-nil, use the current buffer."
               (workspace-path (treebundel-workspace-path workspace))
               (relative-path (when (string-prefix-p workspace-path file-path)
                                (string-remove-prefix workspace-path file-path)))
-              (parts (split-string relative-path "/")))
-    (if (length> (car parts) 0)
-        (car parts)
-      (cadr parts))))
-
-(defun treebundel--project-name (project-path)
-  "Return the name of project at PROJECT-PATH."
-  (file-name-nondirectory (directory-file-name project-path)))
+              (parts (split-string relative-path "/" :omit-empty)))
+    (car parts)))
 
 (defun treebundel--project-move (src-path dst-path)
   "Move a repo from SRC-PATH to DST-PATH."
