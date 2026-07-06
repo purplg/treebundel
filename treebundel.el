@@ -747,7 +747,7 @@ PROMPT is the text prompt presented to the user in the minibuffer."
                                                                                                         (cdr (transient-scope)))))
                                 (project-find-file))))
    ("v" "Visit" treebundel-visit-project)
-   ("k" "Remove" treebundel-remove-project)
+   ("k" treebundel-remove-project)
    ("m" "Move" treebundel-move-project)
    ("r" "Rename" treebundel-rename-project)]
   (interactive (when-let* ((workspace (or (car (transient-scope)) (treebundel-current-workspace)))
@@ -793,6 +793,14 @@ this project."
 (transient-define-suffix treebundel-remove-project (workspace project)
   "Remove PROJECT from workspace WORKSPACE.
 There must be no changes in the project to remove it."
+  :description (lambda ()
+                   (if-let* ((workspace (car (transient-scope)))
+                             (project (cdr (transient-scope)))
+                             (treebundel--repo-clean-p (treebundel--project-path workspace project)))
+                       (format "%s%s"
+                               (propertize "Remove" 'face 'treebundel-disabled)
+                               (propertize " (Dirty)" 'face 'treebundel-error))
+                     "Remove"))
   (interactive (list (car (transient-scope))
                      (cdr (transient-scope))))
   (let* ((project-path (treebundel--project-path workspace project)))
