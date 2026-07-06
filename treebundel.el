@@ -594,25 +594,6 @@ If FILE-PATH is non-nil, use the current buffer instead."
                                (when-let* ((workspace (car (transient-scope)))
                                            (project (treebundel-read-project workspace)))
                                  (treebundel-open-project workspace project))))
-   ("g" "Magit status"
-    (lambda () (interactive)
-      (require 'magit-mode)
-      (require 'magit-status)
-      (if-let* ((workspace (car (transient-scope)))
-                (project (cdr (transient-scope)))
-                (magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1))
-          (magit-status-setup-buffer (treebundel-project-path workspace project))
-        (treebundel--error "No project is currently active")))
-    :if (lambda () (and (featurep 'magit) (treebundel--project-current))))
-
-   ("o" "Open project"
-    (lambda () (interactive)
-      (if-let* ((workspace (car (transient-scope 'treebundel)))
-                (project (cdr (transient-scope 'treebundel))))
-          (funcall treebundel-project-open-function (treebundel--project-path workspace project))
-        (treebundel--error "No project is currently active")))
-    :if treebundel--project-current)
-
    ("a" "Add project" treebundel-add-project :if treebundel-current-workspace
     :description (lambda () (format "Add project to %s" (treebundel--fmt-workspace (or (car (transient-scope)) (treebundel-current-workspace))))))]
 
