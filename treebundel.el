@@ -780,7 +780,7 @@ PROJECT-BRANCH is the name of the branch to be checked out for
 this project."
   :transient 'transient--do-stack
   (interactive
-   (when-let* ((workspace (or (car (transient-scope)) (treebundel-current-workspace)))
+   (when-let* ((workspace (car (transient-scope)))
                (bare (treebundel-read-bare))
                (project-branch (treebundel-read-branch (treebundel-bare-path bare)))
                (project (treebundel-read-project workspace "Project name: " bare)))
@@ -794,13 +794,15 @@ this project."
   "Remove PROJECT from workspace WORKSPACE.
 There must be no changes in the project to remove it."
   :description (lambda ()
-                   (if-let* ((workspace (car (transient-scope)))
-                             (project (cdr (transient-scope)))
-                             (treebundel--repo-clean-p (treebundel--project-path workspace project)))
-                       (format "%s%s"
+                 (if-let* ((workspace (car (transient-scope)))
+                           (project (cdr (transient-scope)))
+                           (project-path (treebundel--project-path workspace project)))
+                     (if (treebundel--repo-clean-p project-path)
+                         (format "Remove %s"
+                                 (propertize "(Clean)" 'face 'treebundel-success))
+                       (format "%s %s"
                                (propertize "Remove" 'face 'treebundel-disabled)
-                               (propertize " (Dirty)" 'face 'treebundel-error))
-                     "Remove"))
+                               (propertize "(Dirty)" 'face 'treebundel-error)))))
   (interactive (list (car (transient-scope))
                      (cdr (transient-scope))))
   (let* ((project-path (treebundel--project-path workspace project)))
