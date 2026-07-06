@@ -625,10 +625,6 @@ If FILE-PATH is non-nil, use the current buffer instead."
 ;;;;; Bare
 (transient-define-prefix treebundel-bare ()
   "Prefix for working with bare repositories."
-  [("-f" "Force" ("-f" "--force"))
-   ("-F" "Force" ("-F" "--force-delete-unpushed-commits"))
-   ("-y" "Yank From Clipboard" ("-y" "--yank"))]
-
   [:description (lambda () (treebundel--fmt-bare))
 
                 ("k" "Delete" treebundel-delete-bare
@@ -642,11 +638,11 @@ If FILE-PATH is non-nil, use the current buffer instead."
 
                 ;; TODO Git-fetch to update bare
                 ("f" "Fetch" treebundel--not-implemented
-                 :description (lambda () (propertize "Fetch (TODO)" 'face 'treebundel-disabled)))
+                 :description (lambda () (propertize "Fetch" 'face 'treebundel-disabled)))
 
                 ;; TODO treebundel-read-project that are currently associated with this bare repo.
                 ("p" "Projects" treebundel--not-implemented
-                 :description  (lambda () (propertize "Projects (TODO)" 'face 'treebundel-disabled)))])
+                 :description  (lambda () (propertize "Projects" 'face 'treebundel-disabled)))])
 
 (transient-define-suffix treebundel-clone-bare (url)
   "Clone URL to the collection of bare repos.
