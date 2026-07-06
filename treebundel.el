@@ -415,12 +415,11 @@ The URL is returned for non-nil."
 ;;;;; Repos
 (defun treebundel--repo-bare (repo-path)
   "Return the name of the bare repo related to REPO-PATH."
-  (let ((bare-name (thread-first repo-path
-                                 (treebundel--git-with-repo
+  (let ((bare-name (thread-first (treebundel--git-with-repo repo-path
                                    "rev-parse" "--path-format=absolute" "--git-common-dir")
                                  (directory-file-name)
                                  (file-name-base))))
-    (unless (string= ".git" bare-name) bare-name)))
+    bare-name))
 
 ;;;;; Bares
 (defun treebundel-bare-path (&optional bare)
@@ -465,10 +464,9 @@ strings, only check these local branches."
 (defun treebundel--bare-read (prompt initial-input history)
   ""
   (let* ((candidates (mapcar (lambda (bare)
-                               (let ((bare (replace-regexp-in-string "\\.git$" "" bare)))
-                                 (cons bare 'existing)))
+                               (replace-regexp-in-string "\\.git$" "" bare))
                              (treebundel--bare-list))))
-    (car (assoc (completing-read prompt candidates nil nil initial-input history) candidates))))
+    (completing-read prompt candidates nil nil initial-input history)))
 
 ;;;;; Branches
 (defun treebundel--branch-name (workspace)
