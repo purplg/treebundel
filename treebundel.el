@@ -587,15 +587,18 @@ If FILE-PATH is non-nil, use the current buffer instead."
 ;;;###autoload(autoload 'treebundel "treebundel" nil t)
 (transient-define-prefix treebundel (&optional workspace project)
   ""
-  [:description
-   (lambda () (format "Quick %s" (treebundel--fmt-workspace-project (transient-scope))))
+  [:description "Quick"
    ("w" "Open in workspace" treebundel-open-in-workspace)
-   ("p" "Open other project" (lambda () (interactive)
+   ("p" "Open other project" (lambda ()
+                               (interactive)
                                (when-let* ((workspace (car (transient-scope)))
                                            (project (treebundel-read-project workspace)))
                                  (treebundel-open-project workspace project))))
-   ("a" "Add project" treebundel-add-project :if treebundel-current-workspace
-    :description (lambda () (format "Add project to %s" (treebundel--fmt-workspace (or (car (transient-scope)) (treebundel-current-workspace))))))]
+   ("a" "Add project" treebundel-add-project
+    :if treebundel-current-workspace
+    :description (lambda ()
+                   (format "Add project to %s" (treebundel--fmt-workspace (or (car (transient-scope))
+                                                                              (treebundel-current-workspace))))))]
 
   ["Configure"
    ("W" "Workspace" treebundel-workspace
