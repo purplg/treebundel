@@ -325,16 +325,6 @@ When OMIT-MAIN is non-nil, exclude the default branch."
   "Return t if REPO-PATH has any worktrees."
   (> (treebundel--worktree-count repo-path) 0))
 
-(defun treebundel--repo-clean-p (repo-path)
-  "Return t if there are no uncommitted modifications in project.
-REPO-PATH is the absolute path of the repo to check."
-  (length= (split-string
-            (treebundel--git-with-repo repo-path
-              "status" "-z" "--porcelain")
-            "\0"
-            t)
-           0))
-
 (defun treebundel-managed-p (repo-path)
   "Return t if the repo at REPO-PATH is compatible with treebundel."
   (and repo-path (treebundel--repo-bare repo-path) t))
@@ -544,6 +534,17 @@ Leave either PROJECT or WORKSPACE nil to try to use current."
     (funcall treebundel-project-open-function (treebundel--project-path workspace project))
     (error "Must specify workspace and project")))
 
+(defun treebundel--project-clean-p (repo-path)
+  "Return t if there are no uncommitted modifications in project.
+REPO-PATH is the absolute path of the repo to check."
+  (and (string-prefix-p treebundel-workspace-root repo-path)
+       (length= (split-string
+                 (treebundel--git-with-repo repo-path
+                   "status" "-z" "--porcelain")
+                 "\0"
+                 t)
+                0)))
+
 ;;;;; Workspaces
 (defun treebundel-workspace-path (name)
   "Return the path of a workspace named NAME."
@@ -638,6 +639,8 @@ If FILE-PATH is non-nil, use the current buffer instead."
                                (propertize (format "%d" use-count) 'face 'treebundel-argument))
                      "Delete")))
 
+   ("l" "List" treebundel-list-bare-projects)
+
    ;; Open a file in this bare's directory
    ("v" "Visit" treebundel-visit-bare)
 
@@ -715,15 +718,33 @@ performed."
    (treebundel--git-with-repo bare "fetch")
    (treebundel--message "%s updated" bare)))
 
-(transient-define-suffix treebundel-visit-bare ()
+(transient-define-suffix treebundel-visit-bare (bare)
   "Find a file in the bare repository at BARE."
-  (interactive)
-  (when-let* ((bare (treebundel-bare-path)))
-    (funcall-interactively 'find-file bare)))
+  (interactive (list (cond ((string= (car (transient-scope)) treebundel-bare-dir)
+                            (cdr (transient-scope)))
+                           ((car (transient-scope))
+                            (treebundel--repo-bare (treebundel--project-path (car (transient-scope)) (cdr (transient-scope)))))
+                           (t (treebundel-read-bare)))))
+  (when bare (funcall-interactively 'find-file (treebundel-bare-path bare))))
+
+(transient-define-suffix treebundel-list-bare-projects (bare)
+  ""
+  :transient 'transient--do-exit
+  (interactive (list (cond ;; ((string= (car (transient-scope)) treebundel-bare-dir)
+                           ;;  (cdr (transient-scope)))
+                           ;; ((car (transient-scope))
+                           ;;  (treebundel--repo-bare (treebundel--project-path (car (transient-scope)) (cdr (transient-scope)))))
+                           ((treebundel-read-bare)))))
+  (transient-setup 'treebundel-list-bare-projects nil nil :scope (cons treebundel-bare-dir bare))
+  (when bare
+    (message "%s" (seq-map
+                   (lambda (worktree) (treebundel--project-current (cadr (split-string (car worktree) " "))))
+                   (cdr (treebundel--worktree-list (treebundel-bare-path bare)))))))
 
 (defun treebundel-read-bare (&optional prompt)
   "Interactively find the path of a bare.
 PROMPT is the text prompt presented to the user in the minibuffer."
+  (interactive)
   (treebundel--bare-read (or prompt "Select bare: ") nil nil))
 
 ;;;;; Projects
@@ -789,7 +810,7 @@ There must be no changes in the project to remove it."
                  (if-let* ((workspace (car (transient-scope)))
                            (project (cdr (transient-scope)))
                            (project-path (treebundel--project-path workspace project)))
-                     (if (treebundel--repo-clean-p project-path)
+                     (if (treebundel--project-clean-p project-path)
                          (format "Remove %s"
                                  (propertize "(Clean)" 'face 'treebundel-success))
                        (format "%s %s"
@@ -798,7 +819,7 @@ There must be no changes in the project to remove it."
   (interactive (list (car (transient-scope))
                      (cdr (transient-scope))))
   (let* ((project-path (treebundel--project-path workspace project)))
-    (if (and (treebundel--repo-clean-p project-path)
+    (if (and (treebundel--project-clean-p project-path)
              (treebundel--worktree-remove project-path))
         (treebundel--message "Removed %s" (treebundel--fmt-workspace-project workspace project))
       (treebundel--message "Cannot remove %s because the project is dirty"
@@ -953,7 +974,7 @@ projects' bare repository located at `treebundel-bare-dir' within
               (project-paths (directory-files workspace-path t "\\`[^.].*")))
     (let* ((ignore-errors (transient-arg-value "--force" workspace)))
       (if (and (seq-every-p (lambda (project-path)
-                              (treebundel--repo-clean-p project-path))
+                              (treebundel--project-clean-p project-path))
                             project-paths)
                (or (length= project-paths 0)
                    (y-or-n-p (format "Workspace '%s' has %s project%s. Delete all?"
