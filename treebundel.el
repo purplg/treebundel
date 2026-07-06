@@ -623,9 +623,9 @@ If FILE-PATH is non-nil, use the current buffer instead."
   (transient-setup 'treebundel nil nil :scope (cons workspace project)))
 
 ;;;;; Bare
-(transient-define-prefix treebundel-bare ()
+(transient-define-prefix treebundel-bare (bare)
   "Prefix for working with bare repositories."
-  [:description (lambda () (treebundel--fmt-bare))
+  [:description (lambda () (treebundel--fmt-bare (transient-scope)))
 
                 ("k" "Delete" treebundel-delete-bare
                  :description (lambda ()
@@ -642,7 +642,11 @@ If FILE-PATH is non-nil, use the current buffer instead."
 
                 ;; TODO treebundel-read-project that are currently associated with this bare repo.
                 ("p" "Projects" treebundel--not-implemented
-                 :description  (lambda () (propertize "Projects" 'face 'treebundel-disabled)))])
+                 :description  (lambda () (propertize "Projects" 'face 'treebundel-disabled)))]
+  (interactive (list (when-let* ((workspace (car (transient-scope 'treebundel)))
+                                 (project (cdr (transient-scope 'treebundel))))
+                       (treebundel--repo-bare (treebundel-project-path workspace project)))))
+  (transient-setup 'treebundel-bare nil nil :scope bare))
 
 (transient-define-suffix treebundel-clone-bare (url)
   "Clone URL to the collection of bare repos.
@@ -851,9 +855,9 @@ the ability to create a workspace with a new entry."
                      require-match
                      initial)))
 
-(defun treebundel-read-branch (project-path &optional prompt initial)
-  "Interactively selected a branch to checkout for project.
-PROJECT-PATH is the path to project to list available branches for.
+(defun treebundel-read-branch (repo-path &optional prompt initial)
+  "Interactively selected a branch for a repo.
+REPO-PATH is the path to project to list available branches for.
 
 PROMPT is the prompt to be presented to the user in the minibuffer.
 
@@ -861,13 +865,13 @@ INITIAL is the default value of the branch of the project that is automatically
 inserted when the minibuffer prompt is shown."
   (when treebundel-fetch-on-add
     (treebundel--message "Fetching...")
-    (treebundel--git-with-repo project-path "fetch"))
+    (treebundel--git-with-repo repo-path "fetch"))
   (completing-read (or prompt "Branch: ")
-                   (treebundel--branches project-path)
+                   (treebundel--branches repo-path)
                    nil
                    nil
                    (or initial (treebundel--branch-name
-                                (treebundel--repo-bare project-path)))))
+                                (treebundel--repo-bare repo-path)))))
 
 ;;;;; Log
 (transient-define-suffix treebundel-open-gitlog ()
@@ -911,7 +915,6 @@ PROJECT is the name of the project within the workspace to open."
   (when-let* ((workspace (treebundel-read-workspace nil t))
               (project (treebundel-read-project workspace nil nil t)))
     (treebundel-open-project workspace project)))
-
 (defalias 'treebundel-open #'treebundel-open-in-workspace)
 
 (transient-define-suffix treebundel-delete-workspace (workspace)
