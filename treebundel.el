@@ -662,12 +662,20 @@ If FILE-PATH is non-nil, use the current buffer instead."
 (transient-define-suffix treebundel-switch-bare (bare)
   "Start configuring BARE."
   :transient 'transient--do-exit
-  (interactive (list (cond ((string= (car (transient-scope)) treebundel-bare-dir)
-                            (cdr (transient-scope)))
-                           ((car (transient-scope))
-                            (treebundel--repo-bare (treebundel--project-path (car (transient-scope))
-                                                                             (cdr (transient-scope)))))
-                           (t (treebundel-read-bare)))))
+  (interactive (list (cond
+                      ;; if the workspace is `treebundel-bare-dir' (e.g.
+                      ;; ".bare"), then it's already a bare repo
+                      ((string= (car (transient-scope)) treebundel-bare-dir)
+                       (cdr (transient-scope)))
+
+                      ;; otherwise, it's a workspace directory so look up the
+                      ;; bare
+                      ((car (transient-scope))
+                       (treebundel--repo-bare (treebundel--project-path (car (transient-scope))
+                                                                        (cdr (transient-scope)))))
+
+                      ;; No idea at this point. Just prompt user to select the bare.
+                      (t (treebundel-read-bare)))))
   (transient-setup transient-current-command nil nil :scope (cons treebundel-bare-dir bare)))
 
 (transient-define-suffix treebundel-clone-bare (url)
