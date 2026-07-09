@@ -45,7 +45,6 @@
 (provide '-tests)
 ;;; tests.el ends here
 ;; Local Variables:
-;; treebundel-workspace-root: "/tmp/workspace"
 ;; read-symbol-shorthands: (("test-" . "treebundel-test--")
 ;;                          ("-" . "treebundel-"))
 ;; End:
