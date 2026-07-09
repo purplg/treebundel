@@ -639,7 +639,7 @@ If FILE-PATH is non-nil, use the current buffer instead."
                                (propertize (format "%d" use-count) 'face 'transient-argument))
                      "Delete")))
 
-   ("l" "List" treebundel-list-bare-projects)
+   ("p" "Projects" treebundel-open-bare-projects)
 
    ;; Open a file in this bare's directory
    ("v" "Visit" treebundel-visit-bare)
@@ -729,19 +729,31 @@ pattern to the project cons that are `(workspace . project)'."
                            ((treebundel-read-bare)))))
   (find-file (treebundel-bare-path bare)))
 
-(transient-define-suffix treebundel-list-bare-projects (bare)
+(transient-define-suffix treebundel-open-bare-projects (bare)
   ""
   :transient 'transient--do-exit
-  (interactive (list (cond ;; ((string= (car (transient-scope)) treebundel-bare-dir)
-                      ;;  (cdr (transient-scope)))
-                      ;; ((car (transient-scope))
-                      ;;  (treebundel--repo-bare (treebundel--project-path (car (transient-scope)) (cdr (transient-scope)))))
-                      ((treebundel-read-bare)))))
-  (transient-setup 'treebundel-list-bare-projects nil nil :scope (cons treebundel-bare-dir bare))
+  (interactive (list (cond ((string= (car (transient-scope)) treebundel-bare-dir)
+                            (cdr (transient-scope)))
+                           ((car (transient-scope))
+                            (treebundel--repo-bare (treebundel--project-path (car (transient-scope)) (cdr (transient-scope)))))
+                           ((treebundel-read-bare)))))
   (when bare
-    (message "%s" (seq-map
-                   (lambda (worktree) (treebundel--project-current (cadr (split-string (car worktree) " "))))
-                   (cdr (treebundel--worktree-list (treebundel-bare-path bare)))))))
+    (let* ((candidates (thread-last bare
+                                    (treebundel-bare-path)
+                                    (treebundel--worktree-list)
+                                    (cdr)
+                                    (mapcar (lambda (worktree) (cadr (split-string (car worktree) " "))))
+                                    (mapcar (lambda (project-path)
+                                              (cons (treebundel--fmt-workspace-project
+                                                     (treebundel-current-workspace project-path)
+                                                     (treebundel--project-current project-path))
+                                                    project-path)))))
+           (selected-path (cdr (assoc (completing-read (format "Open project of %s" (treebundel--fmt-bare bare))
+                                                      candidates
+                                                      nil
+                                                      t)
+                                     candidates))))
+      (transient-setup 'treebundel-project nil nil :scope (cons (treebundel-current-workspace selected-path) (treebundel--project-current selected-path))))))
 
 (defun treebundel-read-bare (&optional prompt)
   "Interactively find the path of a bare.
