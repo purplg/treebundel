@@ -632,7 +632,7 @@ If FILE-PATH is non-nil, use the current buffer instead."
 
   [("k" "Delete" treebundel-delete-bare
     :description (lambda ()
-                   (if-let* ((use-count (length (treebundel--worktree-list (treebundel-bare-path (cdr (transient-scope))))))
+                   (if-let* ((use-count (length (cdr (treebundel--worktree-list (treebundel-bare-path (cdr (transient-scope)))))))
                              ((> use-count 0)))
                        (format "%s (in use by %s projects)"
                                (propertize "Delete" 'face 'treebundel-disabled)
