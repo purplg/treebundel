@@ -860,15 +860,11 @@ NEW-NAME is the new name PROJECT will be renamed to."
    (when-let* ((project (or (cdr (transient-scope)) (treebundel--project-current))))
      (list project (read-string "New name: " project))))
   (when-let* ((workspace (treebundel-current-workspace)))
-    (if (treebundel--project-move
-         (treebundel--project-path workspace project)
-         (treebundel--project-path workspace new-name))
-        (treebundel--message "Renamed project '%s' -> '%s'"
-                             (treebundel--fmt-project project)
-                             (treebundel--fmt-project new-name))
-      (treebundel--message "Could not rename project '%s' -> '%s'"
-                           (treebundel--fmt-project project)
-                           (treebundel--fmt-project new-name)))))
+    (treebundel--project-move (treebundel--project-path workspace project)
+                              (treebundel--project-path workspace new-name))
+    (treebundel--message "Renamed project from %s to %s"
+                         (treebundel--fmt-workspace-project workspace project)
+                         (treebundel--fmt-workspace-project workspace new-name))))
 
 (transient-define-suffix treebundel-open-project (workspace project)
   "Switch to and focus a PROJECT by opening a file."
