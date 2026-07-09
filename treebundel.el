@@ -636,7 +636,7 @@ If FILE-PATH is non-nil, use the current buffer instead."
                              ((> use-count 0)))
                        (format "%s (in use by %s projects)"
                                (propertize "Delete" 'face 'treebundel-disabled)
-                               (propertize (format "%d" use-count) 'face 'treebundel-argument))
+                               (propertize (format "%d" use-count) 'face 'transient-argument))
                      "Delete")))
 
    ("l" "List" treebundel-list-bare-projects)
