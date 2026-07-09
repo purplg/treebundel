@@ -155,7 +155,8 @@
 
 (defcustom treebundel-bare-dir ".bare"
   "The path where bare repositories are stored.
-This is a relative path to `treebundel-workspace-root'."
+This is the directory name in `treebundel-workspace-root' where bare
+repositories are stored and worktrees created from."
   :group 'treebundel
   :type 'string)
 
@@ -412,7 +413,7 @@ The URL is returned for non-nil."
     bare-name))
 
 ;;;;; Bares
-(defun treebundel-bare-path (&optional bare)
+(defun treebundel-bare-path (bare)
   "Return the path of bare repository with BARE."
   (when-let* ((bare (or bare (treebundel--bare-current))))
     (file-name-concat treebundel-workspace-root treebundel-bare-dir
@@ -627,12 +628,12 @@ If FILE-PATH is non-nil, use the current buffer instead."
 (transient-define-prefix treebundel-bare (bare)
   "Prefix for working with bare repositories."
   [:description
-   (lambda () (format "Configuring %s" (treebundel--fmt-bare (transient-scope))))
+   (lambda () (format "Configuring %s" (treebundel--fmt-bare (cdr (transient-scope)))))
    ("b" "Switch to other bare" treebundel-switch-bare)]
 
   [("k" "Delete" treebundel-delete-bare
     :description (lambda ()
-                   (if-let* ((use-count (length (treebundel--worktree-list (treebundel-bare-path (transient-scope)))))
+                   (if-let* ((use-count (length (treebundel--worktree-list (treebundel-bare-path (cdr (transient-scope))))))
                              ((> use-count 0)))
                        (format "%s (in use by %s projects)"
                                (propertize "Delete" 'face 'treebundel-disabled)
@@ -657,7 +658,7 @@ If FILE-PATH is non-nil, use the current buffer instead."
                ((and (car (transient-scope)) (cdr (transient-scope)))
                 (treebundel--repo-bare (treebundel--project-path (car (transient-scope)) (cdr (transient-scope)))))
                ((treebundel-read-bare)))))
-  (transient-setup 'treebundel-bare nil nil :scope bare))
+  (transient-setup 'treebundel-bare nil nil :scope (cons treebundel-bare-dir bare)))
 
 (transient-define-suffix treebundel-switch-bare (bare)
   "Start configuring BARE."
@@ -719,22 +720,24 @@ performed."
    (treebundel--message "%s updated" bare)))
 
 (transient-define-suffix treebundel-visit-bare (bare)
-  "Find a file in the bare repository at BARE."
+  "Find a file in the bare repository at BARE-CONS.
+BARE-CONS is `(treebundel-bare-dir . bare-name)'. This is because it follows a similar
+pattern to the project cons that are `(workspace . project)'."
   (interactive (list (cond ((string= (car (transient-scope)) treebundel-bare-dir)
                             (cdr (transient-scope)))
                            ((car (transient-scope))
                             (treebundel--repo-bare (treebundel--project-path (car (transient-scope)) (cdr (transient-scope)))))
-                           (t (treebundel-read-bare)))))
-  (when bare (funcall-interactively 'find-file (treebundel-bare-path bare))))
+                           ((treebundel-read-bare)))))
+  (find-file (treebundel-bare-path bare)))
 
 (transient-define-suffix treebundel-list-bare-projects (bare)
   ""
   :transient 'transient--do-exit
   (interactive (list (cond ;; ((string= (car (transient-scope)) treebundel-bare-dir)
-                           ;;  (cdr (transient-scope)))
-                           ;; ((car (transient-scope))
-                           ;;  (treebundel--repo-bare (treebundel--project-path (car (transient-scope)) (cdr (transient-scope)))))
-                           ((treebundel-read-bare)))))
+                      ;;  (cdr (transient-scope)))
+                      ;; ((car (transient-scope))
+                      ;;  (treebundel--repo-bare (treebundel--project-path (car (transient-scope)) (cdr (transient-scope)))))
+                      ((treebundel-read-bare)))))
   (transient-setup 'treebundel-list-bare-projects nil nil :scope (cons treebundel-bare-dir bare))
   (when bare
     (message "%s" (seq-map
