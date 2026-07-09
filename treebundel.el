@@ -150,8 +150,7 @@
   :group 'treebundel
   :type 'string
   :set (lambda (option value)
-         (set option (file-name-as-directory (expand-file-name
-                                              value)))))
+         (set option (file-name-as-directory (expand-file-name value)))))
 
 (defcustom treebundel-bare-dir ".bare"
   "The path where bare repositories are stored.
