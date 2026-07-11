@@ -631,7 +631,7 @@ If FILE-PATH is non-nil, use the current buffer instead."
 
   [:description
    (lambda ()
-     (format "Configuring %s" (treebundel--fmt-bare (cdr (transient-scope)))))
+     (format "Configure %s" (treebundel--fmt-bare (cdr (transient-scope)))))
 
    ("l" (lambda ()
           (let ((use-count (length (cdr (treebundel--worktree-list (treebundel-bare-path (cdr (transient-scope))))))))
@@ -766,7 +766,7 @@ PROMPT is the text prompt presented to the user in the minibuffer."
 (transient-define-prefix treebundel-project (workspace project)
   "Working with a PROJECT."
   [:description
-   (lambda () (format "Configuring %s" (treebundel--fmt-workspace-project (transient-scope))))
+   (lambda () (format "Configure %s" (treebundel--fmt-workspace-project (transient-scope))))
    ("p" "Switch to other project" treebundel-switch-project)]
 
   [("RET" "Open project" treebundel-open-project)
@@ -939,7 +939,7 @@ inserted when the minibuffer prompt is shown."
 (transient-define-prefix treebundel-workspace (workspace)
   "Working with a workspace."
   [:description
-   (lambda () (format "Configuring %s" (treebundel--fmt-workspace-project (car (transient-scope)))))
+   (lambda () (format "Configure %s" (treebundel--fmt-workspace-project (car (transient-scope)))))
    ("w" "Switch to other workspace" treebundel-switch-workspace)]
 
   [("p" "Configure project" treebundel-project)
