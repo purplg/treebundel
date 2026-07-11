@@ -405,11 +405,12 @@ The URL is returned for non-nil."
 ;;;;; Repos
 (defun treebundel--repo-bare (repo-path)
   "Return the name of the bare repo related to REPO-PATH."
-  (let ((bare-name (thread-first (treebundel--git-with-repo repo-path
-                                   "rev-parse" "--path-format=absolute" "--git-common-dir")
-                                 (directory-file-name)
-                                 (file-name-base))))
-    bare-name))
+  (when (file-exists-p repo-path)
+    (let ((bare-name (thread-first (treebundel--git-with-repo repo-path
+                                     "rev-parse" "--path-format=absolute" "--git-common-dir")
+                                   (directory-file-name)
+                                   (file-name-base))))
+      bare-name)))
 
 ;;;;; Bares
 (defun treebundel-bare-path (bare)
