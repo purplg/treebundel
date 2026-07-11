@@ -452,7 +452,9 @@ strings, only check these local branches."
    0))
 
 (defun treebundel--bare-read (prompt initial-input history)
-  ""
+  "Lookup a bare.
+PROMPT INITIAL-INPUT and HISTORY are all directly forwarded to
+`completing-read'."
   (let* ((candidates (mapcar (lambda (bare)
                                (replace-regexp-in-string "\\.git$" "" bare))
                              (treebundel--bare-list))))
@@ -756,11 +758,16 @@ pattern to the project cons that are `(workspace . project)'."
                                      candidates))))
       (transient-setup 'treebundel-project nil nil :scope (cons (treebundel-current-workspace selected-path) (treebundel--project-current selected-path))))))
 
+(defvar treebundel--bare-history nil
+  "The `completing-read' history `treebundel--bare-read'.")
+
 (defun treebundel-read-bare (&optional prompt)
   "Interactively find the path of a bare.
-PROMPT is the text prompt presented to the user in the minibuffer."
+PROMPT is the text prompt presented to the user in the minibuffer.
+
+HISTORY"
   (interactive)
-  (treebundel--bare-read (or prompt "Select bare: ") nil nil))
+  (treebundel--bare-read (or prompt "Select bare: ") nil 'treebundel--bare-history))
 
 ;;;;; Projects
 (transient-define-prefix treebundel-project (workspace project)
@@ -893,6 +900,9 @@ NEW-NAME is the new name PROJECT will be renamed to."
                  (list (treebundel-current-workspace) (treebundel--project-current))))
   (funcall-interactively #'find-file (treebundel--project-path workspace project)))
 
+(defvar treebundel--project-history nil
+  "The `completing-read' history `treebundel-read-project'.")
+
 (defun treebundel-read-project (workspace &optional prompt initial require-match)
   "Interactively find the path of a project.
 WORKSPACE is the workspace to look for projects in.
@@ -910,7 +920,8 @@ the ability to create a workspace with a new entry."
                      candidates
                      nil
                      require-match
-                     initial)))
+                     initial
+                     treebundel--project-history)))
 
 (defun treebundel-read-branch (repo-path &optional prompt initial)
   "Interactively selected a branch for a repo.
@@ -1000,6 +1011,9 @@ projects' bare repository located at `treebundel-bare-dir' within
             (treebundel--message "Deleted workspace %s" (treebundel--fmt-workspace workspace)))
         (user-error "There must not be any unsaved changes to delete a workspace")))))
 
+(defvar treebundel--workspace-history nil
+  "The `completing-read' history `treebundel-read-workspace'.")
+
 (defun treebundel-read-workspace (&optional prompt require-match)
   "Interactively find the path of a workspace.
 PROMPT is the prompt to be presented to the user in the
@@ -1011,19 +1025,12 @@ to create a workspace with a new entry."
              (y-or-n-p (format "%s directory doesn't exist. Create?"
                                treebundel-workspace-root)))
     (make-directory treebundel-workspace-root))
-  (let* ((candidates (mapcar (lambda (workspace) (cons workspace 'existing))
+  (let* ((candidates (mapcar (lambda (workspace) (treebundel--fmt-workspace workspace))
                              (treebundel--workspaces)))
          (prompt (or prompt "Workspace: "))
-         (read (completing-read prompt candidates nil require-match))
+         (read (completing-read prompt candidates nil require-match nil treebundel--workspace-history))
          (selection (assoc read candidates)))
-
-    (if (eq (cdr selection) 'existing)
-        (car selection)
-      (let ((workspace-path (treebundel-workspace-path read)))
-        (when (y-or-n-p (format "Are you sure you want to create a new workspace '%s'?"
-                                read))
-          (make-directory workspace-path)
-          read)))))
+    selection))
 
 (provide 'treebundel)
 ;;; treebundel.el ends here
