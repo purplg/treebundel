@@ -596,7 +596,7 @@ If FILE-PATH is non-nil, use the current buffer instead."
    ("p" "Open other project" (lambda ()
                                (interactive)
                                (when-let* ((workspace (car (transient-scope)))
-                                           (project (treebundel-read-project workspace nil :require-match)))
+                                           (project (treebundel-read-project workspace nil nil :require-match)))
                                  (treebundel-open-project workspace project))))
    ("a" "Add project" treebundel-add-project :if (lambda () (car (transient-scope)))
     :description (lambda ()
@@ -991,7 +991,7 @@ WORKSPACE is the name of the workspace to open.
 PROJECT is the name of the project within the workspace to open."
   (interactive)
   (when-let* ((workspace (treebundel-read-workspace nil :require-match))
-              (project (treebundel-read-project workspace nil :require-match)))
+              (project (treebundel-read-project workspace nil nil :require-match)))
     (treebundel-open-project workspace project)))
 (defalias 'treebundel-open #'treebundel-open-in-workspace)
 
@@ -1035,12 +1035,9 @@ to create a workspace with a new entry."
              (y-or-n-p (format "%s directory doesn't exist. Create?"
                                treebundel-workspace-root)))
     (make-directory treebundel-workspace-root))
-  (let* ((candidates (mapcar (lambda (workspace) (treebundel--fmt-workspace workspace))
-                             (treebundel--workspaces)))
-         (prompt (or prompt "Workspace: "))
-         (read (completing-read prompt candidates nil require-match nil treebundel--workspace-history))
-         (selection (assoc read candidates)))
-    selection))
+  (let* ((candidates (treebundel--workspaces))
+         (prompt (or prompt "Workspace: ")))
+    (completing-read prompt candidates nil require-match nil treebundel--workspace-history)))
 
 (provide 'treebundel)
 ;;; treebundel.el ends here
