@@ -630,24 +630,28 @@ If FILE-PATH is non-nil, use the current buffer instead."
    ("b" "Switch to other bare" treebundel-switch-bare)]
 
   [:description
-   (lambda () (format "Configuring %s" (treebundel--fmt-bare (cdr (transient-scope)))))
-   ("k" "Delete" treebundel-delete-bare
-    :description (lambda ()
-                   (if-let* ((use-count (length (cdr (treebundel--worktree-list (treebundel-bare-path (cdr (transient-scope)))))))
-                             ((> use-count 0)))
-                       (format "%s (in use by %s projects)"
-                               (propertize "Delete" 'face 'treebundel-disabled)
-                               (propertize (format "%d" use-count) 'face 'transient-argument))
-                     "Delete")))
+   (lambda ()
+     (format "Configuring %s" (treebundel--fmt-bare (cdr (transient-scope)))))
 
-   ("p" "Projects" treebundel-open-bare-projects)
+   ("l" (lambda ()
+          (let ((use-count (length (cdr (treebundel--worktree-list (treebundel-bare-path (cdr (transient-scope))))))))
+            (format "List %s" (propertize (format "%d projects" use-count) 'face 'treebundel-project))))
+    treebundel-open-bare-projects)
 
    ;; Open a file in this bare's directory
    ("v" "Visit" treebundel-visit-bare)
 
+   ("k" "Delete" treebundel-delete-bare
+    :description (lambda ()
+                   (if-let* ((use-count (length (cdr (treebundel--worktree-list (treebundel-bare-path (cdr (transient-scope)))))))
+                             ((> use-count 0)))
+                       (propertize "Delete" 'face 'treebundel-disabled)
+                     "Delete")))
+
    ;; TODO Git-fetch to update bare
    ("f" "Fetch" treebundel--not-implemented
     :description (lambda () (propertize "Fetch" 'face 'treebundel-disabled)))]
+
   (interactive
    (list (cond ((string= treebundel-bare-dir (car (transient-scope)))
                 (cdr (transient-scope)))
