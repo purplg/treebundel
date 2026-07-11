@@ -685,7 +685,7 @@ Existing worktrees or uncommitted changes will prevent you from deleting."
                           (cdr (transient-scope)))))
   (when-let* ((bare-path (treebundel-bare-path bare)))
     (cond ((treebundel--has-worktrees-p bare-path)
-           (treebundel--error "This repository has worktrees checked out"))
+           (treebundel--error "This bare has projects attached to it"))
 
           ((treebundel--bare-unpushed-commits-p bare)
            (treebundel--error "This bare has unpushed commits"))
