@@ -776,7 +776,7 @@ HISTORY"
 
   [:description
    (lambda () (treebundel--fmt-workspace-project (transient-scope)))
-   ("W" "Configure workspace" treebundel-workspace)]
+   ("W" "Configure workspace" treebundel-workspace :transient transient--do-exit)]
   [("RET" "Open project" treebundel-open-project)
    ("f" "Open project file" (lambda () (interactive)
                               (when-let* ((project-current-directory-override (treebundel--project-path (car (transient-scope))
@@ -956,7 +956,7 @@ inserted when the minibuffer prompt is shown."
 
   [:description
    (lambda () (treebundel--fmt-workspace-project (car (transient-scope))))
-   ("P" "Configure project" treebundel-project)
+   ("P" "Configure project" treebundel-project :transient transient--do-exit)
    ("a" "Add project" treebundel-add-project)
    ("k" "Delete" treebundel-delete-workspace)
    ("m" "Rename" treebundel--not-implemented
@@ -968,6 +968,7 @@ inserted when the minibuffer prompt is shown."
 
 (transient-define-suffix treebundel-switch-workspace (workspace)
   "Switch to WORKSPACE."
+  :transient 'transient--do-exit
   (interactive (list (treebundel-read-workspace nil :require-match)))
   (transient-setup transient-current-command nil nil :scope (cons workspace nil)))
 
