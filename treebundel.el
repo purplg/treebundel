@@ -630,15 +630,15 @@ If FILE-PATH is non-nil, use the current buffer instead."
 (transient-define-prefix treebundel-bare (bare)
   "Prefix for working with bare repositories."
   [("c" "Clone new" treebundel-clone-bare)
-   ("b" "Switch to other bare" treebundel-switch-bare)]
+   ("B" "Switch to other bare" treebundel-switch-bare)]
 
   [:description
    (lambda ()
      (treebundel--fmt-bare (cdr (transient-scope))))
 
-   ("l" (lambda ()
+   ("P" (lambda ()
           (let ((use-count (length (cdr (treebundel--worktree-list (treebundel-bare-path (cdr (transient-scope))))))))
-            (format "List %s" (propertize (format "%d projects" use-count) 'face 'treebundel-project))))
+            (format "Projects (%s)" (propertize (format "%d" use-count) 'face 'treebundel-project))))
     treebundel-open-bare-projects)
 
    ;; Open a file in this bare's directory
@@ -773,7 +773,7 @@ HISTORY"
 ;;;;; Projects
 (transient-define-prefix treebundel-project (workspace project)
   "Working with a PROJECT."
-  [("p" "Switch to other project" treebundel-switch-project)]
+  [("P" "Switch to other project" treebundel-switch-project)]
 
   [:description
    (lambda () (treebundel--fmt-workspace-project (transient-scope)))
@@ -961,7 +961,7 @@ inserted when the minibuffer prompt is shown."
 ;;;;; Workspaces
 (transient-define-prefix treebundel-workspace (workspace)
   "Working with a workspace."
-  [("w" "Switch to other workspace" treebundel-switch-workspace)]
+  [("W" "Switch to other workspace" treebundel-switch-workspace)]
 
   [:description
    (lambda () (treebundel--fmt-workspace-project (transient-scope)))
