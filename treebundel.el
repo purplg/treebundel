@@ -626,11 +626,12 @@ If FILE-PATH is non-nil, use the current buffer instead."
 ;;;;; Bare
 (transient-define-prefix treebundel-bare (bare)
   "Prefix for working with bare repositories."
-  [:description
-   (lambda () (format "Configuring %s" (treebundel--fmt-bare (cdr (transient-scope)))))
+  [("c" "Clone new" treebundel-clone-bare)
    ("b" "Switch to other bare" treebundel-switch-bare)]
 
-  [("k" "Delete" treebundel-delete-bare
+  [:description
+   (lambda () (format "Configuring %s" (treebundel--fmt-bare (cdr (transient-scope)))))
+   ("k" "Delete" treebundel-delete-bare
     :description (lambda ()
                    (if-let* ((use-count (length (cdr (treebundel--worktree-list (treebundel-bare-path (cdr (transient-scope)))))))
                              ((> use-count 0)))
@@ -646,11 +647,7 @@ If FILE-PATH is non-nil, use the current buffer instead."
 
    ;; TODO Git-fetch to update bare
    ("f" "Fetch" treebundel--not-implemented
-    :description (lambda () (propertize "Fetch" 'face 'treebundel-disabled)))
-
-   ;; TODO treebundel-read-project that are currently associated with this bare repo.
-   ("p" "Projects" treebundel--not-implemented
-    :description  (lambda () (propertize "Projects" 'face 'treebundel-disabled)))]
+    :description (lambda () (propertize "Fetch" 'face 'treebundel-disabled)))]
   (interactive
    (list (cond ((string= treebundel-bare-dir (car (transient-scope)))
                 (cdr (transient-scope)))
@@ -677,26 +674,21 @@ with `treebundel-add-project'"
                                          (file-name-nondirectory
                                           (directory-file-name
                                            (treebundel--bare-clone url))))))
-    (treebundel--message "Finished cloning %s." bare-name)))
+    (treebundel--message "Finished cloning %s." bare-name)
+    (transient-setup transient-current-command nil nil :scope (cons treebundel-bare-dir bare-name))))
 (defalias 'treebundel-clone #'treebundel-clone-bare)
 
-(transient-define-suffix treebundel-delete-bare ()
+(transient-define-suffix treebundel-delete-bare (bare)
   "Delete a bare repository BARE.
-Existing worktrees or uncommitted changes will prevent you from deleting.
-
-If INTERACTIVE is non-nil, prompt the user to force delete for any changes not
-on remote.
-
-When FORCE is t, continue deleting even if"
-  (interactive)
-  (when-let* ((_ (message "scope(-delete-bare): %s" (transient-scope)))
-              (bare (treebundel-bare-path))
-              (_ (progn (message "Disabled -delete-bare for safety") nil)))
-    (cond ((treebundel--has-worktrees-p (treebundel-bare-path bare))
+Existing worktrees or uncommitted changes will prevent you from deleting."
+  (interactive (list (and (string= treebundel-bare-dir (car (transient-scope)))
+                          (cdr (transient-scope)))))
+  (when-let* ((bare-path (treebundel-bare-path bare)))
+    (cond ((treebundel--has-worktrees-p bare-path)
            (treebundel--error "This repository has worktrees checked out"))
 
-          ((and (treebundel--bare-unpushed-commits-p bare)
-                (not (yes-or-no-p (format "%s has unpushed commits on some branches.  Delete anyway?" bare)))))
+          ((treebundel--bare-unpushed-commits-p bare)
+           (treebundel--error "This bare has unpushed commits"))
 
           (t (treebundel--bare-delete bare)))))
 
