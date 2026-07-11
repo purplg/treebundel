@@ -596,7 +596,7 @@ If FILE-PATH is non-nil, use the current buffer instead."
    ("p" "Open other project" (lambda ()
                                (interactive)
                                (when-let* ((workspace (car (transient-scope)))
-                                           (project (treebundel-read-project workspace)))
+                                           (project (treebundel-read-project workspace nil :require-match)))
                                  (treebundel-open-project workspace project))))
    ("a" "Add project" treebundel-add-project :if (lambda () (car (transient-scope)))
     :description (lambda ()
@@ -795,7 +795,7 @@ HISTORY"
   "Start configuring PROJECT in WORKSPACE."
   :transient 'transient--do-exit
   (interactive (when-let* ((workspace (or (car (transient-scope))))
-                           (project (treebundel-read-project workspace nil nil t)))
+                           (project (treebundel-read-project workspace nil nil :require-match)))
                  (list workspace project)))
   (transient-setup transient-current-command nil nil :scope (cons workspace project)))
 
@@ -860,7 +860,9 @@ into."
   (interactive
    (when-let* ((workspace (car (transient-scope)))
                (project (cdr (transient-scope)))
-               (new-workspace (treebundel-read-workspace (format "Move %s to: " (treebundel--fmt-workspace-project workspace project)) t)))
+               (new-workspace (treebundel-read-workspace
+                               (format "Move %s to: " (treebundel--fmt-workspace-project workspace project))
+                               :require-match)))
      (list workspace project new-workspace)))
   (treebundel--project-move (treebundel--project-path workspace project)
                             (file-name-concat (treebundel-workspace-path new-workspace) project))
@@ -961,14 +963,12 @@ inserted when the minibuffer prompt is shown."
     :description  (lambda () (propertize "Rename (not implemented)" 'face 'treebundel-disabled)))]
 
   (interactive (list (or (car (transient-scope))
-                         (treebundel-current-workspace)
-                         (treebundel-read-workspace nil t))))
+                         (treebundel-read-workspace nil :require-match))))
   (transient-setup 'treebundel-workspace nil nil :scope (cons workspace nil)))
 
 (transient-define-suffix treebundel-switch-workspace (workspace)
   "Switch to WORKSPACE."
-  :transient 'transient--do-exit
-  (interactive (list (treebundel-read-workspace nil t)))
+  (interactive (list (treebundel-read-workspace nil :require-match)))
   (transient-setup transient-current-command nil nil :scope (cons workspace nil)))
 
 (transient-define-suffix treebundel-open-in-workspace ()
@@ -980,8 +980,8 @@ WORKSPACE is the name of the workspace to open.
 
 PROJECT is the name of the project within the workspace to open."
   (interactive)
-  (when-let* ((workspace (treebundel-read-workspace nil t))
-              (project (treebundel-read-project workspace nil nil t)))
+  (when-let* ((workspace (treebundel-read-workspace nil :require-match))
+              (project (treebundel-read-project workspace nil :require-match)))
     (treebundel-open-project workspace project)))
 (defalias 'treebundel-open #'treebundel-open-in-workspace)
 
@@ -992,7 +992,7 @@ everything in the workspace. Anything committed is still saved in the respective
 projects' bare repository located at `treebundel-bare-dir' within
 `treebundel-workspace-root'."
   (interactive (list (car (transient-scope))))
-  (when-let* ((workspace (or workspace (treebundel-read-workspace "Delete workspace: " t)))
+  (when-let* ((workspace (or workspace (treebundel-read-workspace "Delete workspace: " :require-match)))
               (workspace-path (treebundel-workspace-path workspace))
               (project-paths (directory-files workspace-path t "\\`[^.].*")))
     (let* ((ignore-errors (transient-arg-value "--force" workspace)))
