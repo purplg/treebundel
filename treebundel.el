@@ -278,7 +278,7 @@ Place the cloned repository as a bare repository in the directory declared in
 `treebundel-bare-dir' within `treebundel-workspace-root' so worktrees can be
 created from it as workspace projects."
   (let* ((name (car (last (split-string url "/"))))
-         (dest (treebundel-bare-path name)))
+         (dest (treebundel--bare-path name)))
     (when (file-exists-p dest)
       (user-error "Repository with this name is already cloned"))
     (treebundel--git "clone" url "--bare" dest)
@@ -334,7 +334,7 @@ When OMIT-MAIN is non-nil, exclude the default branch."
 (defun treebundel--worktree-remove (project-path &optional force)
   "Remove the worktree at PROJECT-PATH.
 If FORCE is t, then add --force to the command."
-  (treebundel--git-with-repo (treebundel-bare-path (treebundel--repo-bare project-path))
+  (treebundel--git-with-repo (treebundel--bare-path (treebundel--repo-bare project-path))
     "worktree" "remove" (when force "--force") project-path))
 
 (defun treebundel--worktree-add (bare worktree-path branch-name)
@@ -347,7 +347,7 @@ BRANCH-NAME is the name of branch to be created and checked out at
 WORKTREE-PATH.
 
 Returns the path to the newly created worktree."
-  (let ((bare-path (treebundel-bare-path bare)))
+  (let ((bare-path (treebundel--bare-path bare)))
     (if (member branch-name (treebundel--branches bare-path))
         (treebundel--git-with-repo bare-path
           "worktree" "add" worktree-path branch-name)
@@ -412,7 +412,7 @@ The URL is returned for non-nil."
       bare-name)))
 
 ;;;;; Bares
-(defun treebundel-bare-path (bare)
+(defun treebundel--bare-path (bare)
   "Return the path of bare repository with BARE."
   (file-name-concat treebundel-workspace-root treebundel-bare-dir
                     (if (string= "git" (file-name-extension bare))
@@ -421,7 +421,7 @@ The URL is returned for non-nil."
 
 (defun treebundel--bare-delete (bare)
   "Delete the bare repository at BARE."
-  (delete-directory (treebundel-bare-path bare) t))
+  (delete-directory (treebundel--bare-path bare) t))
 
 (defun treebundel--bare-list ()
   "Return a list of all existing bare repository directory names."
@@ -446,7 +446,7 @@ strings, only check these local branches."
     (setq branches (list branches)))
 
   (length>
-   (treebundel--git-with-repo (treebundel-bare-path bare)
+   (treebundel--git-with-repo (treebundel--bare-path bare)
      "log" "--branches" "--not" "--remotes")
    0))
 
@@ -506,7 +506,7 @@ If FILE-PATH is non-nil, use the current buffer."
 
 (defun treebundel--project-move (src-path dst-path)
   "Move a repo from SRC-PATH to DST-PATH."
-  (treebundel--git-with-repo (treebundel-bare-path (treebundel--repo-bare src-path))
+  (treebundel--git-with-repo (treebundel--bare-path (treebundel--repo-bare src-path))
     "worktree" "move" src-path dst-path)
   ;; Updated related open buffers file location
   (dolist (buf (buffer-list))
@@ -644,7 +644,7 @@ means it represents a bare directory rather than a project directory.")
 (cl-defmethod treebundel-scope-exists-p ((scope treebundel-scope))
   "Returns t directory at `treebundel-scope' SCOPE exists."
   (cond ((treebundel-scope-bare-p scope)
-         (file-exists-p (treebundel-bare-path (oref scope project))))
+         (file-exists-p (treebundel--bare-path (oref scope project))))
         ((treebundel-scope-project-p scope)
          (file-exists-p (treebundel-project-path (oref scope workspace)
                                                  (oref scope project))))))
@@ -703,7 +703,7 @@ means it represents a bare directory rather than a project directory.")
      (treebundel--fmt-bare (oref (transient-scope) project)))
 
    ("P" (lambda ()
-          (let ((use-count (length (cdr (treebundel--worktree-list (treebundel-bare-path (oref (transient-scope) project)))))))
+          (let ((use-count (length (cdr (treebundel--worktree-list (treebundel--bare-path (oref (transient-scope) project)))))))
             (format "Projects (%s)" (propertize (format "%d" use-count) 'face 'treebundel-project))))
     treebundel-open-bare-projects)
 
@@ -712,7 +712,7 @@ means it represents a bare directory rather than a project directory.")
 
    ("k" "Delete" treebundel-delete-bare
     :description (lambda ()
-                   (if-let* ((use-count (length (cdr (treebundel--worktree-list (treebundel-bare-path (oref (transient-scope) project))))))
+                   (if-let* ((use-count (length (cdr (treebundel--worktree-list (treebundel--bare-path (oref (transient-scope) project))))))
                              ((> use-count 0)))
                        (propertize "Delete" 'face 'treebundel-disabled)
                      "Delete")))
@@ -729,7 +729,7 @@ means it represents a bare directory rather than a project directory.")
                            ((treebundel-read-bare)))))
   (transient-setup 'treebundel-bare nil nil :scope (treebundel-scope
                                                     :workspace treebundel-bare-dir
-                                                    :project (file-name-nondirectory (treebundel-bare-path bare)))))
+                                                    :project (file-name-nondirectory (treebundel--bare-path bare)))))
 
 (transient-define-suffix treebundel-switch-bare (bare)
   "Start configuring BARE."
@@ -737,7 +737,7 @@ means it represents a bare directory rather than a project directory.")
   (interactive (list (treebundel-read-bare)))
   (transient-setup transient-current-command nil nil :scope (treebundel-scope
                                                              :workspace treebundel-bare-dir
-                                                             :project (file-name-nondirectory (treebundel-bare-path bare)))))
+                                                             :project (file-name-nondirectory (treebundel--bare-path bare)))))
 
 (transient-define-suffix treebundel-clone-bare (url)
   "Clone URL to the collection of bare repos.
@@ -754,7 +754,7 @@ with `treebundel-add-project'"
     (treebundel--message "Finished cloning %s." bare)
     (transient-setup transient-current-command nil nil :scope (treebundel-scope
                                                                :workspace treebundel-bare-dir
-                                                               :project (file-name-nondirectory (treebundel-bare-path bare))))))
+                                                               :project (file-name-nondirectory (treebundel--bare-path bare))))))
 (defalias 'treebundel-clone #'treebundel-clone-bare)
 
 (transient-define-suffix treebundel-delete-bare (bare)
@@ -763,7 +763,7 @@ Existing worktrees or uncommitted changes will prevent you from deleting."
   (interactive (list (when (and (treebundel-scope-exists-p (transient-scope))
                                 (treebundel-scope-bare-p (transient-scope)))
                        (oref (transient-scope) project))))
-  (when-let* ((bare-path (treebundel-bare-path bare)))
+  (when-let* ((bare-path (treebundel--bare-path bare)))
     (cond ((treebundel--has-worktrees-p bare-path)
            (treebundel--error "This bare has projects attached to it"))
 
@@ -781,7 +781,7 @@ disabled.  Use this command to manually control when git-fetch operations are
 performed."
   (interactive)
   (when-let* ((bare (treebundel--repo-bare (treebundel-project-path)))
-              (bare-path (treebundel-bare-path bare))
+              (bare-path (treebundel--bare-path bare))
               ((file-exists-p bare-path)))
     (treebundel--message "Fetching...")
     (treebundel--git-with-repo bare "fetch")
@@ -797,7 +797,7 @@ pattern to the project cons that are `(workspace . project)'."
                             (treebundel--repo-bare (treebundel--project-path (oref (transient-scope) workspace)
                                                                              (oref (transient-scope) project))))
                            ((treebundel-read-bare)))))
-  (find-file (treebundel-bare-path bare)))
+  (find-file (treebundel--bare-path bare)))
 
 (transient-define-suffix treebundel-open-bare-projects (bare)
   ""
@@ -808,7 +808,7 @@ pattern to the project cons that are `(workspace . project)'."
                             (treebundel--repo-bare (treebundel--project-path (oref (transient-scope) workspace)
                                                                              (oref (transient-scope) project))))
                            ((treebundel-read-bare)))))
-  (let* ((bare-path (treebundel-bare-path bare))
+  (let* ((bare-path (treebundel--bare-path bare))
          (worktrees (cdr (treebundel--worktree-list bare-path)))
          (worktree-paths (mapcar (lambda (worktree) (cadr (split-string (car worktree) " ")))
                                  worktrees))
@@ -897,7 +897,7 @@ this project."
   (interactive
    (when-let* ((workspace (oref (transient-scope) workspace))
                (bare (treebundel-read-bare))
-               (project-branch (treebundel-read-branch (treebundel-bare-path bare)))
+               (project-branch (treebundel-read-branch (treebundel--bare-path bare)))
                (project (treebundel-read-project workspace "Project name: " bare)))
      (list workspace bare project project-branch)))
   (treebundel--project-add workspace
