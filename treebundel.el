@@ -631,7 +631,7 @@ If FILE-PATH is non-nil, use the current buffer instead."
 
   [:description
    (lambda ()
-     (format "Configure %s" (treebundel--fmt-bare (cdr (transient-scope)))))
+     (treebundel--fmt-bare (cdr (transient-scope))))
 
    ("l" (lambda ()
           (let ((use-count (length (cdr (treebundel--worktree-list (treebundel-bare-path (cdr (transient-scope))))))))
@@ -765,10 +765,11 @@ PROMPT is the text prompt presented to the user in the minibuffer."
 ;;;;; Projects
 (transient-define-prefix treebundel-project (workspace project)
   "Working with a PROJECT."
-  [:description
-   (lambda () (format "Configure %s" (treebundel--fmt-workspace-project (transient-scope))))
-   ("p" "Switch to other project" treebundel-switch-project)]
+  [("p" "Switch to other project" treebundel-switch-project)]
 
+  [:description
+   (lambda () (treebundel--fmt-workspace-project (transient-scope)))
+   ("W" "Configure workspace" treebundel-workspace)]
   [("RET" "Open project" treebundel-open-project)
    ("f" "Open project file" (lambda () (interactive)
                               (when-let* ((project-current-directory-override (treebundel--project-path (car (transient-scope))
@@ -938,11 +939,11 @@ inserted when the minibuffer prompt is shown."
 ;;;;; Workspaces
 (transient-define-prefix treebundel-workspace (workspace)
   "Working with a workspace."
-  [:description
-   (lambda () (format "Configure %s" (treebundel--fmt-workspace-project (car (transient-scope)))))
-   ("w" "Switch to other workspace" treebundel-switch-workspace)]
+  [("w" "Switch to other workspace" treebundel-switch-workspace)]
 
-  [("p" "Configure project" treebundel-project)
+  [:description
+   (lambda () (treebundel--fmt-workspace-project (car (transient-scope))))
+   ("P" "Configure project" treebundel-project)
    ("a" "Add project" treebundel-add-project)
    ("k" "Delete" treebundel-delete-workspace)
    ("m" "Rename" treebundel--not-implemented
