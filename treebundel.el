@@ -776,7 +776,14 @@ HISTORY"
 
   [:description
    (lambda () (treebundel--fmt-workspace-project (transient-scope)))
-   ("W" "Configure workspace" treebundel-workspace)]
+   ("W" "Configure workspace" treebundel-workspace)
+   ("B" "Configure bare" treebundel-bare
+    :description
+    (lambda ()
+      (format "Bare %s"
+              (treebundel--fmt-bare (treebundel--repo-bare (treebundel--project-path
+                                                            (car (transient-scope))
+                                                            (cdr (transient-scope))))))))]
 
   [("RET" "Open project" treebundel-open-project)
    ("f" "Open project file" (lambda () (interactive)
