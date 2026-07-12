@@ -58,13 +58,25 @@
      :project-p nil
      :bare-p nil)
 
+    (:scope ,(treebundel-scope :workspace ".bare" :project "")
+     :workspace-p nil
+     :project-p nil
+     :bare-p nil)
+
     (:scope ,(treebundel-scope :workspace ".hidden" :project "repo")
      :workspace-p nil
      :project-p nil
      :bare-p nil)
 
     (:scope ,(treebundel-scope :workspace "bare" :project nil)
-     :workspace-p t :project-p nil :bare-p nil)
+     :workspace-p t
+     :project-p nil
+     :bare-p nil)
+
+    (:scope ,(treebundel-scope :workspace "bare" :project "")
+     :workspace-p t
+     :project-p nil
+     :bare-p nil)
 
     (:scope ,(treebundel-scope :workspace "bare" :project "repo.git")
      :workspace-p t

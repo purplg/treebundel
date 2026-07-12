@@ -430,12 +430,6 @@ The URL is returned for non-nil."
       (make-directory bare-dir))
     (directory-files bare-dir nil "\\`[^.].*")))
 
-(defun treebundel--bare-of (file-path)
-  "Return the bare name of FILE-PATH."
-  (when-let* ((workspace (treebundel--workspace-of file-path))
-              (project (treebundel--project-of file-path)))
-    (treebundel--repo-bare (treebundel--project-path workspace project))))
-
 (defun treebundel--bare-unpushed-commits-p (bare &optional branches)
   "Return t if there are commits not on remote.
 BARE is the bare repo to check.
@@ -862,20 +856,20 @@ HISTORY"
    ("k" treebundel-remove-project)
    ("m" "Move" treebundel-move-project)
    ("r" "Rename" treebundel-rename-project)]
-  (interactive (if-let* ((workspace (oref (transient-scope) workspace))
-                         (project (oref (transient-scope) project)))
-                   (list workspace project)
-                 (let* ((workspace (treebundel-read-workspace nil :require-match))
-                        (project (treebundel-read-project workspace nil nil :require-match)))
-                   (list workspace project))))
+  (interactive (let* ((workspace (or (oref (transient-scope) workspace)
+                                     (treebundel-read-workspace nil :require-matchd)))
+                      (project (or (oref (transient-scope) project)
+                                   (treebundel-read-project workspace nil nil :require-match))))
+                 (list workspace project)))
   (transient-setup 'treebundel-project nil nil :scope (treebundel-scope :workspace workspace :project project)))
 
 (transient-define-suffix treebundel-switch-project (workspace project)
   "Switch to PROJECT in WORKSPACE."
   :transient 'transient--do-exit
-  (interactive (when-let* ((workspace (or (oref (transient-scope) workspace)))
-                           (project (treebundel-read-project workspace nil nil :require-match)))
-                 (list workspace project)))
+  (interactive (if (treebundel-scope-workspace-p (transient-scope))
+                   (let* ((workspace (oref (transient-scope) workspace)))
+                     (list workspace (treebundel-read-project workspace nil nil :require-match)))
+                 (list "test" "invalid")))
   (transient-setup transient-current-command nil nil :scope (treebundel-scope :workspace workspace :project project)))
 
 (transient-define-suffix treebundel-add-project (workspace bare project project-branch)
