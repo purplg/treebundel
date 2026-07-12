@@ -180,11 +180,27 @@ operations when adding projects to your workspaces."
   "Face used for workspaces."
   :group 'treebundel-faces)
 
+(defface treebundel-workspace-active '((t :inherit treebundel-workspace :box t))
+  "Face used for workspaces."
+  :group 'treebundel-faces)
+
+(defface treebundel-workspace-inactive '((t :inherit treebundel-workspace :foreground "#004963"))
+  "Face used for workspaces."
+  :group 'treebundel-faces)
+
 (defface treebundel-bare '((t :inherit bold :foreground "#C300FF"))
   "Face used for projects."
   :group 'treebundel-faces)
 
 (defface treebundel-project '((t :inherit bold :foreground "#24A600"))
+  "Face used for projects."
+  :group 'treebundel-faces)
+
+(defface treebundel-project-active '((t :inherit treebundel-project :box t))
+  "Face used for projects."
+  :group 'treebundel-faces)
+
+(defface treebundel-project-inactive '((t :inherit treebundel-project :foreground "#197400"))
   "Face used for projects."
   :group 'treebundel-faces)
 
@@ -381,20 +397,31 @@ The URL is returned for non-nil."
   (format "%s" (propertize (or bare "⸺")
                            'face 'treebundel-bare)))
 
-(defun treebundel--fmt-workspace (workspace)
-  "Format the text of a WORKSPACE name."
-  (concat (propertize (or workspace "⸺") 'face 'treebundel-workspace)
+(defun treebundel--fmt-workspace (workspace &optional focus)
+  "Format the text of a WORKSPACE name.
+Set INACTIVE to t to use the darker face."
+  (concat (propertize (or workspace "⸺") 'face (cond ((eq focus 'active) 'treebundel-workspace-active)
+                                                     ((eq focus 'inactive) 'treebundel-workspace-inactive)
+                                                     (t 'treebundel-workspace)))
           "/"))
 
-(defun treebundel--fmt-project (project)
+(defun treebundel--fmt-project (project &optional focus)
   "Format the text of a PROJECT name."
-  (propertize (or project "⸺") 'face 'treebundel-project))
+  (propertize (or project "⸺") 'face (cond ((eq focus 'active) 'treebundel-project-active)
+                                           ((eq focus t) 'treebundel-project-active)
+                                           ((eq focus 'inactive) 'treebundel-project-inactive)
+                                           (t 'treebundel-project))))
 
-(defun treebundel--fmt-workspace-project (workspace project)
-  "Format the text of a WORKSPACE and PROJECT pair."
+(cl-defun treebundel--fmt-workspace-project (workspace project &key workspace-state project-state &allow-other-keys)
+  "Format the text of a WORKSPACE and PROJECT pair.
+When FOCUS is nil, neither WORKSPACE or PROJECT are in the active face.
+When FOCUS is workspace, only WORKSPACE is in the active face.
+When FOCUS is project, only PROJECT is in the active face."
   (if workspace
-      (concat (treebundel--fmt-workspace workspace) (treebundel--fmt-project project))
-    (concat (treebundel--fmt-workspace nil) (treebundel--fmt-project nil))))
+      (concat (treebundel--fmt-workspace workspace workspace-state)
+              (treebundel--fmt-project project project-state))
+    (concat (treebundel--fmt-workspace nil workspace-state)
+            (treebundel--fmt-project nil project-state))))
 
 ;;;; Workspace management
 
@@ -634,10 +661,11 @@ means it represents a bare directory rather than a project directory.")
          (treebundel--repo-bare (treebundel-project-path (oref scope workspace) (oref scope project))))
         (t (treebundel--error "This is not treebundel-managed project"))))
 
-(cl-defmethod treebundel-scope-fmt ((scope treebundel-scope))
+(cl-defmethod treebundel-scope-fmt ((scope treebundel-scope) &key workspace-state project-state &allow-other-keys)
   "Format the text of the `treebundel-scope' SCOPE."
-  (concat (treebundel--fmt-workspace (oref scope workspace))
-          (treebundel--fmt-project (oref scope project))))
+  (treebundel--fmt-workspace-project (oref scope workspace) (oref scope project)
+                                     :workspace-state workspace-state
+                                     :project-state project-state))
 
 (cl-defmethod treebundel-scope-exists-p ((scope treebundel-scope))
   "Returns t directory at `treebundel-scope' SCOPE exists."
@@ -663,21 +691,22 @@ Read `treebundel-scope' docstring for more information."
 ;;;###autoload(autoload 'treebundel "treebundel" nil t)
 (transient-define-prefix treebundel (&optional workspace project)
   ""
-  [:description "Quick"
-                ("w" "Open in workspace" treebundel-open-in-workspace)
-                ("p" "Open other project" (lambda ()
-                                            (interactive)
-                                            (when-let* ((workspace (oref (transient-scope) workspace))
-                                                        (project (treebundel-read-project workspace nil nil :require-match)))
-                                              (treebundel-open-project workspace project))))
-                ("a" "Add project" treebundel-add-project :if (lambda () (treebundel-scope-workspace-p (transient-scope)))
-                 :description (lambda ()
-                                (format "Add project to %s" (treebundel--fmt-workspace (oref (transient-scope) workspace)))))]
+  ["Quick"
+   ("w" "Open in workspace" treebundel-open-in-workspace)
+   ("p" "Open other project" (lambda ()
+                               (interactive)
+                               (when-let* ((workspace (oref (transient-scope) workspace))
+                                           (project (treebundel-read-project workspace nil nil :require-match)))
+                                 (treebundel-open-project workspace project))))
+   ("a" "Add project" treebundel-add-project :if (lambda () (treebundel-scope-workspace-p (transient-scope)))
+    :description (lambda ()
+                   (format "Add project to %s" (treebundel--fmt-workspace (oref (transient-scope) workspace)))))]
 
   ["Configure"
    ("W" "Workspace" treebundel-workspace
-    :description (lambda () (treebundel--fmt-workspace (when (treebundel-scope-workspace-p (transient-scope))
-                                                         (oref (transient-scope) workspace)))))
+    :description (lambda () (treebundel--fmt-workspace-project (oref (transient-scope) workspace)
+                                                               nil
+                                                               :project-state 'inactive)))
 
    ("P" "Project" treebundel-project :if (lambda () (treebundel-scope-project-p (transient-scope)))
     :description (lambda () (treebundel-scope-fmt (transient-scope))))
@@ -849,7 +878,7 @@ HISTORY"
   [("P" "Switch to other project" treebundel-switch-project)]
 
   [:description
-   (lambda () (treebundel-scope-fmt (transient-scope)))
+   (lambda () (treebundel-scope-fmt (transient-scope) :project-state 'active))
    ("W" "Configure workspace" treebundel-workspace)
    ("B" "Configure bare" treebundel-bare
     :description
@@ -1045,7 +1074,7 @@ inserted when the minibuffer prompt is shown."
   [("W" "Switch to other workspace" treebundel-switch-workspace)]
 
   [:description
-   (lambda () (treebundel-scope-fmt (transient-scope)))
+   (lambda () (treebundel-scope-fmt (transient-scope) :project-state 'inactive))
    ("P" "Configure project" treebundel-project :transient transient--do-exit)]
 
   [("a" "Add project" treebundel-add-project)
