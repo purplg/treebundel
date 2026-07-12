@@ -418,16 +418,9 @@ Set INACTIVE to t to use the darker face."
                                            (t 'treebundel-project))))
 
 (cl-defun treebundel--fmt-workspace-project (workspace project &key workspace-state project-state &allow-other-keys)
-  "Format the text of a WORKSPACE and PROJECT pair.
-When FOCUS is nil, neither WORKSPACE or PROJECT are in the active face.
-When FOCUS is workspace, only WORKSPACE is in the active face.
-When FOCUS is project, only PROJECT is in the active face."
-  (concat (treebundel--fmt-workspace workspace (or workspace-state
-                                                   (unless (eq project-state 'active)
-                                                     (when project 'inactive))))
-          (treebundel--fmt-project project (or project-state
-                                               (unless (eq workspace-state 'active)
-                                                 (unless project 'inactive))))))
+  "Format the text of a WORKSPACE and PROJECT pair."
+  (concat (treebundel--fmt-workspace workspace (or workspace-state (and project (not project-state) 'inactive)))
+          (treebundel--fmt-project project (or project-state (unless (or project workspace-state) 'inactive)))))
 
 ;;;; Workspace management
 
@@ -437,7 +430,8 @@ When FOCUS is project, only PROJECT is in the active face."
 ;;;;; Repos
 (defun treebundel--repo-bare (repo-path)
   "Return the name of the bare repo related to REPO-PATH."
-  (when (file-exists-p repo-path)
+  (when (and (file-exists-p repo-path)
+             (vc-git-root repo-path))
     (let ((bare-name (thread-first (treebundel--git-with-repo repo-path
                                      "rev-parse" "--path-format=absolute" "--git-common-dir")
                                    (directory-file-name)
@@ -725,7 +719,8 @@ Read `treebundel-scope' docstring for more information."
    ("P" "Project" treebundel-project :if (lambda () (treebundel-scope-project-p (transient-scope)))
     :description (lambda () (treebundel-scope-fmt (transient-scope))))
 
-   ("B" "Bare" treebundel-bare :if (lambda () (oref (transient-scope) project))
+   ("B" "Bare" treebundel-bare :if (lambda () (or (treebundel-scope-bare-p (transient-scope))
+                                                  (treebundel-scope-project-p (transient-scope))))
     :description
     (lambda ()
       (format "Bare %s"
@@ -748,8 +743,7 @@ Read `treebundel-scope' docstring for more information."
    ("B" "Switch to other bare" treebundel-switch-bare)]
 
   [:description
-   (lambda ()
-     (treebundel--fmt-bare (oref (transient-scope) project) 'active))
+   (lambda () (treebundel--fmt-bare (oref (transient-scope) project) 'active))
 
    ("P" (lambda ()
           (let ((use-count (length (cdr (treebundel--worktree-list (treebundel--bare-path (oref (transient-scope) project)))))))
