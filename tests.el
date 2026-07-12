@@ -5,22 +5,22 @@
 (require 'treebundel)
 
 (ert-deftest test-fmt-bare ()
-  (should (string= (--fmt-bare nil) "⸺"))
-  (should (string= (--fmt-bare "thebare") "thebare")))
+  (should (string= (substring-no-properties (--fmt-bare nil)) "⸺"))
+  (should (string= (substring-no-properties (--fmt-bare "thebare")) "thebare")))
 
 (ert-deftest test-fmt-workspace ()
-  (should (string= (--fmt-workspace nil) "⸺/"))
-  (should (string= (--fmt-workspace "theworkspace") "theworkspace/")))
+  (should (string= (substring-no-properties (--fmt-workspace nil)) "⸺/"))
+  (should (string= (substring-no-properties (--fmt-workspace "theworkspace")) "theworkspace/")))
 
 (ert-deftest test-fmt-project ()
-  (should (string= (--fmt-project nil) "⸺"))
-  (should (string= (--fmt-project "theproject") "theproject")))
+  (should (string= (substring-no-properties (--fmt-project nil)) "⸺"))
+  (should (string= (substring-no-properties (--fmt-project "theproject")) "theproject")))
 
 (ert-deftest test-fmt-workspace-project ()
-  (should (string= (--fmt-workspace-project nil nil) "⸺/⸺"))
-  (should (string= (--fmt-workspace-project nil "theproject") "⸺/⸺"))
-  (should (string= (--fmt-workspace-project "theworkspace" nil) "theworkspace/⸺"))
-  (should (string= (--fmt-workspace-project "theworkspace" "theproject") "theworkspace/theproject")))
+  (should (string= (substring-no-properties (--fmt-workspace-project nil nil)) "⸺/⸺"))
+  (should (string= (substring-no-properties (--fmt-workspace-project nil "theproject")) "⸺/⸺"))
+  (should (string= (substring-no-properties (--fmt-workspace-project "theworkspace" nil)) "theworkspace/⸺"))
+  (should (string= (substring-no-properties (--fmt-workspace-project "theworkspace" "theproject")) "theworkspace/theproject")))
 
 (ert-deftest test-workspace-of ()
   (let* ((-workspace-root "/tmp/treebundel-tests/"))
