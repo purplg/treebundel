@@ -731,16 +731,12 @@ Read `treebundel-scope' docstring for more information."
                                                             (oref (transient-scope) project)))))))]
 
   ["Debug" :level 6
-   ("l" "Log" treebundel-open-gitlog)
-   ("c" "Clear scope" treebundel--clear-scope)]
+   ("l" "Log" treebundel--debug-gitlog)
+   ("c" "Clear scope" treebundel--debug-clear-scope)]
 
   (interactive (let* ((scope (or (transient-scope) (treebundel-scope :workspace (treebundel-current-workspace) :project (treebundel-current-project)))))
                  (list (oref scope workspace) (oref scope project))))
   (transient-setup 'treebundel nil nil :scope (treebundel-scope :workspace workspace :project project)))
-
-(transient-define-suffix treebundel--clear-scope ()
-  (interactive)
-  (transient-setup transient-current-command nil nil :scope (treebundel-scope :workspace nil :project nil)))
 
 ;;;;; Bare
 (transient-define-prefix treebundel-bare (bare)
@@ -1076,12 +1072,6 @@ inserted when the minibuffer prompt is shown."
                    (or initial (treebundel--branch-name
                                 (treebundel--repo-bare repo-path)))))
 
-;;;;; Log
-(transient-define-suffix treebundel-open-gitlog ()
-  ""
-  (interactive)
-  (display-buffer (treebundel--gitlog-buffer)))
-
 ;;;;; Workspaces
 (transient-define-prefix treebundel-workspace (workspace)
   "Working with a workspace."
@@ -1166,4 +1156,14 @@ to create a workspace with a new entry."
     (completing-read prompt candidates nil require-match nil treebundel--workspace-history)))
 
 (provide 'treebundel)
+;;;;; Debug
+(transient-define-suffix treebundel--debug-gitlog ()
+  ""
+  (interactive)
+  (display-buffer (treebundel--gitlog-buffer)))
+
+(transient-define-suffix treebundel--debug-clear-scope ()
+  (interactive)
+  (transient-setup transient-current-command nil nil :scope (treebundel-scope :workspace nil :project nil)))
+
 ;;; treebundel.el ends here
