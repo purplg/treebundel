@@ -702,14 +702,8 @@ Read `treebundel-scope' docstring for more information."
 (transient-define-prefix treebundel (&optional workspace project)
   ""
   ["Quick"
-   ("w" "Open in workspace" treebundel-open-in-workspace)
-   ("p" "Open other project"
-    (lambda ()
-      (interactive)
-      (when-let* ((workspace (oref (transient-scope) workspace))
-                  (project (treebundel-read-project workspace nil nil :require-match)))
-        (treebundel-open-project workspace project)))
-    :if (lambda () (treebundel-scope-project-p (transient-scope))))
+   ("w" "Open in workspace" treebundel-open-workspace)
+   ("p" "Open other project" treebundel-open-project :if (lambda () (treebundel-scope-workspace-p (transient-scope))))
    ("a" "Add project" treebundel-add-project :if (lambda () (treebundel-scope-workspace-p (transient-scope)))
     :description (lambda ()
                    (format "Add project to %s" (treebundel--fmt-workspace-project (oref (transient-scope) workspace) nil))))]
@@ -1018,9 +1012,9 @@ NEW-NAME is the new name PROJECT will be renamed to."
 
 (transient-define-suffix treebundel-open-project (workspace project)
   "Switch to and focus a PROJECT by opening a file."
-  :transient 'transient--do-exit
-  (interactive (list (oref (transient-scope) workspace)
-                     (oref (transient-scope) project)))
+  (interactive (let* ((workspace (or (oref (transient-scope) workspace) (treebundel-current-workspace))))
+                 (list workspace (treebundel-read-project workspace nil nil :require-match))))
+  (transient-setup 'treebundel-open-project nil nil :scope (treebundel-scope :workspace workspace :project project))
   (treebundel--project-open workspace project))
 
 (transient-define-suffix treebundel-visit-project (workspace project)
@@ -1088,8 +1082,8 @@ inserted when the minibuffer prompt is shown."
    ("m" "Rename" treebundel--not-implemented
     :description  (lambda () (propertize "Rename (not implemented)" 'face 'treebundel-disabled)))]
 
-  (interactive (list (or (and (treebundel-scope-workspace-p (transient-scope))
-                              (oref (transient-scope) workspace))
+  (interactive (list (or (when (treebundel-scope-workspace-p (transient-scope))
+                           (oref (transient-scope) workspace))
                          (treebundel-read-workspace nil :require-match))))
   (transient-setup 'treebundel-workspace nil nil :scope (treebundel-scope :workspace workspace :project nil)))
 
@@ -1099,19 +1093,19 @@ inserted when the minibuffer prompt is shown."
   (interactive (list (treebundel-read-workspace nil :require-match)))
   (transient-setup transient-current-command nil nil :scope (treebundel-scope :workspace workspace :project nil)))
 
-(transient-define-suffix treebundel-open-in-workspace ()
+(transient-define-suffix treebundel-open-workspace (workspace project)
   "Switch to a workspace and open a project within it.
 This will always prompt for a workspace.  If you want to prefer your
-current workspace, use `treebundel-switch-project'.
+current workspace, use `treebundel-open-project'.
 
 WORKSPACE is the name of the workspace to open.
 
 PROJECT is the name of the project within the workspace to open."
-  (interactive)
-  (when-let* ((workspace (treebundel-read-workspace nil :require-match))
-              (project (treebundel-read-project workspace nil nil :require-match)))
-    (treebundel-open-project workspace project)))
-(defalias 'treebundel-open #'treebundel-open-in-workspace)
+  (interactive (let* ((workspace (treebundel-read-workspace nil :require-match))
+                      (project (treebundel-read-project workspace nil nil :require-match)))
+                 (list workspace project)))
+  (treebundel--project-open workspace project))
+(defalias 'treebundel-open #'treebundel-open-workspace)
 
 (transient-define-suffix treebundel-delete-workspace (workspace)
   "Delete workspace at WORKSPACE.
