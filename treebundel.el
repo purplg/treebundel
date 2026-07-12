@@ -1155,7 +1155,6 @@ to create a workspace with a new entry."
          (prompt (or prompt "Workspace: ")))
     (completing-read prompt candidates nil require-match nil treebundel--workspace-history)))
 
-(provide 'treebundel)
 ;;;;; Debug
 (transient-define-suffix treebundel--debug-gitlog ()
   ""
@@ -1166,4 +1165,5 @@ to create a workspace with a new entry."
   (interactive)
   (transient-setup transient-current-command nil nil :scope (treebundel-scope :workspace nil :project nil)))
 
+(provide 'treebundel)
 ;;; treebundel.el ends here
