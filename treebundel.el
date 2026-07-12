@@ -523,7 +523,8 @@ If FILE-PATH is non-nil, use the current buffer."
 (defun treebundel-current-project (&optional file-path)
   "Return the project name of FILE-PATH or of current file.
 If FILE-PATH is non-nil, use the current buffer."
-  (treebundel--project-of (or file-path buffer-file-name default-directory)))
+  (when-let* ((file-path (or file-path buffer-file-name default-directory)))
+    (treebundel--project-of file-path)))
 
 (defun treebundel--project-move (src-path dst-path)
   "Move a repo from SRC-PATH to DST-PATH."
@@ -601,7 +602,8 @@ If FILE-PATH is non-nil, use the current buffer instead."
 (defun treebundel-current-workspace (&optional file-path)
   "Return the name of the current workspace.
 If FILE-PATH is non-nil, use the current buffer instead."
-  (treebundel--workspace-of (or file-path buffer-file-name (file-name-as-directory default-directory))))
+  (when-let* ((file-path (or file-path buffer-file-name default-directory)))
+    (treebundel--workspace-of file-path)))
 
 ;;;; User Interface
 
@@ -729,12 +731,16 @@ Read `treebundel-scope' docstring for more information."
                                                             (oref (transient-scope) project)))))))]
 
   ["Debug" :level 6
-   ("l" "Log" treebundel-open-gitlog)]
-  (interactive (let* ((scope (or (transient-scope) (treebundel-scope)))
-                      (workspace (or (oref scope workspace) (treebundel-current-workspace) (treebundel-read-workspace)))
-                      (project (or (oref scope project) (treebundel-current-project) (treebundel-read-project workspace))))
-                 (list workspace project)))
+   ("l" "Log" treebundel-open-gitlog)
+   ("c" "Clear scope" treebundel--clear-scope)]
+
+  (interactive (let* ((scope (or (transient-scope) (treebundel-scope :workspace (treebundel-current-workspace) :project (treebundel-current-project)))))
+                 (list (oref scope workspace) (oref scope project))))
   (transient-setup 'treebundel nil nil :scope (treebundel-scope :workspace workspace :project project)))
+
+(transient-define-suffix treebundel--clear-scope ()
+  (interactive)
+  (transient-setup transient-current-command nil nil :scope (treebundel-scope :workspace nil :project nil)))
 
 ;;;;; Bare
 (transient-define-prefix treebundel-bare (bare)
