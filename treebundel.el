@@ -703,11 +703,13 @@ Read `treebundel-scope' docstring for more information."
   ""
   ["Quick"
    ("w" "Open in workspace" treebundel-open-in-workspace)
-   ("p" "Open other project" (lambda ()
-                               (interactive)
-                               (when-let* ((workspace (oref (transient-scope) workspace))
-                                           (project (treebundel-read-project workspace nil nil :require-match)))
-                                 (treebundel-open-project workspace project))))
+   ("p" "Open other project"
+    (lambda ()
+      (interactive)
+      (when-let* ((workspace (oref (transient-scope) workspace))
+                  (project (treebundel-read-project workspace nil nil :require-match)))
+        (treebundel-open-project workspace project)))
+    :if (lambda () (treebundel-scope-project-p (transient-scope))))
    ("a" "Add project" treebundel-add-project :if (lambda () (treebundel-scope-workspace-p (transient-scope)))
     :description (lambda ()
                    (format "Add project to %s" (treebundel--fmt-workspace-project (oref (transient-scope) workspace) nil))))]
