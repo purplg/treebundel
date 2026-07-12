@@ -764,7 +764,7 @@ Read `treebundel-scope' docstring for more information."
                            ((treebundel-read-bare)))))
   (transient-setup 'treebundel-bare nil nil :scope (treebundel-scope
                                                     :workspace treebundel-bare-dir
-                                                    :project (file-name-nondirectory (treebundel--bare-path bare)))))
+                                                    :project bare)))
 
 (transient-define-suffix treebundel-switch-bare (bare)
   "Start configuring BARE."
