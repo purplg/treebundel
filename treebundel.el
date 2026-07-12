@@ -584,8 +584,10 @@ If FILE-PATH is non-nil, use the current buffer instead."
 
 (defclass treebundel-scope ()
   ((workspace :initarg :workspace
-              :type string)
+              :initform nil
+              :type (or string null))
    (project :initarg :project
+            :initform nil
             :type (or string null)))
   "Data in the scope of treebundel transients.
 This class is the only class used for the scopes of these transients
@@ -612,9 +614,11 @@ means it represents a bare directory rather than a project directory.")
   (and (string= treebundel-bare-dir (oref scope workspace))
        (string-suffix-p ".git" (oref scope project))))
 
+;; (treebundel-scope-workspace-p (treebundel-scope))
 (cl-defmethod treebundel-scope-workspace-p ((scope treebundel-scope))
   "Return t if the SCOPE represents a workspace directory."
-  (and (not (string= treebundel-bare-dir (oref scope workspace)))
+  (and (oref scope workspace)
+       (not (string= treebundel-bare-dir (oref scope workspace)))
        (not (string-prefix-p "." (oref scope workspace)))))
 
 (cl-defmethod treebundel-scope-project-p ((scope treebundel-scope))
@@ -638,10 +642,16 @@ means it represents a bare directory rather than a project directory.")
 (cl-defmethod treebundel-scope-exists-p ((scope treebundel-scope))
   "Returns t directory at `treebundel-scope' SCOPE exists."
   (cond ((treebundel-scope-bare-p scope)
-         (file-exists-p (treebundel--bare-path (oref scope project))))
-        ((treebundel-scope-project-p scope)
-         (file-exists-p (treebundel-project-path (oref scope workspace)
-                                                 (oref scope project))))))
+         (file-directory-p (treebundel--bare-path (oref scope project))))
+        ((treebundel-scope-workspace-p scope)
+         (file-directory-p (treebundel-workspace-path (oref scope workspace))))))
+
+(cl-defmethod treebundel-scope-valid-p ((scope treebundel-scope))
+  "Returns t if SCOPE is in a valid configuration.
+Read `treebundel-scope' docstring for more information."
+  (or (treebundel-scope-workspace-p scope)
+      (treebundel-scope-bare-p scope)
+      (treebundel-scope-project-p scope)))
 
 ;;;;; not-implemented
 (defun treebundel--not-implemented ()
@@ -654,19 +664,20 @@ means it represents a bare directory rather than a project directory.")
 (transient-define-prefix treebundel (&optional workspace project)
   ""
   [:description "Quick"
-   ("w" "Open in workspace" treebundel-open-in-workspace)
-   ("p" "Open other project" (lambda ()
-                               (interactive)
-                               (when-let* ((workspace (oref (transient-scope) workspace))
-                                           (project (treebundel-read-project workspace nil nil :require-match)))
-                                 (treebundel-open-project workspace project))))
-   ("a" "Add project" treebundel-add-project :if (lambda () (oref (transient-scope) workspace))
-    :description (lambda ()
-                   (format "Add project to %s" (treebundel--fmt-workspace (oref (transient-scope) workspace)))))]
+                ("w" "Open in workspace" treebundel-open-in-workspace)
+                ("p" "Open other project" (lambda ()
+                                            (interactive)
+                                            (when-let* ((workspace (oref (transient-scope) workspace))
+                                                        (project (treebundel-read-project workspace nil nil :require-match)))
+                                              (treebundel-open-project workspace project))))
+                ("a" "Add project" treebundel-add-project :if (lambda () (treebundel-scope-workspace-p (transient-scope)))
+                 :description (lambda ()
+                                (format "Add project to %s" (treebundel--fmt-workspace (oref (transient-scope) workspace)))))]
 
   ["Configure"
    ("W" "Workspace" treebundel-workspace
-    :description (lambda () (treebundel--fmt-workspace (oref (transient-scope) workspace))))
+    :description (lambda () (treebundel--fmt-workspace (when (treebundel-scope-workspace-p (transient-scope))
+                                                         (oref (transient-scope) workspace)))))
 
    ("P" "Project" treebundel-project :if (lambda () (treebundel-scope-project-p (transient-scope)))
     :description (lambda () (treebundel-scope-fmt (transient-scope))))
@@ -681,9 +692,10 @@ means it represents a bare directory rather than a project directory.")
 
   ["Debug" :level 6
    ("l" "Log" treebundel-open-gitlog)]
-  (interactive (if-let* ((scope (transient-scope)))
-                   (list (oref scope workspace) (oref scope project))
-                 (list (treebundel-current-workspace) (treebundel-current-project))))
+  (interactive (let* ((scope (or (transient-scope) (treebundel-scope)))
+                      (workspace (or (oref scope workspace) (treebundel-current-workspace) (treebundel-read-workspace)))
+                      (project (or (oref scope project) (treebundel-current-project) (treebundel-read-project workspace))))
+                 (list workspace project)))
   (transient-setup 'treebundel nil nil :scope (treebundel-scope :workspace workspace :project project)))
 
 ;;;;; Bare
@@ -1041,7 +1053,8 @@ inserted when the minibuffer prompt is shown."
    ("m" "Rename" treebundel--not-implemented
     :description  (lambda () (propertize "Rename (not implemented)" 'face 'treebundel-disabled)))]
 
-  (interactive (list (or (oref (transient-scope) workspace)
+  (interactive (list (or (and (treebundel-scope-workspace-p (transient-scope))
+                              (oref (transient-scope) workspace))
                          (treebundel-read-workspace nil :require-match))))
   (transient-setup 'treebundel-workspace nil nil :scope (treebundel-scope :workspace workspace :project nil)))
 

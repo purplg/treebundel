@@ -43,7 +43,12 @@
     (should (string= (--project-of "/tmp/treebundel-tests/test-ws/test-project/three") "test-project"))))
 
 (defvar test-matrix
-  `((:scope ,(treebundel-scope :workspace ".bare" :project "repo.git")
+  `((:scope ,(treebundel-scope)
+     :workspace-p nil
+     :project-p nil
+     :bare-p nil)
+
+    (:scope ,(treebundel-scope :workspace ".bare" :project "repo.git")
      :workspace-p nil
      :project-p nil
      :bare-p t)
