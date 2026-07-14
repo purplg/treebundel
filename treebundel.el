@@ -640,7 +640,6 @@ means it represents a bare directory rather than a project directory.")
   (and (string= treebundel-bare-dir (oref scope workspace))
        (string-suffix-p ".git" (oref scope project))))
 
-;; (treebundel-scope-workspace-p (treebundel-scope))
 (cl-defmethod treebundel-scope-workspace-p ((scope treebundel-scope))
   "Return t if the SCOPE represents a workspace directory."
   (and (oref scope workspace)
