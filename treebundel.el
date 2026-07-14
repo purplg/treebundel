@@ -133,7 +133,6 @@
 (require 'vc-git)
 (require 'transient)
 
-
 ;;;; Customization
 (defgroup treebundel nil
   "Exploit git-worktrees to create inter-related project workspaces."
@@ -261,7 +260,6 @@ ARGS is same arguments as `message'."
   "Print and error with ARGS formatted with FORMAT."
   (signal 'treebundel-error (list (apply #'format-message format args))))
 
-
 ;;;; Git operations
 
 ;; Parse the git output into something more useful.
@@ -349,7 +347,6 @@ When OMIT-MAIN is non-nil, exclude the default branch."
   "Return t if the repo at REPO-PATH is compatible with treebundel."
   (and repo-path (treebundel--repo-bare repo-path) t))
 
-
 ;;;;; Worktrees
 (defun treebundel--worktree-remove (project-path &optional force)
   "Remove the worktree at PROJECT-PATH.
