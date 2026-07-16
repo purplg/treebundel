@@ -561,11 +561,9 @@ Leave either PROJECT or WORKSPACE nil to try to use current."
   "Return t if there are no uncommitted modifications in project.
 REPO-PATH is the absolute path of the repo to check."
   (and (string-prefix-p treebundel-workspace-root repo-path)
-       (length= (split-string
-                 (treebundel--git-with-repo repo-path
-                   "status" "-z" "--porcelain")
-                 "\0"
-                 t)
+       (length= (split-string (treebundel--git-with-repo repo-path "status" "--porcelain" "-uno")
+                              "\n"
+                              t)
                 0)))
 
 ;;;;; Workspaces
