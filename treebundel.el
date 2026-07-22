@@ -164,16 +164,6 @@ repositories are stored and worktrees created from."
   :group 'treebundel
   :type 'function)
 
-(defcustom treebundel-fetch-on-add nil
-  "When t, perform a git-fetch before adding a project to a workspace.
-This allows the latest branches on remote to appear when selecting a branch to
-checkout.
-
-Set to nil when you don't want to make network requests or just to reduce git
-operations when adding projects to your workspaces."
-  :group 'treebundel
-  :type 'boolean)
-
 (defcustom treebundel--force-remove-worktrees nil
   ""
   :group 'treebundel
@@ -814,11 +804,7 @@ Existing worktrees or uncommitted changes will prevent you from deleting."
 
 (transient-define-suffix treebundel-fetch-bare ()
   "Perform a git-fetch on bare repo.
-BARE is the name of the bare repo to fetch.
-
-This command is normally not useful unless `treebundel-fetch-on-add' is
-disabled.  Use this command to manually control when git-fetch operations are
-performed."
+BARE is the name of the bare repo to fetch from remote."
   (interactive)
   (when-let* ((bare (treebundel--repo-bare (treebundel-project-path)))
               (bare-path (treebundel--bare-path bare))
@@ -1057,9 +1043,6 @@ PROMPT is the prompt to be presented to the user in the minibuffer.
 
 INITIAL is the default value of the branch of the project that is automatically
 inserted when the minibuffer prompt is shown."
-  (when treebundel-fetch-on-add
-    (treebundel--message "Fetching...")
-    (treebundel--git-with-repo repo-path "fetch"))
   (completing-read (or prompt "Branch: ")
                    (treebundel--branches repo-path)
                    nil
