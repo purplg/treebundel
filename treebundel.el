@@ -174,6 +174,11 @@ operations when adding projects to your workspaces."
   :group 'treebundel
   :type 'boolean)
 
+(defcustom treebundel--force-remove-worktrees nil
+  ""
+  :group 'treebundel
+  :type 'boolean)
+
 ;;;;; Faces
 (defface treebundel-workspace '((t :inherit bold :foreground "#0098CF"))
   "Face used for workspaces."
@@ -957,7 +962,7 @@ There must be no changes in the project to remove it."
                      (oref (transient-scope) project)))
   (let* ((project-path (treebundel--project-path workspace project)))
     (if (and (treebundel--project-clean-p project-path)
-             (treebundel--worktree-remove project-path))
+             (treebundel--worktree-remove project-path treebundel--force-remove-worktrees))
         (treebundel--message "Removed %s" (treebundel--fmt-workspace-project workspace project))
       (treebundel--message "Cannot remove %s because the project is dirty"
                            (treebundel--fmt-workspace-project workspace project)))))
