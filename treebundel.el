@@ -1008,7 +1008,7 @@ NEW-NAME is the new name PROJECT will be renamed to."
   "Switch to and focus a PROJECT by opening a file."
   (interactive (let* ((workspace (or (oref (transient-scope) workspace) (treebundel-current-workspace))))
                  (list workspace (treebundel-read-project workspace nil nil :require-match))))
-  (transient-setup 'treebundel-open-project nil nil :scope (treebundel-scope :workspace workspace :project project))
+  (transient-setup transient-current-command nil nil :scope (treebundel-scope :workspace workspace :project project))
   (treebundel--project-open workspace project))
 
 (transient-define-suffix treebundel-visit-project (workspace project)
