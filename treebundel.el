@@ -549,7 +549,7 @@ Leave either PROJECT or WORKSPACE nil to try to use current."
 (defun treebundel--project-open (workspace project)
   "Call the project open function on WORKSPACE/PROJECT."
   (if (and workspace project)
-    (funcall treebundel-project-open-function (treebundel--project-path workspace project))
+      (funcall treebundel-project-open-function (treebundel--project-path workspace project))
     (error "Must specify workspace and project")))
 
 (defun treebundel--project-clean-p (repo-path)
