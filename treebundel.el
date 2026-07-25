@@ -820,38 +820,44 @@ Read `treebundel-scope' docstring for more information."
                                                              :workspace treebundel-bare-dir-name
                                                              :project (file-name-nondirectory (treebundel--bare-path bare)))))
 
-(transient-define-suffix treebundel-clone-bare (url)
+(transient-define-suffix treebundel-clone-bare (clone-url)
   "Clone URL to the collection of bare repos.
 Once a repository is in the bare repos collection, you can add it to a project
 with `treebundel-add-project'"
   (interactive
-   (list (read-string "URL: " (or (treebundel--git-url-like-p (gui-get-selection 'CLIPBOARD 'STRING))
-                                  (treebundel--git-url-like-p (gui-get-selection 'PRIMARY 'STRING))))))
-  (treebundel--message "Cloning %s..." url)
-  (let ((bare (string-remove-suffix ".git"
-                                    (file-name-nondirectory
-                                     (directory-file-name
-                                      (treebundel--bare-clone url))))))
-    (treebundel--message "Finished cloning %s." bare)
-    (transient-setup transient-current-command nil nil :scope (treebundel-scope
-                                                               :workspace treebundel-bare-dir-name
-                                                               :project (file-name-nondirectory (treebundel--bare-path bare))))))
+   (list (read-string "URL: " (and (transient-scope) (oref (transient-scope) clone-url)))))
+
+  (treebundel--message "Cloning %s..." clone-url)
+  (when-let* ((bare (string-remove-suffix ".git" (file-name-nondirectory (directory-file-name (treebundel--bare-clone clone-url))))))
+    (treebundel--message "Finished cloning %s." (treebundel--fmt-bare bare))
+    (transient-setup 'treebundel-bare nil nil :scope (treebundel-scope
+                                                      :workspace treebundel-bare-dir-name
+                                                      :project bare
+                                                      :clone-url clone-url))))
 (defalias 'treebundel-clone #'treebundel-clone-bare)
 
 (transient-define-suffix treebundel-delete-bare (bare)
   "Delete a bare repository BARE.
 Existing worktrees or uncommitted changes will prevent you from deleting."
-  (interactive (list (when (and (treebundel-scope-exists-p (transient-scope))
-                                (treebundel-scope-bare-p (transient-scope)))
-                       (oref (transient-scope) project))))
-  (when-let* ((bare-path (treebundel--bare-path bare)))
-    (cond ((treebundel--has-worktrees-p bare-path)
-           (treebundel--error "This bare has projects attached to it"))
+  (interactive (list (if (and (transient-scope)
+                              (treebundel-scope-bare-p (transient-scope))
+                              (treebundel-scope-exists-p (transient-scope)))
+                         (oref (transient-scope) project)
+                       (treebundel-read-bare))))
 
-          ((treebundel--bare-unpushed-commits-p bare)
-           (treebundel--error "This bare has unpushed commits"))
+  (cond ((not bare)
+         (treebundel--error "Bare cannot be nil"))
 
-          (t (treebundel--bare-delete bare)))))
+        ((treebundel--has-worktrees-p (treebundel--bare-path bare))
+         (treebundel--error "This bare has projects attached to it"))
+
+        ((treebundel--bare-unpushed-commits-p bare)
+         (treebundel--error "This bare has unpushed commits"))
+
+        ((not (y-or-n-p (format "Are you sure you want to delete %s?" (treebundel--fmt-bare bare))))
+         nil)
+
+        (t (treebundel--bare-delete bare))))
 
 (transient-define-suffix treebundel-fetch-bare ()
   "Perform a git-fetch on bare repo.
