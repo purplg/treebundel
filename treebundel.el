@@ -355,7 +355,8 @@ When OMIT-MAIN is non-nil, exclude the default branch."
 
 (defun treebundel-managed-p (repo-path)
   "Return t if the repo at REPO-PATH is compatible with treebundel."
-  (and repo-path (treebundel--repo-bare repo-path) t))
+  (and (not (string= ".git" (treebundel--repo-bare repo-path)))
+       t))
 
 (defun treebundel--update-buffer-locations (buffer-list src-prefix dst-prefix)
   "Move all buffers in BUFFER-LIST associated with SRC-PREFIX to DST-PREFIX."
@@ -554,9 +555,7 @@ SRC-WORKSPACE/SRC-PROJECT to DST-WORKSPACE/DST-PROJECT."
 
 (defun treebundel--project-path (workspace project)
   "Return the path of PROJECT in WORKSPACE."
-  (if (and (length> workspace 0) (length> project 0))
-      (file-name-concat treebundel-workspace-root workspace project)
-    (error "Missing workspace or project arguments")))
+  (file-name-concat treebundel-workspace-root workspace project))
 
 (defun treebundel-project-path (&optional workspace project)
   "Return the path of PROJECT in WORKSPACE.
@@ -591,6 +590,7 @@ Leave either PROJECT or WORKSPACE nil to try to use current."
   "Return a list of absolute paths to projects in WORKSPACE."
   (thread-last (directory-files (treebundel-workspace-path (or workspace (treebundel-current-workspace))) t "\\`[^\\.]")
                (seq-filter #'file-directory-p)
+               (seq-filter #'treebundel-managed-p)
                (seq-map (lambda (path) (file-name-nondirectory path)))))
 
 (defun treebundel--workspaces ()
@@ -686,7 +686,14 @@ means it represents a bare directory rather than a project directory.")
 (cl-defmethod treebundel-scope-project-p ((scope treebundel-scope))
   "Return t if the SCOPE represents a workspace and project directory."
   (and (treebundel-scope-workspace-p scope)
-       (length> (oref scope project) 0)))
+       (length> (oref scope project) 0)
+       (treebundel-scope-managed-p scope)))
+
+(cl-defmethod treebundel-scope-managed-p ((scope treebundel-scope))
+  "Return t if the SCOPE represents a workspace and project directory."
+  (when-let* ((workspace (oref scope workspace))
+              (project (oref scope project)))
+    (treebundel-managed-p (treebundel-project-path workspace project))))
 
 (cl-defmethod treebundel-scope-bare ((scope treebundel-scope))
   "The bare name if the `treebundel-scope' SCOPE represents or has bare directory."
@@ -751,10 +758,12 @@ Read `treebundel-scope' docstring for more information."
                                                                nil
                                                                :project-state 'inactive)))
 
-   ("P" "Project" treebundel-project :if (lambda () (treebundel-scope-project-p (transient-scope)))
+   ("P" "Project" treebundel-project
+    :if (lambda () (treebundel-scope-project-p (transient-scope)))
     :description (lambda () (treebundel-scope-fmt (transient-scope))))
 
    ("B" "Bare" treebundel-bare
+    :if (lambda () (treebundel-scope-managed-p (transient-scope)))
     :description
     (lambda ()
       (if-let* ((workspace (oref (transient-scope) workspace))
@@ -952,11 +961,13 @@ HISTORY"
    ("k" treebundel-remove-project)
    ("m" "Move" treebundel-move-project)
    ("r" "Rename" treebundel-rename-project)]
-  (interactive (let* ((workspace (or (oref (transient-scope) workspace)
-                                     (treebundel-read-workspace nil :require-matchd)))
-                      (project (or (oref (transient-scope) project)
-                                   (treebundel-read-project workspace nil nil :require-match))))
-                 (list workspace project)))
+  (interactive (if-let* ((workspace (or (oref (transient-scope) workspace)
+                                        (treebundel-read-workspace nil :require-matchd)))
+                         (project (or (and (treebundel-scope-managed-p (transient-scope))) (oref (transient-scope) project)
+                                      (treebundel-read-project workspace nil nil :require-match))))
+                   (list workspace project)
+                 (list (treebundel-read-workspace nil :require-matchd)
+                       (treebundel-read-project workspace nil nil :require-match))))
   (transient-setup 'treebundel-project nil nil :scope (treebundel-scope :workspace workspace :project project)))
 
 (transient-define-suffix treebundel-switch-project (workspace project)
@@ -1118,7 +1129,9 @@ inserted when the minibuffer prompt is shown."
 
   [:description
    (lambda () (treebundel-scope-fmt (transient-scope) :workspace-state 'active))
-   ("P" "Configure project" treebundel-project :transient transient--do-exit)]
+   ("P" "Configure project" treebundel-project
+    :if (lambda () (length> (treebundel--workspace-projects (oref (transient-scope) workspace)) 0))
+    :transient transient--do-exit)]
 
   [("a" "Add project" treebundel-add-project)
    ("k" "Delete" treebundel-delete-workspace)
