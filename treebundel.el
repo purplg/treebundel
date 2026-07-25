@@ -816,9 +816,10 @@ Read `treebundel-scope' docstring for more information."
   "Start configuring BARE."
   :transient 'transient--do-exit
   (interactive (list (treebundel-read-bare)))
-  (transient-setup transient-current-command nil nil :scope (treebundel-scope
-                                                             :workspace treebundel-bare-dir-name
-                                                             :project (file-name-nondirectory (treebundel--bare-path bare)))))
+  (transient-setup transient-current-command nil nil
+                   :scope (treebundel-scope
+                           :workspace treebundel-bare-dir-name
+                           :project (file-name-nondirectory (treebundel--bare-path bare)))))
 
 (transient-define-suffix treebundel-clone-bare (clone-url)
   "Clone URL to the collection of bare repos.
@@ -955,11 +956,11 @@ HISTORY"
 (transient-define-suffix treebundel-switch-project (workspace project)
   "Switch to PROJECT in WORKSPACE."
   :transient 'transient--do-exit
-  (interactive (if (treebundel-scope-workspace-p (transient-scope))
-                   (let* ((workspace (oref (transient-scope) workspace)))
-                     (list workspace (treebundel-read-project workspace nil nil :require-match)))
-                 (list "test" "invalid")))
-  (transient-setup transient-current-command nil nil :scope (treebundel-scope :workspace workspace :project project)))
+  (interactive (when-let* ((treebundel-scope-workspace-p (transient-scope))
+                           (workspace (oref (transient-scope) workspace))
+                           (project (treebundel-read-project workspace nil nil :require-match)))
+                 (list workspace project)))
+  (transient-setup 'treebundel-project nil nil :scope (treebundel-scope :workspace workspace :project project)))
 
 (transient-define-suffix treebundel-add-project (workspace bare project project-branch)
   "Add a project to a workspace.
@@ -976,17 +977,16 @@ provided project should be in workspace WORKSPACE.
 
 PROJECT-BRANCH is the name of the branch to be checked out for
 this project."
-  :transient 'transient--do-stack
+  :transient 'transient--do-exit
   (interactive
    (when-let* ((workspace (oref (transient-scope) workspace))
                (bare (treebundel-read-bare))
                (project-branch (treebundel-read-branch (treebundel--bare-path bare)))
                (project (treebundel-read-project workspace "Project name: " bare)))
      (list workspace bare project project-branch)))
-  (treebundel--project-add workspace
-                           bare
-                           project-branch
-                           project))
+  (treebundel--project-add workspace bare project-branch project)
+  (transient-setup 'treebundel-project nil nil
+                   :scope (treebundel-scope :workspace workspace :project project)))
 
 (transient-define-suffix treebundel-remove-project (workspace project)
   "Remove PROJECT from workspace WORKSPACE.
@@ -1007,7 +1007,9 @@ There must be no changes in the project to remove it."
             ((treebundel--worktree-remove project-path treebundel--force-remove-worktrees)))
       (treebundel--message "Removed %s" (treebundel--fmt-workspace-project workspace project))
     (treebundel--message "Cannot remove %s because the project is dirty"
-                         (treebundel--fmt-workspace-project workspace project))))
+                         (treebundel--fmt-workspace-project workspace project)))
+  (transient-setup 'treebundel-workspace nil nil
+                   :scope (treebundel-scope :workspace workspace :project nil)))
 
 (transient-define-suffix treebundel-move-project (src-workspace project dst-workspace)
   "Move a project from one workspace to another.
