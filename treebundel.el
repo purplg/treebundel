@@ -766,10 +766,8 @@ Read `treebundel-scope' docstring for more information."
     :transient transient--do-stack
     :if (lambda () (treebundel-scope-managed-p (transient-scope)))
     :description (lambda ()
-                   (if-let* (((treebundel-scope-managed-p (transient-scope)))
-                             (project (oref (transient-scope) project))
-                             (bare (string-remove-suffix ".git" project)))
-                       (treebundel--fmt-bare bare)
+                   (if (treebundel-scope-managed-p (transient-scope))
+                       (treebundel--fmt-bare (string-remove-suffix ".git" (oref (transient-scope) project)))
                      (treebundel--fmt-bare nil))))]
 
   ["Debug" :level 6
