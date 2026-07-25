@@ -456,6 +456,11 @@ Set INACTIVE to t to use the darker face."
       bare-name)))
 
 ;;;;; Bares
+(defun treebundel--bare-of (workspace project)
+  ""
+  (when-let* ((project-path (treebundel-project-path workspace project)))
+    (treebundel--repo-bare project-path)))
+
 (defun treebundel--bare-path (bare)
   "Return the path of bare repository with BARE."
   (file-name-concat (treebundel--bare-dir-path)
