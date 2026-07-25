@@ -786,7 +786,7 @@ Read `treebundel-scope' docstring for more information."
   [("c" "Clone new" treebundel-clone-bare)
    ("B" "Switch to other bare" treebundel-switch-bare)]
 
-  [:description (lambda () (treebundel--fmt-bare (oref (transient-scope) project) 'active))
+  [:description (lambda () (treebundel--fmt-bare (string-remove-suffix ".git" (oref (transient-scope) project)) 'active))
                 ("P" "Projects" treebundel-open-bare-projects)
                 ("v" "Visit" treebundel-visit-bare)
                 ("k" "Delete" treebundel-delete-bare)
