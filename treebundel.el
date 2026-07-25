@@ -763,10 +763,9 @@ Read `treebundel-scope' docstring for more information."
    ("B" "Bare" treebundel-bare
     :if (lambda () (treebundel-scope-managed-p (transient-scope)))
     :description (lambda ()
-                   (if-let* ((workspace (oref (transient-scope) workspace))
+                   (if-let* (((treebundel-scope-managed-p (transient-scope)))
                              (project (oref (transient-scope) project))
-                             (project-path (treebundel--project-path workspace project))
-                             (bare (treebundel--repo-bare project-path)))
+                             (bare (string-remove-suffix ".git" project)))
                        (treebundel--fmt-bare bare)
                      (treebundel--fmt-bare nil))))]
 
