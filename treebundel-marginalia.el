@@ -78,7 +78,7 @@
       (treebundel--fmt-bare bare)))))
 
 (defun treebundel-marginalia-enable ()
-  "Enable the treebundel marginalia annotators."
+  "Enable the treebundel marginalia annotators for treebundel."
   (interactive)
   (add-to-list 'marginalia-annotators '(treebundel-bare treebundel-marginalia--bare-annotator builtin none))
   (add-to-list 'marginalia-annotators '(treebundel-workspace
