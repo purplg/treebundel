@@ -783,10 +783,10 @@ Read `treebundel-scope' docstring for more information."
   [:description
    (lambda () (treebundel--fmt-bare (oref (transient-scope) project) 'active))
 
-   ("P" (lambda ()
-          (let ((use-count (length (cdr (treebundel--worktree-list (treebundel--bare-path (oref (transient-scope) project)))))))
-            (format "Projects (%s)" (propertize (format "%d" use-count) 'face 'treebundel-project))))
-    treebundel-open-bare-projects)
+   ("P" "Projects" treebundel-open-bare-projects
+    :description (lambda ()
+                   (let ((use-count (length (cdr (treebundel--worktree-list (treebundel--bare-path (oref (transient-scope) project)))))))
+                     (format "Projects (%s)" (propertize (format "%d" use-count) 'face 'treebundel-project)))))
 
    ;; Open a file in this bare's directory
    ("v" "Visit" treebundel-visit-bare)
@@ -810,7 +810,7 @@ Read `treebundel-scope' docstring for more information."
                            ((treebundel-read-bare)))))
   (transient-setup 'treebundel-bare nil nil :scope (treebundel-scope
                                                     :workspace treebundel-bare-dir-name
-                                                    :project bare)))
+                                                    :project (file-name-nondirectory (treebundel--bare-path bare)))))
 
 (transient-define-suffix treebundel-switch-bare (bare)
   "Start configuring BARE."
@@ -833,7 +833,7 @@ with `treebundel-add-project'"
     (treebundel--message "Finished cloning %s." (treebundel--fmt-bare bare))
     (transient-setup 'treebundel-bare nil nil :scope (treebundel-scope
                                                       :workspace treebundel-bare-dir-name
-                                                      :project bare
+                                                      :project (file-name-nondirectory (treebundel--bare-path bare))
                                                       :clone-url clone-url))))
 (defalias 'treebundel-clone #'treebundel-clone-bare)
 
@@ -886,12 +886,18 @@ pattern to the project cons that are `(workspace . project)'."
 (transient-define-suffix treebundel-open-bare-projects (bare)
   ""
   :transient 'transient--do-exit
-  (interactive (list (cond ((treebundel-scope-bare-p (transient-scope))
-                            (oref (transient-scope) project))
-                           ((treebundel-scope-project-p (transient-scope))
-                            (treebundel--repo-bare (treebundel--project-path (oref (transient-scope) workspace)
-                                                                             (oref (transient-scope) project))))
-                           ((treebundel-read-bare)))))
+  (interactive (progn
+                 (message "scope interactive: %s" (transient-scope))
+                 (message "bare-p: %s" (treebundel-scope-bare-p (transient-scope)))
+                 (message "project-p: %s" (treebundel-scope-project-p (transient-scope)))
+                 (list (cond ((treebundel-scope-bare-p (transient-scope))
+                              (oref (transient-scope) project))
+                             ((treebundel-scope-project-p (transient-scope))
+                              (treebundel--repo-bare (treebundel--project-path (oref (transient-scope) workspace)
+                                                                               (oref (transient-scope) project))))
+                             ((treebundel-read-bare))))))
+
+  (message "scope command: %s" (transient-scope))
   (let* ((bare-path (treebundel--bare-path bare))
          (worktrees (cdr (treebundel--worktree-list bare-path)))
          (worktree-paths (mapcar (lambda (worktree) (cadr (split-string (car worktree) " ")))
