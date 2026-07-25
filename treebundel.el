@@ -1172,7 +1172,7 @@ projects' bare repository located at `treebundel-bare-dir-name' within
 (transient-define-suffix treebundel-rename-workspace (src-workspace dst-workspace)
   "Delete workspace at SRC-WORKSPACE to DST-WORKSPACE."
   (interactive (list (oref (transient-scope) workspace)
-                     (treebundel-read-workspace "New workspace name: ")))
+                     (read-string (format "Rename %s to: " (treebundel--fmt-workspace (oref (transient-scope) workspace))))))
   (treebundel--workspace-move src-workspace dst-workspace))
 
 (defun treebundel-read-workspace (&optional prompt require-match)
