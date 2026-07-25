@@ -740,14 +740,15 @@ Read `treebundel-scope' docstring for more information."
    ("P" "Project" treebundel-project :if (lambda () (treebundel-scope-project-p (transient-scope)))
     :description (lambda () (treebundel-scope-fmt (transient-scope))))
 
-   ("B" "Bare" treebundel-bare :if (lambda () (or (treebundel-scope-bare-p (transient-scope))
-                                                  (treebundel-scope-project-p (transient-scope))))
+   ("B" "Bare" treebundel-bare
     :description
     (lambda ()
-      (format "Bare %s"
-              (treebundel--fmt-bare (treebundel--repo-bare (treebundel--project-path
-                                                            (oref (transient-scope) workspace)
-                                                            (oref (transient-scope) project)))))))]
+      (if-let* ((workspace (oref (transient-scope) workspace))
+                (project (oref (transient-scope) project))
+                (project-path (treebundel--project-path workspace project))
+                (bare (treebundel--repo-bare project-path)))
+          (treebundel--fmt-bare bare)
+        (treebundel--fmt-bare nil))))]
 
   ["Debug" :level 6
    ("l" "Log" treebundel--debug-gitlog)
