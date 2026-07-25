@@ -1108,7 +1108,8 @@ inserted when the minibuffer prompt is shown."
    (lambda () (treebundel-scope-fmt (transient-scope) :workspace-state 'active))
    ("P" "Configure project" treebundel-switch-project)]
 
-  [("a" "Add project" treebundel-add-project)
+  [("-f" "force" "--force")
+   ("a" "Add project" treebundel-add-project)
    ("k" "Delete" treebundel-delete-workspace)
    ("m" "Rename" treebundel-rename-workspace)]
 
@@ -1147,7 +1148,7 @@ projects' bare repository located at `treebundel-bare-dir-name' within
   (when-let* ((workspace (or workspace (treebundel-read-workspace "Delete workspace: " :require-match)))
               (workspace-path (treebundel-workspace-path workspace))
               (projects (treebundel--workspace-projects workspace)))
-    (let* ((ignore-errors (transient-arg-value "--force" workspace)))
+    (let* ((ignore-errors (transient-arg-value "--force" (transient-args transient-current-command))))
       (if (and (seq-every-p (lambda (project)
                               (treebundel--project-clean-p workspace project))
                             projects)
