@@ -752,15 +752,18 @@ Read `treebundel-scope' docstring for more information."
 
   ["Configure"
    ("W" "Workspace" treebundel-workspace
-    :description (lambda () (treebundel--fmt-workspace-project (oref (transient-scope) workspace)
-                                                               nil
-                                                               :project-state 'inactive)))
+    :transient transient--do-stack
+    :description (lambda ()
+                   (treebundel--fmt-workspace-project
+                    (oref (transient-scope) workspace) nil :project-state 'inactive)))
 
    ("P" "Project" treebundel-project
+    :transient transient--do-stack
     :if (lambda () (treebundel-scope-project-p (transient-scope)))
     :description (lambda () (treebundel-scope-fmt (transient-scope))))
 
    ("B" "Bare" treebundel-bare
+    :transient transient--do-stack
     :if (lambda () (treebundel-scope-managed-p (transient-scope)))
     :description (lambda ()
                    (if-let* (((treebundel-scope-managed-p (transient-scope)))
@@ -804,7 +807,7 @@ Read `treebundel-scope' docstring for more information."
 
 (transient-define-suffix treebundel-switch-bare (bare)
   "Start configuring BARE."
-  :transient 'transient--do-exit
+  :transient 'transient--do-replace
   (interactive (list (treebundel-read-bare)))
   (transient-setup transient-current-command nil nil
                    :scope (treebundel-scope
@@ -886,7 +889,7 @@ pattern to the project cons that are `(workspace . project)'."
   :description (lambda ()
                  (let ((use-count (length (cdr (treebundel--worktree-list (treebundel--bare-path (oref (transient-scope) project)))))))
                    (format "Projects (%s)" (propertize (format "%d" use-count) 'face 'treebundel-project))))
-  :transient 'transient--do-exit
+  :transient 'transient--do-stack
   (interactive (progn
                  (message "scope interactive: %s" (transient-scope))
                  (message "bare-p: %s" (treebundel-scope-bare-p (transient-scope)))
@@ -951,7 +954,7 @@ HISTORY"
 
 (transient-define-suffix treebundel-switch-project (workspace project)
   "Switch to PROJECT in WORKSPACE."
-  :transient 'transient--do-exit
+  :transient 'transient--do-replace
   (interactive (let* ((workspace (or (oref (transient-scope) workspace) (treebundel-current-workspace))))
                  (list workspace (treebundel-read-project workspace nil nil :require-match))))
   (transient-setup 'treebundel-project nil nil :scope (treebundel-scope :workspace workspace :project project)))
@@ -1050,8 +1053,10 @@ NEW-NAME is the new name PROJECT will be renamed to."
   "Switch to and focus a PROJECT by opening a file."
   :transient 'transient--do-exit
   :if (lambda () (treebundel-scope-workspace-p (transient-scope)))
-  (interactive (list (or (and (transient-scope) (oref (transient-scope) workspace)) (treebundel-current-workspace))
-                     (or (and (transient-scope) (oref (transient-scope) project)) (treebundel-current-project))))
+  (interactive (let* ((workspace (or (oref (transient-scope) workspace) (treebundel-current-workspace))))
+                 (list workspace (treebundel-read-project workspace nil nil :require-match))))
+  (transient-setup 'treebundel-switch-project nil nil :scope (treebundel-scope :workspace workspace
+                                                                               :project project))
   (treebundel--project-open workspace project))
 
 (transient-define-suffix treebundel-visit-project (workspace project)
@@ -1110,7 +1115,7 @@ inserted when the minibuffer prompt is shown."
 
   [:description
    (lambda () (treebundel-scope-fmt (transient-scope) :workspace-state 'active))
-   ("P" "Configure project" treebundel-switch-project)]
+   ("P" "Configure project" treebundel-switch-project :transient transient--do-stack)]
 
   [("-f" "force" "--force")
    ("a" "Add project" treebundel-add-project)
@@ -1124,7 +1129,7 @@ inserted when the minibuffer prompt is shown."
 
 (transient-define-suffix treebundel-switch-workspace (workspace)
   "Switch to WORKSPACE."
-  :transient 'transient--do-exit
+  :transient 'transient--do-replace
   (interactive (list (treebundel-read-workspace nil :require-match)))
   (transient-setup transient-current-command nil nil :scope (treebundel-scope :workspace workspace :project nil)))
 
