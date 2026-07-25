@@ -213,6 +213,10 @@ repositories are stored and worktrees created from."
   "Face used for disabled things."
   :group 'treebundel-faces)
 
+(defface treebundel-url '((t :inherit transient-argument))
+  "Face used for disabled things."
+  :group 'treebundel-faces)
+
 ;;;; Logging
 (defface treebundel--gitlog-heading
   '((t (:inherit outline-1 :box t :extend t)))
@@ -644,7 +648,10 @@ If FILE-PATH is non-nil, use the current buffer instead."
               :type (or string null))
    (project :initarg :project
             :initform nil
-            :type (or string null)))
+            :type (or string null))
+   (clone-url :initarg :clone-url
+              :initform nil
+              :type (or string null)))
   "Data in the scope of treebundel transients.
 This class is the only class used for the scopes of these transients
 
@@ -725,14 +732,18 @@ Read `treebundel-scope' docstring for more information."
 
 ;;;;; Entrypoint
 ;;;###autoload(autoload 'treebundel "treebundel" nil t)
-(transient-define-prefix treebundel (&optional workspace project)
+(transient-define-prefix treebundel (&optional workspace project clone-url)
   ""
   ["Quick"
    ("w" "Open in workspace" treebundel-open-workspace)
    ("p" "Open other project" treebundel-open-project :if (lambda () (treebundel-scope-workspace-p (transient-scope))))
    ("a" "Add project" treebundel-add-project :if (lambda () (treebundel-scope-workspace-p (transient-scope)))
     :description (lambda ()
-                   (format "Add project to %s" (treebundel--fmt-workspace-project (oref (transient-scope) workspace) nil))))]
+                   (format "Add project to %s" (treebundel--fmt-workspace-project (oref (transient-scope) workspace) nil))))
+   ("b" "Clone new bare" treebundel-clone-bare
+    :description (lambda ()
+                   (concat "Clone new bare" (when-let* ((clone-url (oref (transient-scope) clone-url)))
+                                              (concat ": " (propertize clone-url 'face 'treebundel-url))))))]
 
   ["Configure"
    ("W" "Workspace" treebundel-workspace
@@ -757,9 +768,11 @@ Read `treebundel-scope' docstring for more information."
    ("l" "Log" treebundel--debug-gitlog)
    ("c" "Clear scope" treebundel--debug-clear-scope)]
 
-  (interactive (let* ((scope (or (transient-scope) (treebundel-scope :workspace (treebundel-current-workspace) :project (treebundel-current-project)))))
-                 (list (oref scope workspace) (oref scope project))))
-  (transient-setup 'treebundel nil nil :scope (treebundel-scope :workspace workspace :project project)))
+  (interactive (list (treebundel-current-workspace)
+                     (treebundel-current-project)
+                     (or (treebundel--git-url-like-p (gui-get-selection 'CLIPBOARD 'STRING))
+                         (treebundel--git-url-like-p (gui-get-selection 'PRIMARY 'STRING)))))
+  (transient-setup 'treebundel nil nil :scope (treebundel-scope :workspace workspace :project project :clone-url clone-url)))
 
 ;;;;; Bare
 (transient-define-prefix treebundel-bare (bare)
