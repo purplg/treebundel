@@ -279,11 +279,19 @@ ARGS are the arguments passed to git."
 
 (defmacro treebundel--git-with-repo (repo-path &rest args)
   "Run a command on a specific git repository.
-REPO-PATH is the repository to pass to git with the '-C' switch.
+REPO-PATH is path to the repository to operate a git command on.
 
 ARGS are the arguments passed to git."
   (declare (indent defun))
   `(treebundel--git "-C" ,repo-path ,@args))
+
+(defmacro treebundel--git-with-bare (bare &rest args)
+  "Run a command on a specific bare repository.
+BARE is the name of the bare to operate a git command on.
+
+ARGS are the arguments passed to git."
+  (declare (indent defun))
+  `(treebundel--git-with-repo (treebundel--bare-path ,bare) ,@args))
 
 (defun treebundel--bare-clone (url)
   "Clone a repository from URL to the bare repo directory.
@@ -341,6 +349,15 @@ When OMIT-MAIN is non-nil, exclude the default branch."
 (defun treebundel-managed-p (repo-path)
   "Return t if the repo at REPO-PATH is compatible with treebundel."
   (and repo-path (treebundel--repo-bare repo-path) t))
+
+(defun treebundel--update-buffer-locations (buffer-list src-prefix dst-prefix)
+  "Move all buffers in BUFFER-LIST associated with SRC-PREFIX to DST-PREFIX."
+  (let ((src-prefix (file-name-as-directory src-prefix)))
+    (dolist (buf buffer-list)
+      (when-let* ((suffix (and (string-prefix-p src-prefix (buffer-file-name buf))
+                               (string-remove-prefix src-prefix (buffer-file-name buf)) ))
+                  (dst-prefix (file-name-concat dst-prefix suffix)))
+        (with-current-buffer buf (set-visited-file-name dst-prefix nil t))))))
 
 ;;;;; Worktrees
 (defun treebundel--worktree-remove (project-path &optional force)
@@ -518,17 +535,15 @@ If FILE-PATH is non-nil, use the current buffer."
   (when-let* ((file-path (or file-path buffer-file-name default-directory)))
     (treebundel--project-of file-path)))
 
-(defun treebundel--project-move (src-path dst-path)
-  "Move a repo from SRC-PATH to DST-PATH."
-  (treebundel--git-with-repo (treebundel--bare-path (treebundel--repo-bare src-path))
-    "worktree" "move" src-path dst-path)
-  ;; Updated related open buffers file location
-  (dolist (buf (buffer-list))
-    (when-let* ((src-path (file-name-as-directory src-path))
-                (suffix (and (string-prefix-p src-path (buffer-file-name buf))
-                             (string-remove-prefix src-path (buffer-file-name buf)) ))
-                (dst-path (file-name-concat dst-path suffix)))
-      (with-current-buffer buf (set-visited-file-name dst-path nil t)))))
+(defun treebundel--project-move (src-workspace src-project dst-workspace dst-project)
+  "Move a repo from from one workspace to another.
+SRC-WORKSPACE/SRC-PROJECT to DST-WORKSPACE/DST-PROJECT."
+  (when-let* ((src-project-path (treebundel--project-path src-workspace src-project))
+              (bare (treebundel--repo-bare src-project-path))
+              (dst-project-path (treebundel--project-path dst-workspace dst-project)))
+    (treebundel--git-with-bare bare "worktree" "move" src-project-path dst-project-path)
+    ;; Update buffers related to the project to new file location
+    (treebundel--update-buffer-locations (buffer-list) src-project-path dst-project-path)))
 
 (defun treebundel--project-path (workspace project)
   "Return the path of PROJECT in WORKSPACE."
@@ -552,14 +567,13 @@ Leave either PROJECT or WORKSPACE nil to try to use current."
       (funcall treebundel-project-open-function (treebundel--project-path workspace project))
     (error "Must specify workspace and project")))
 
-(defun treebundel--project-clean-p (repo-path)
-  "Return t if there are no uncommitted modifications in project.
-REPO-PATH is the absolute path of the repo to check."
-  (and (string-prefix-p treebundel-workspace-root repo-path)
-       (length= (split-string (treebundel--git-with-repo repo-path "status" "--porcelain" "-uno")
-                              "\n"
-                              t)
-                0)))
+(defun treebundel--project-clean-p (workspace project)
+  "Return t if there are no uncommitted modifications in WORKSPACE/PROJECT."
+  (when-let* ((project-path (treebundel--project-path workspace project)))
+    (and (length= (split-string (treebundel--git-with-repo project-path "status" "--porcelain" "-uall")
+                                "\n"
+                                t)
+                  0))))
 
 ;;;;; Workspaces
 (defun treebundel-workspace-path (name)
@@ -594,6 +608,26 @@ If FILE-PATH is non-nil, use the current buffer instead."
 If FILE-PATH is non-nil, use the current buffer instead."
   (when-let* ((file-path (or file-path buffer-file-name default-directory)))
     (treebundel--workspace-of file-path)))
+
+(defun treebundel--workspace-new (workspace)
+  "Create a empty workspace named WORKSPACE."
+  (make-directory (treebundel-workspace-path workspace)))
+
+(defun treebundel--workspace-move (src-workspace dst-workspace)
+  "Move a workspace and all of its' repos from SRC-WORKSPACE to DST-WORKSPACE."
+  (mapc (lambda (project)
+          (unless (treebundel--project-clean-p src-workspace project)
+            (user-error "Workspace has unsaved changes in a project")))
+        (treebundel--workspace-projects src-workspace))
+  (treebundel--workspace-new dst-workspace)
+  (dolist (project (treebundel--workspace-projects src-workspace))
+    (treebundel--project-move src-workspace project
+                              dst-workspace project)
+    ;; Update open buffers related to the project to new file location
+    (treebundel--update-buffer-locations (buffer-list)
+                                         (treebundel--project-path src-workspace project)
+                                         (treebundel--project-path dst-workspace project)))
+  (delete-directory (treebundel-workspace-path src-workspace)))
 
 ;;;; User Interface
 
@@ -936,9 +970,8 @@ this project."
 There must be no changes in the project to remove it."
   :description (lambda ()
                  (if-let* ((workspace (oref (transient-scope) workspace))
-                           (project (oref (transient-scope) project))
-                           (project-path (treebundel--project-path workspace project)))
-                     (if (treebundel--project-clean-p project-path)
+                           (project (oref (transient-scope) project)))
+                     (if (treebundel--project-clean-p workspace project)
                          (format "Remove %s"
                                  (propertize "(Clean)" 'face 'treebundel-success))
                        (format "%s %s"
@@ -946,14 +979,14 @@ There must be no changes in the project to remove it."
                                (propertize "(Dirty)" 'face 'treebundel-error)))))
   (interactive (list (oref (transient-scope) workspace)
                      (oref (transient-scope) project)))
-  (let* ((project-path (treebundel--project-path workspace project)))
-    (if (and (treebundel--project-clean-p project-path)
-             (treebundel--worktree-remove project-path treebundel--force-remove-worktrees))
-        (treebundel--message "Removed %s" (treebundel--fmt-workspace-project workspace project))
-      (treebundel--message "Cannot remove %s because the project is dirty"
-                           (treebundel--fmt-workspace-project workspace project)))))
+  (if-let* ((project-path (treebundel--project-path workspace project))
+            ((treebundel--project-clean-p workspace project))
+            ((treebundel--worktree-remove project-path treebundel--force-remove-worktrees)))
+      (treebundel--message "Removed %s" (treebundel--fmt-workspace-project workspace project))
+    (treebundel--message "Cannot remove %s because the project is dirty"
+                         (treebundel--fmt-workspace-project workspace project))))
 
-(transient-define-suffix treebundel-move-project (workspace project new-workspace)
+(transient-define-suffix treebundel-move-project (src-workspace project dst-workspace)
   "Move a project from one workspace to another.
 WORKSPACE is the name of the workspace that contains the project to be
 moved.
@@ -963,19 +996,18 @@ PROJECT is name of the project to move to a new workspace.
 NEW-WORKSPACE is the name of the workspace the project will be moved
 into."
   (interactive
-   (when-let* ((workspace (oref (transient-scope) workspace))
+   (when-let* ((src-workspace (oref (transient-scope) workspace))
                (project (oref (transient-scope) project))
-               (new-workspace (treebundel-read-workspace
-                               (format "Move %s to: " (treebundel--fmt-workspace-project workspace project))
+               (dst-workspace (treebundel-read-workspace
+                               (format "Move %s to: " (treebundel--fmt-workspace-project src-workspace project))
                                :require-match)))
-     (list workspace project new-workspace)))
-  (treebundel--project-move (treebundel--project-path workspace project)
-                            (file-name-concat (treebundel-workspace-path new-workspace) project))
+     (list src-workspace project dst-workspace)))
+  (treebundel--project-move src-workspace project dst-workspace project)
   (treebundel--message "Moved project %s -> %s"
-                       (treebundel--fmt-workspace-project workspace project)
-                       (treebundel--fmt-workspace-project new-workspace project)))
+                       (treebundel--fmt-workspace-project src-workspace project)
+                       (treebundel--fmt-workspace-project dst-workspace project)))
 
-(transient-define-suffix treebundel-rename-project (project new-name)
+(transient-define-suffix treebundel-rename-project (src-workspace src-project dst-project)
   "Rename a project.
 WORKSPACE is the name of the workspace that contains the project to be
 renamed.
@@ -984,16 +1016,14 @@ PROJECT is name of the project in WORKSPACE to be renamed.
 
 NEW-NAME is the new name PROJECT will be renamed to."
   (interactive
-   (when-let* ((workspace (oref (transient-scope) workspace))
-               (project (oref (transient-scope) project))
-               ((treebundel-scope-project-p workspace project)))
-     (list project (read-string "New name: " project))))
-  (when-let* ((workspace (treebundel-current-workspace)))
-    (treebundel--project-move (treebundel--project-path workspace project)
-                              (treebundel--project-path workspace new-name))
-    (treebundel--message "Renamed project from %s to %s"
-                         (treebundel--fmt-workspace-project workspace project)
-                         (treebundel--fmt-workspace-project workspace new-name))))
+   (when-let* ((src-workspace (oref (transient-scope) workspace))
+               (src-project (oref (transient-scope) project))
+               ((treebundel-scope-project-p (treebundel-scope))))
+     (list src-workspace src-project (read-string "New name: " src-project))))
+  (treebundel--project-move src-workspace src-project src-workspace dst-project)
+  (treebundel--message "Renamed project from %s to %s"
+                       (treebundel--fmt-workspace-project src-workspace src-project)
+                       (treebundel--fmt-workspace-project src-workspace dst-project)))
 
 (transient-define-suffix treebundel-open-project (workspace project)
   "Switch to and focus a PROJECT by opening a file."
@@ -1061,8 +1091,7 @@ inserted when the minibuffer prompt is shown."
 
   [("a" "Add project" treebundel-add-project)
    ("k" "Delete" treebundel-delete-workspace)
-   ("m" "Rename" treebundel--not-implemented
-    :description  (lambda () (propertize "Rename (not implemented)" 'face 'treebundel-disabled)))]
+   ("m" "Rename" treebundel-rename-workspace)]
 
   (interactive (list (or (when (treebundel-scope-workspace-p (transient-scope))
                            (oref (transient-scope) workspace))
@@ -1098,22 +1127,28 @@ projects' bare repository located at `treebundel-bare-dir' within
   (interactive (list (oref (transient-scope) workspace)))
   (when-let* ((workspace (or workspace (treebundel-read-workspace "Delete workspace: " :require-match)))
               (workspace-path (treebundel-workspace-path workspace))
-              (project-paths (directory-files workspace-path t "\\`[^.].*")))
+              (projects (treebundel--workspace-projects workspace)))
     (let* ((ignore-errors (transient-arg-value "--force" workspace)))
-      (if (and (seq-every-p (lambda (project-path)
-                              (treebundel--project-clean-p project-path))
-                            project-paths)
-               (or (length= project-paths 0)
+      (if (and (seq-every-p (lambda (project)
+                              (treebundel--project-clean-p workspace project))
+                            projects)
+               (or (length= projects 0)
                    (y-or-n-p (format "Workspace '%s' has %s project%s. Delete all?"
                                      workspace
-                                     (length project-paths)
-                                     (if (length= project-paths 1) "" "s")))))
+                                     (length projects)
+                                     (if (length= projects 1) "" "s")))))
           (progn
-            (dolist (repo-path project-paths)
-              (treebundel--worktree-remove repo-path ignore-errors))
+            (dolist (project-path projects)
+              (treebundel--worktree-remove project-path ignore-errors))
             (delete-directory workspace-path)
             (treebundel--message "Deleted workspace %s" (treebundel--fmt-workspace workspace)))
         (user-error "There must not be any unsaved changes to delete a workspace")))))
+
+(transient-define-suffix treebundel-rename-workspace (src-workspace dst-workspace)
+  "Delete workspace at SRC-WORKSPACE to DST-WORKSPACE."
+  (interactive (list (oref (transient-scope) workspace)
+                     (treebundel-read-workspace "New workspace name: ")))
+  (treebundel--workspace-move src-workspace dst-workspace))
 
 (defvar treebundel--workspace-history nil
   "The `completing-read' history `treebundel-read-workspace'.")
