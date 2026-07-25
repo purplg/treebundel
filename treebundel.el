@@ -151,12 +151,15 @@
   :set (lambda (option value)
          (set option (file-name-as-directory (expand-file-name value)))))
 
-(defcustom treebundel-bare-dir ".bare"
+(defcustom treebundel-bare-dir-name ".bare"
   "The path where bare repositories are stored.
 This is the directory name in `treebundel-workspace-root' where bare
 repositories are stored and worktrees created from."
   :group 'treebundel
   :type 'string)
+(defun treebundel--bare-dir-path ()
+  "Getter for the path of variable `treebundel-bare-dir-name'."
+  (file-name-concat treebundel-workspace-root treebundel-bare-dir-name))
 
 (defcustom treebundel-project-open-function
   'project-switch-project
@@ -296,7 +299,7 @@ ARGS are the arguments passed to git."
 (defun treebundel--bare-clone (url)
   "Clone a repository from URL to the bare repo directory.
 Place the cloned repository as a bare repository in the directory declared in
-`treebundel-bare-dir' within `treebundel-workspace-root' so worktrees can be
+`treebundel-bare-dir-name' within `treebundel-workspace-root' so worktrees can be
 created from it as workspace projects."
   (let* ((name (car (last (split-string url "/"))))
          (dest (treebundel--bare-path name)))
@@ -450,7 +453,7 @@ Set INACTIVE to t to use the darker face."
 ;;;;; Bares
 (defun treebundel--bare-path (bare)
   "Return the path of bare repository with BARE."
-  (file-name-concat treebundel-workspace-root treebundel-bare-dir
+  (file-name-concat (treebundel--bare-dir-path)
                     (if (string= "git" (file-name-extension bare))
                         bare
                       (concat bare ".git"))))
@@ -461,7 +464,7 @@ Set INACTIVE to t to use the darker face."
 
 (defun treebundel--bare-list ()
   "Return a list of all existing bare repository directory names."
-  (let ((bare-dir  (file-name-concat treebundel-workspace-root treebundel-bare-dir)))
+  (let ((bare-dir (treebundel--bare-dir-path)))
     (unless (file-exists-p bare-dir)
       (make-directory bare-dir))
     (directory-files bare-dir nil "\\`[^.].*")))
@@ -656,21 +659,21 @@ There are 3 valid states an instance of this class should only be in.
    :project   is a string with a length more than 0
 
 3. Bare scope
-   :workspace is `treebundel-bare-dir'
+   :workspace is `treebundel-bare-dir-name'
    :project   is a string that ends in `.git'
 
-An instance of `treebundel-scope' with `:workspace' set to `treebundel-bare-dir'
+An instance of `treebundel-scope' with `:workspace' set to `treebundel-bare-dir-name'
 means it represents a bare directory rather than a project directory.")
 
 (cl-defmethod treebundel-scope-bare-p ((scope treebundel-scope))
   "Return t if the SCOPE represents a bare directory."
-  (and (string= treebundel-bare-dir (oref scope workspace))
+  (and (string= treebundel-bare-dir-name (oref scope workspace))
        (string-suffix-p ".git" (oref scope project))))
 
 (cl-defmethod treebundel-scope-workspace-p ((scope treebundel-scope))
   "Return t if the SCOPE represents a workspace directory."
   (and (oref scope workspace)
-       (not (string= treebundel-bare-dir (oref scope workspace)))
+       (not (string= treebundel-bare-dir-name (oref scope workspace)))
        (not (string-prefix-p "." (oref scope workspace)))))
 
 (cl-defmethod treebundel-scope-project-p ((scope treebundel-scope))
@@ -793,7 +796,7 @@ Read `treebundel-scope' docstring for more information."
                                                                              (oref (transient-scope) project))))
                            ((treebundel-read-bare)))))
   (transient-setup 'treebundel-bare nil nil :scope (treebundel-scope
-                                                    :workspace treebundel-bare-dir
+                                                    :workspace treebundel-bare-dir-name
                                                     :project bare)))
 
 (transient-define-suffix treebundel-switch-bare (bare)
@@ -801,7 +804,7 @@ Read `treebundel-scope' docstring for more information."
   :transient 'transient--do-exit
   (interactive (list (treebundel-read-bare)))
   (transient-setup transient-current-command nil nil :scope (treebundel-scope
-                                                             :workspace treebundel-bare-dir
+                                                             :workspace treebundel-bare-dir-name
                                                              :project (file-name-nondirectory (treebundel--bare-path bare)))))
 
 (transient-define-suffix treebundel-clone-bare (url)
@@ -818,7 +821,7 @@ with `treebundel-add-project'"
                                       (treebundel--bare-clone url))))))
     (treebundel--message "Finished cloning %s." bare)
     (transient-setup transient-current-command nil nil :scope (treebundel-scope
-                                                               :workspace treebundel-bare-dir
+                                                               :workspace treebundel-bare-dir-name
                                                                :project (file-name-nondirectory (treebundel--bare-path bare))))))
 (defalias 'treebundel-clone #'treebundel-clone-bare)
 
@@ -850,7 +853,7 @@ BARE is the name of the bare repo to fetch from remote."
 
 (transient-define-suffix treebundel-visit-bare (bare)
   "Find a file in the bare repository at BARE-CONS.
-BARE-CONS is `(treebundel-bare-dir . bare-name)'. This is because it follows a similar
+BARE-CONS is `(treebundel-bare-dir-name . bare-name)'. This is because it follows a similar
 pattern to the project cons that are `(workspace . project)'."
   (interactive (list (cond ((treebundel-scope-bare-p (transient-scope))
                             (oref (transient-scope) project))
@@ -1123,7 +1126,7 @@ PROJECT is the name of the project within the workspace to open."
   "Delete workspace at WORKSPACE.
 This will check if all projects within the workspace are clean and if so, remove
 everything in the workspace. Anything committed is still saved in the respective
-projects' bare repository located at `treebundel-bare-dir' within
+projects' bare repository located at `treebundel-bare-dir-name' within
 `treebundel-workspace-root'."
   (interactive (list (oref (transient-scope) workspace)))
   (when-let* ((workspace (or workspace (treebundel-read-workspace "Delete workspace: " :require-match)))
