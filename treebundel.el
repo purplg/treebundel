@@ -168,7 +168,7 @@ repositories are stored and worktrees created from."
   :type 'function)
 
 (defcustom treebundel--force-remove-worktrees nil
-  ""
+  "TODO Remove this with a transient arg."
   :group 'treebundel
   :type 'boolean)
 
