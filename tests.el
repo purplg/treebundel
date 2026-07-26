@@ -10,11 +10,13 @@
 
 (ert-deftest test-fmt-workspace ()
   (should (string= (substring-no-properties (--fmt-workspace nil)) "⸺/"))
-  (should (string= (substring-no-properties (--fmt-workspace "theworkspace")) "theworkspace/")))
+  (should (string= (substring-no-properties (--fmt-workspace "theworkspace")) "theworkspace/"))
+  (should (string= (substring-no-properties (--fmt-workspace "The Workspace")) "The Workspace/")))
 
 (ert-deftest test-fmt-project ()
   (should (string= (substring-no-properties (--fmt-project nil)) "⸺"))
-  (should (string= (substring-no-properties (--fmt-project "theproject")) "theproject")))
+  (should (string= (substring-no-properties (--fmt-project "theproject")) "theproject"))
+  (should (string= (substring-no-properties (--fmt-project "The Project")) "The Project")))
 
 (ert-deftest test-fmt-workspace-project ()
   (should (string= (substring-no-properties (--fmt-workspace-project nil nil)) "⸺/⸺"))
