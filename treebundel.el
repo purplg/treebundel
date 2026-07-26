@@ -437,7 +437,7 @@ Set INACTIVE to t to use the darker face."
 (cl-defun treebundel--fmt-workspace-project (workspace project &key workspace-state project-state &allow-other-keys)
   "Format the text of a WORKSPACE and PROJECT pair."
   (concat (treebundel--fmt-workspace workspace (or workspace-state (and project (not project-state) 'inactive)))
-          (treebundel--fmt-project project (or project-state (unless (or project workspace-state) 'inactive)))))
+          (treebundel--fmt-project (and workspace project) (or project-state (unless (or project workspace-state) 'inactive)))))
 
 ;;;; Workspace management
 
