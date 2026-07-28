@@ -514,6 +514,21 @@ the default branch.  So this function just gets the branch that the HEAD of the
 bare repo points to."
   (treebundel--branch (treebundel--repo-bare repo-path)))
 
+(defun treebundel-read-branch (repo-path &optional prompt initial)
+  "Interactively selected a branch for a repo.
+REPO-PATH is the path to project to list available branches for.
+
+PROMPT is the prompt to be presented to the user in the minibuffer.
+
+INITIAL is the default value of the branch of the project that is automatically
+inserted when the minibuffer prompt is shown."
+  (completing-read (or prompt "Branch: ")
+                   (treebundel--branches repo-path)
+                   nil
+                   nil
+                   (or initial (treebundel--branch-name
+                                (treebundel--repo-bare repo-path)))))
+
 ;;;;; Projects
 (defun treebundel--project-add (workspace bare &optional branch-name project)
   "Add a project to a workspace.
@@ -585,6 +600,25 @@ Leave either PROJECT or WORKSPACE nil to try to use current."
                                 t)
                   0))))
 
+(defun treebundel-read-project (workspace &optional prompt initial require-match)
+  "Interactively find the path of a project.
+WORKSPACE is the workspace to look for projects in.
+
+PROMPT is the prompt to be presented to the user in the
+minibuffer.
+
+INITIAL is the default value for the name of the project that is
+automatically inserted when the minibuffer prompt is shown.
+
+REQUIRE-MATCH forces a valid workspace to be selected.  This removes
+the ability to create a workspace with a new entry."
+  (let* ((candidates (treebundel--workspace-projects workspace)))
+    (completing-read (or prompt (format "Project in %s" (treebundel--fmt-workspace workspace)))
+                     candidates
+                     nil
+                     require-match
+                     initial)))
+
 ;;;;; Workspaces
 (defun treebundel-workspace-path (workspace)
   "Return the path of a workspace named WORKSPACE."
@@ -639,6 +673,21 @@ If FILE-PATH is non-nil, use the current buffer instead."
                                          (treebundel--project-path src-workspace project)
                                          (treebundel--project-path dst-workspace project)))
   (delete-directory (treebundel-workspace-path src-workspace)))
+
+(defun treebundel-read-workspace (&optional prompt require-match)
+  "Interactively find the path of a workspace.
+PROMPT is the prompt to be presented to the user in the
+minibuffer.
+
+REQUIRE-MATCH forces a valid workspace to be selected.  This removes the ability
+to create a workspace with a new entry."
+  (when (and (not (file-exists-p treebundel-workspace-root))
+             (y-or-n-p (format "%s directory doesn't exist. Create?"
+                               treebundel-workspace-root)))
+    (make-directory treebundel-workspace-root))
+  (let* ((candidates (treebundel--workspaces))
+         (prompt (or prompt "Workspace: ")))
+    (completing-read prompt candidates nil require-match)))
 
 ;;;; User Interface
 
@@ -1080,40 +1129,6 @@ NEW-NAME is the new name PROJECT will be renamed to."
   (let* ((project-current-directory-override (treebundel--project-path workspace project)))
     (funcall-interactively #'project-find-file)))
 
-(defun treebundel-read-project (workspace &optional prompt initial require-match)
-  "Interactively find the path of a project.
-WORKSPACE is the workspace to look for projects in.
-
-PROMPT is the prompt to be presented to the user in the
-minibuffer.
-
-INITIAL is the default value for the name of the project that is
-automatically inserted when the minibuffer prompt is shown.
-
-REQUIRE-MATCH forces a valid workspace to be selected.  This removes
-the ability to create a workspace with a new entry."
-  (let* ((candidates (treebundel--workspace-projects workspace)))
-    (completing-read (or prompt (format "Project in %s" (treebundel--fmt-workspace workspace)))
-                     candidates
-                     nil
-                     require-match
-                     initial)))
-
-(defun treebundel-read-branch (repo-path &optional prompt initial)
-  "Interactively selected a branch for a repo.
-REPO-PATH is the path to project to list available branches for.
-
-PROMPT is the prompt to be presented to the user in the minibuffer.
-
-INITIAL is the default value of the branch of the project that is automatically
-inserted when the minibuffer prompt is shown."
-  (completing-read (or prompt "Branch: ")
-                   (treebundel--branches repo-path)
-                   nil
-                   nil
-                   (or initial (treebundel--branch-name
-                                (treebundel--repo-bare repo-path)))))
-
 ;;;;; Workspaces
 (transient-define-prefix treebundel-workspace (workspace)
   "Working with a workspace."
@@ -1203,21 +1218,6 @@ projects' bare repository located at `treebundel-bare-dir-name' within
                        (treebundel-read-branch (treebundel--bare-path (oref (transient-scope) project))))))
   (treebundel--project-add workspace bare branch project)
   (transient-setup 'treebundel-project nil nil :scope (treebundel-scope :workspace workspace :project project)))
-
-(defun treebundel-read-workspace (&optional prompt require-match)
-  "Interactively find the path of a workspace.
-PROMPT is the prompt to be presented to the user in the
-minibuffer.
-
-REQUIRE-MATCH forces a valid workspace to be selected.  This removes the ability
-to create a workspace with a new entry."
-  (when (and (not (file-exists-p treebundel-workspace-root))
-             (y-or-n-p (format "%s directory doesn't exist. Create?"
-                               treebundel-workspace-root)))
-    (make-directory treebundel-workspace-root))
-  (let* ((candidates (treebundel--workspaces))
-         (prompt (or prompt "Workspace: ")))
-    (completing-read prompt candidates nil require-match)))
 
 ;;;;; Debug
 (transient-define-suffix treebundel--debug-gitlog ()
