@@ -1,14 +1,14 @@
 ;;; treebundel.el --- Bundle related git-worktrees together -*- lexical-binding: t; -*-
-
+;;
 ;; Package-Requires: ((emacs "30.1") (transient "0.13.4"))
 ;; Version: 0.3.0
 ;; Author: Ben Whitley
 ;; Homepage: https://github.com/purplg/treebundel
 ;; Keywords: convenience vc
 ;; SPDX-License-Identifier: MIT
-
+;;
 ;;; Commentary:
-
+;;
 ;; This package is used for bundling related git-worktrees from multiple
 ;; repositories together.  This helps switch quickly between repositories and
 ;; ensure you're on the correct branch.  When you're done with your changes, you
@@ -18,10 +18,9 @@
 ;; Additionally, git metadata (the =.git= directory) is shared between all
 ;; projects.  You can stash, pop, and pull changes in from the same repository in
 ;; other workspaces thanks to the power of git-worktrees.
-
-
+;;
 ;;;; Terminology:
-
+;;
 ;; Bare
 ;;   A bare repository used as a source to create a 'PROJECT's git-worktree.
 ;;
@@ -30,10 +29,9 @@
 ;;
 ;; Workspace
 ;;   A collection of 'PROJECT's created from 'BARE's.
-
-
+;;
 ;;;; Structure:
-
+;;
 ;; The workspaces directory is structured as such:
 ;;
 ;; `treebundel-workspace-root' (default: "~/workspaces/")
@@ -47,10 +45,9 @@
 ;;         L project-one   (branch: "feature/workspace2")
 ;;         L project-two   (branch: "feature/workspace2")
 ;;         L project-three (branch: "feature/workspace2")
-
-
+;;
 ;;;; Quick start:
-
+;;
 ;; Assuming default configuration, the following will create a bare clone of the
 ;; provided repo URL to '~/workspaces/.bare/<repo-name>.git', then create and
 ;; open a worktree for a new branch called 'feature/<workspace>'.
@@ -59,10 +56,9 @@
 ;; 2. Enter name for the new (or existing) workspace.
 ;; 3. Select '[ clone ]'.
 ;; 4. Enter the URL to clone for the repository to be added to the workspace.
-
-
+;;
 ;;;; Configuration:
-
+;;
 ;; `treebundel-branch-prefix'
 ;;  Default: 'feature/'
 ;;
@@ -70,20 +66,20 @@
 ;; its default value, when you add a project to a workspace named, for example,
 ;; 'new-protocol', the new project will be checked out to a new branch called
 ;; 'feature/new-protocol'.
-
+;;
 ;; `treebundel-workspace-root'
 ;;  Default: '~/workspaces/'
 ;;
 ;; This one is also very subjective.  It's where all of your workspaces will
 ;; exist on your file-system.
-
+;;
 ;; `treebundel-project-open-function'
 ;;  Default: `project-switch-project'
 ;;
 ;; This is the function called when a project is opened.  You could also just
 ;; make this `find-file' to just open the file instantly or any other function
 ;; that takes a file path.
-
+;;
 ;;;; Usage:
 ;;
 ;; The following functions are the commands you should use (and
@@ -102,7 +98,7 @@
 ;; `treebundel-delete-workspace'
 ;;   Delete a workspace.  This will also remove all projects in a
 ;;   workspace if they don't have any changes.
-
+;;
 ;;;; Dev notes:
 ;;
 ;; Some information about how this package is organized and common conventions
@@ -129,11 +125,13 @@
 ;;   it reads more like plain English. `treebundel-adjective-subject'
 ;;
 ;;; Code:
+
 (require 'subr-x)
 (require 'vc-git)
 (require 'transient)
 
 ;;;; Customization
+
 (defgroup treebundel nil
   "Exploit git-worktrees to create inter-related project workspaces."
   :group 'convenience
@@ -173,6 +171,7 @@ repositories are stored and worktrees created from."
   :type 'boolean)
 
 ;;;;; Faces
+
 (defface treebundel-workspace '((t :inherit bold :foreground "#0098CF"))
   "Face used for workspaces."
   :group 'treebundel-faces)
@@ -218,6 +217,7 @@ repositories are stored and worktrees created from."
   :group 'treebundel-faces)
 
 ;;;; Logging
+
 (defface treebundel--gitlog-heading
   '((t (:inherit outline-1 :box t :extend t)))
   "Face for widget group labels in treebundel's dashboard."
@@ -271,6 +271,7 @@ ARGS is same arguments as `message'."
 ;; function instead of using a macro directly.
 
 ;;;;; Git macros
+
 (defmacro treebundel--git (&rest args)
   "Base macro for all treebundel git commands.
 ARGS are the arguments passed to git."
@@ -303,8 +304,8 @@ ARGS are the arguments passed to git."
 (defun treebundel--bare-clone (url)
   "Clone a repository from URL to the bare repo directory.
 Place the cloned repository as a bare repository in the directory declared in
-`treebundel-bare-dir-name' within `treebundel-workspace-root' so worktrees can be
-created from it as workspace projects."
+`treebundel-bare-dir-name' within `treebundel-workspace-root' so worktrees can
+be created from it as workspace projects."
   (let* ((name (car (last (split-string url "/"))))
          (dest (treebundel--bare-path name)))
     (when (file-exists-p dest)
@@ -325,6 +326,7 @@ If COMMIT-B is nil, count between HEAD Of default branch and COMMIT-A."
      "rev-list" (concat commit-a ".." commit-b) "--count")))
 
 ;;;;; Branches
+
 (defun treebundel--branches (repo-path &optional omit-main)
   "Return a list of branches for repository at REPO-PATH.
 When OMIT-MAIN is non-nil, exclude the default branch."
@@ -343,6 +345,7 @@ When OMIT-MAIN is non-nil, exclude the default branch."
     "branch" "--show-current"))
 
 ;;;;; Utility
+
 (defun treebundel--worktree-count (repo-path)
   "Return the number of worktrees that exist for REPO-PATH."
   (seq-count
@@ -368,6 +371,7 @@ When OMIT-MAIN is non-nil, exclude the default branch."
         (with-current-buffer buf (set-visited-file-name dst-prefix nil t))))))
 
 ;;;;; Worktrees
+
 (defun treebundel--worktree-remove (project-path &optional force)
   "Remove the worktree at PROJECT-PATH.
 If FORCE is t, then add --force to the command."
@@ -413,6 +417,7 @@ The URL is returned for non-nil."
        url))
 
 ;;;; Format
+
 (defun treebundel--fmt-bare (bare &optional focus)
   "Format the text of a BARE name."
   (format "%s" (propertize (or bare "⸺")
@@ -440,11 +445,12 @@ Set INACTIVE to t to use the darker face."
           (treebundel--fmt-project (and workspace project) (or project-state (unless (or project workspace-state) 'inactive)))))
 
 ;;;; Workspace management
-
+;;
 ;; These functions provide useful functions for and the rules to enforce the
 ;; definitions of the terminology at the top of this package.
 
 ;;;;; Repos
+
 (defun treebundel--repo-bare (repo-path)
   "Return the name of the bare repo related to REPO-PATH."
   (when (and (file-exists-p repo-path)
@@ -456,6 +462,7 @@ Set INACTIVE to t to use the darker face."
       bare-name)))
 
 ;;;;; Bares
+
 (defun treebundel--bare-of (workspace project)
   ""
   (when-let* ((project-path (treebundel-project-path workspace project)))
@@ -503,6 +510,7 @@ PROMPT INITIAL-INPUT and HISTORY are all directly forwarded to
     (completing-read prompt candidates nil nil initial-input history)))
 
 ;;;;; Branches
+
 (defun treebundel--branch-name (workspace)
   "Generate a branch name for WORKSPACE."
   (concat treebundel-branch-prefix workspace))
@@ -530,6 +538,7 @@ inserted when the minibuffer prompt is shown."
                                 (treebundel--repo-bare repo-path)))))
 
 ;;;;; Projects
+
 (defun treebundel--project-add (workspace bare &optional branch-name project)
   "Add a project to a workspace.
 Defines the way project worktrees are added and named in workspaces.
@@ -620,6 +629,7 @@ the ability to create a workspace with a new entry."
                      initial)))
 
 ;;;;; Workspaces
+
 (defun treebundel-workspace-path (workspace)
   "Return the path of a workspace named WORKSPACE."
   (file-name-concat treebundel-workspace-root workspace))
@@ -690,7 +700,7 @@ to create a workspace with a new entry."
     (completing-read prompt candidates nil require-match)))
 
 ;;;; User Interface
-
+;;
 ;; This section provides the stable user interface.
 
 ;;;;; Scope
@@ -785,12 +795,14 @@ Read `treebundel-scope' docstring for more information."
       (treebundel-scope-project-p scope)))
 
 ;;;;; not-implemented
+
 (defun treebundel--not-implemented ()
   "A placeholder command for unimplemented transient commands."
   (interactive)
   (treebundel--message "This command is not yet implemented"))
 
 ;;;;; Entrypoint
+
 ;;;###autoload(autoload 'treebundel "treebundel" nil t)
 (transient-define-prefix treebundel (&optional workspace project clone-url)
   ""
@@ -833,6 +845,7 @@ Read `treebundel-scope' docstring for more information."
   (transient-setup 'treebundel nil nil :scope (treebundel-scope :workspace workspace :project project :clone-url clone-url)))
 
 ;;;;; Bare
+
 (transient-define-prefix treebundel-bare (bare)
   "Prefix for working with bare repositories."
   [("c" "Clone new" treebundel-clone-bare)
@@ -986,6 +999,7 @@ HISTORY"
   (treebundel--bare-read (or prompt "Select bare: ") nil nil))
 
 ;;;;; Projects
+
 (transient-define-prefix treebundel-project (workspace project)
   "Working with a PROJECT."
   [("P" "Switch to other project" treebundel-switch-project)]
@@ -1130,6 +1144,7 @@ NEW-NAME is the new name PROJECT will be renamed to."
     (funcall-interactively #'project-find-file)))
 
 ;;;;; Workspaces
+
 (transient-define-prefix treebundel-workspace (workspace)
   "Working with a workspace."
   [("W" "Switch to other workspace" treebundel-switch-workspace)]
@@ -1220,6 +1235,7 @@ projects' bare repository located at `treebundel-bare-dir-name' within
   (transient-setup 'treebundel-project nil nil :scope (treebundel-scope :workspace workspace :project project)))
 
 ;;;;; Debug
+
 (transient-define-suffix treebundel--debug-gitlog ()
   ""
   (interactive)
