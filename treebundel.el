@@ -419,28 +419,32 @@ The URL is returned for non-nil."
 ;;;; Format
 
 (defun treebundel--fmt-bare (bare &optional focus)
-  "Format the text of a BARE name."
+  "Format the text of a BARE name.
+FOCUS can be `active' or `inactive' and changes which face to use."
   (format "%s" (propertize (or bare "⸺")
                            'face (cond ((eq focus 'active) 'treebundel-bare-active)
                                        (t 'treebundel-bare)))))
 
 (defun treebundel--fmt-workspace (workspace &optional focus)
   "Format the text of a WORKSPACE name.
-Set INACTIVE to t to use the darker face."
+FOCUS can be `active' or `inactive' and changes which face to use."
   (concat (propertize (or workspace "⸺") 'face (cond ((eq focus 'active) 'treebundel-workspace-active)
                                                      ((eq focus 'inactive) 'treebundel-workspace-inactive)
                                                      (t 'treebundel-workspace)))
           "/"))
 
 (defun treebundel--fmt-project (project &optional focus)
-  "Format the text of a PROJECT name."
+  "Format the text of a PROJECT name.
+FOCUS can be `active' or `inactive' and changes which face to use."
   (propertize (or project "⸺") 'face (cond ((eq focus 'active) 'treebundel-project-active)
                                            ((eq focus t) 'treebundel-project-active)
                                            ((eq focus 'inactive) 'treebundel-project-inactive)
                                            (t 'treebundel-project))))
 
 (cl-defun treebundel--fmt-workspace-project (workspace project &key workspace-state project-state &allow-other-keys)
-  "Format the text of a WORKSPACE and PROJECT pair."
+  "Format the text of a WORKSPACE and PROJECT pair.
+WORKSPACE-STATE and PROJECT-STATE can be `active' or `inactive' and changes
+which face to use respectively."
   (concat (treebundel--fmt-workspace workspace (or workspace-state (and project (not project-state) 'inactive)))
           (treebundel--fmt-project (and workspace project) (or project-state (unless (or project workspace-state) 'inactive)))))
 
@@ -464,7 +468,7 @@ Set INACTIVE to t to use the darker face."
 ;;;;; Bares
 
 (defun treebundel--bare-of (workspace project)
-  ""
+  "Get the name of the bare report at WORKSPACE/PROJECT."
   (when-let* ((project-path (treebundel-project-path workspace project)))
     (treebundel--repo-bare project-path)))
 
@@ -767,7 +771,8 @@ means it represents a bare directory rather than a project directory.")
         (t (treebundel--error "This is not treebundel-managed project"))))
 
 (cl-defmethod treebundel-scope-fmt ((scope treebundel-scope) &key workspace-state project-state &allow-other-keys)
-  "Format the text of the `treebundel-scope' SCOPE."
+  "Format the text of the `treebundel-scope' SCOPE.
+WORKSPACE-STATE and PROJECT-STATE can be `active' or `inactive' and changes."
   (cond ((treebundel-scope-project-p scope)
          (treebundel--fmt-workspace-project (oref scope workspace) (oref scope project)
                                             :workspace-state workspace-state
@@ -1237,7 +1242,6 @@ projects' bare repository located at `treebundel-bare-dir-name' within
 ;;;;; Debug
 
 (transient-define-suffix treebundel--debug-gitlog ()
-  ""
   (interactive)
   (display-buffer (treebundel--gitlog-buffer)))
 
