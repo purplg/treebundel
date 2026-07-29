@@ -301,20 +301,6 @@ ARGS are the arguments passed to git."
   (declare (indent defun))
   `(treebundel--git-with-repo (treebundel--bare-path ,bare) ,@args))
 
-(defun treebundel--bare-clone (url)
-  "Clone a repository from URL to the bare repo directory.
-Place the cloned repository as a bare repository in the directory declared in
-`treebundel-bare-dir-name' within `treebundel-workspace-root' so worktrees can
-be created from it as workspace projects."
-  (let* ((name (car (last (split-string url "/"))))
-         (dest (treebundel--bare-path name)))
-    (when (file-exists-p dest)
-      (user-error "Repository with this name is already cloned"))
-    (treebundel--git "clone" url "--bare" dest)
-    (treebundel--git-with-repo dest "config" "remote.origin.fetch" "+refs/heads/*:refs/remotes/origin/*")
-    (treebundel--git-with-repo dest "fetch")
-    dest))
-
 (defun treebundel--rev-count (repo-path commit-a &optional commit-b)
   "Return the number of commits between COMMIT-A and COMMIT-B at REPO-PATH.
 If COMMIT-B is nil, count between HEAD Of default branch and COMMIT-A."
@@ -466,6 +452,20 @@ which face to use respectively."
       bare-name)))
 
 ;;;;; Bares
+
+(defun treebundel--bare-clone (url)
+  "Clone a repository from URL to the bare repo directory.
+Place the cloned repository as a bare repository in the directory declared in
+`treebundel-bare-dir-name' within `treebundel-workspace-root' so worktrees can
+be created from it as workspace projects."
+  (let* ((name (car (last (split-string url "/"))))
+         (dest (treebundel--bare-path name)))
+    (when (file-exists-p dest)
+      (user-error "Repository with this name is already cloned"))
+    (treebundel--git "clone" url "--bare" dest)
+    (treebundel--git-with-repo dest "config" "remote.origin.fetch" "+refs/heads/*:refs/remotes/origin/*")
+    (treebundel--git-with-repo dest "fetch")
+    dest))
 
 (defun treebundel--bare-of (workspace project)
   "Get the name of the bare report at WORKSPACE/PROJECT."
