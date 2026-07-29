@@ -715,10 +715,7 @@ to create a workspace with a new entry."
               :type (or string null))
    (project :initarg :project
             :initform nil
-            :type (or string null))
-   (clone-url :initarg :clone-url
-              :initform nil
-              :type (or string null)))
+            :type (or string null)))
   "Data in the scope of treebundel transients.
 This class is the only class used for the scopes of these transients
 
@@ -809,7 +806,7 @@ Read `treebundel-scope' docstring for more information."
 ;;;;; Entrypoint
 
 ;;;###autoload(autoload 'treebundel "treebundel" nil t)
-(transient-define-prefix treebundel (&optional workspace project clone-url)
+(transient-define-prefix treebundel (&optional workspace project)
   ""
   ["Quick"
    ("w" "Open in workspace" treebundel-open-workspace)
@@ -843,11 +840,8 @@ Read `treebundel-scope' docstring for more information."
    ("l" "Log" treebundel--debug-gitlog)
    ("c" "Clear scope" treebundel--debug-clear-scope)]
 
-  (interactive (list (treebundel-current-workspace)
-                     (treebundel-current-project)
-                     (or (treebundel--git-url-like-p (gui-get-selection 'CLIPBOARD 'STRING))
-                         (treebundel--git-url-like-p (gui-get-selection 'PRIMARY 'STRING)))))
-  (transient-setup 'treebundel nil nil :scope (treebundel-scope :workspace workspace :project project :clone-url clone-url)))
+  (interactive (list (treebundel-current-workspace) (treebundel-current-project)))
+  (transient-setup 'treebundel nil nil :scope (treebundel-scope :workspace workspace :project project)))
 
 ;;;;; Bare
 
@@ -887,19 +881,16 @@ Read `treebundel-scope' docstring for more information."
   "Clone URL to the collection of bare repos.
 Once a repository is in the bare repos collection, you can add it to a project
 with `treebundel-add-project'"
-  :description (lambda ()
-                 (concat "Clone new bare" (when-let* ((clone-url (oref (transient-scope) clone-url)))
-                                            (concat ": " (propertize clone-url 'face 'treebundel-url)))))
+  :description "Clone new bare"
+
   (interactive
-   (list (read-string "URL: " (and (transient-scope) (oref (transient-scope) clone-url)))))
+   (list (read-string "URL: " (or (treebundel--git-url-like-p (gui-get-selection 'CLIPBOARD 'STRING))
+                                  (treebundel--git-url-like-p (gui-get-selection 'PRIMARY 'STRING))))))
 
   (treebundel--message "Cloning %s..." clone-url)
   (when-let* ((bare (string-remove-suffix ".git" (file-name-nondirectory (directory-file-name (treebundel--bare-clone clone-url))))))
     (treebundel--message "Finished cloning %s." (treebundel--fmt-bare bare))
-    (transient-setup 'treebundel-bare nil nil :scope (treebundel-scope
-                                                      :workspace treebundel-bare-dir-name
-                                                      :project (file-name-nondirectory (treebundel--bare-path bare))
-                                                      :clone-url clone-url))))
+    (transient-setup 'treebundel-bare nil nil :scope (treebundel-scope :workspace treebundel-bare-dir-name :project (file-name-nondirectory (treebundel--bare-path bare))))))
 (defalias 'treebundel-clone #'treebundel-clone-bare)
 
 (transient-define-suffix treebundel-new-bare (bare)
