@@ -833,12 +833,12 @@ Read `treebundel-scope' docstring for more information."
 (transient-define-prefix treebundel (&optional workspace project)
   ""
   ["Quick"
-   ("w" "Open in workspace" treebundel-quick-open-workspace)
-   ("p" "Open other project" treebundel-quick-open-project)
-   ("a" "Add project" treebundel-add-project)
-   ("b" "Clone new bare" treebundel-clone-bare)
-   ("np" "New empty project" treebundel-new-project-in-workspace)
-   ("nw" "New workspace" treebundel-new-workspace)]
+   (treebundel-quick-open-workspace)
+   (treebundel-quick-open-project)
+   (treebundel-add-project)
+   (treebundel-clone-bare)
+   (treebundel-new-project-in-workspace)
+   (treebundel-new-workspace)]
 
   ["Configure"
    ("W" "Workspace" treebundel-workspace
@@ -871,16 +871,15 @@ Read `treebundel-scope' docstring for more information."
 
 (transient-define-prefix treebundel-bare (bare)
   "Prefix for working with bare repositories."
-  [("c" "Clone new" treebundel-clone-bare)
-   ("B" "Switch to other bare" treebundel-switch-bare)]
+  [(treebundel-clone-bare)
+   (treebundel-switch-bare)]
 
   [:description (lambda () (treebundel--fmt-bare (string-remove-suffix ".git" (oref (transient-scope) project)) 'active))
-                ("w" "Add to workspace" treebundel-add-bare-to-workspace)
-                ("P" "Projects" treebundel-open-bare-projects)
-                ("v" "Visit" treebundel-visit-bare)
-                ("k" "Delete" treebundel-delete-bare)
-                ("f" "Fetch" treebundel--not-implemented
-                 :description (lambda () (propertize "Fetch" 'face 'treebundel-disabled)))]
+                (treebundel-add-bare-to-workspace)
+                (treebundel-open-bare-projects)
+                (treebundel-visit-bare)
+                (treebundel-delete-bare)
+                (treebundel-fetch-bare)]
 
   (interactive (list (cond ((treebundel-scope-bare-p (transient-scope))
                             (transient-scope))
@@ -894,7 +893,10 @@ Read `treebundel-scope' docstring for more information."
 
 (transient-define-suffix treebundel-switch-bare (bare)
   "Start configuring BARE."
+  :description "Switch to other bare"
+  :key "B"
   :transient 'transient--do-replace
+
   (interactive (list (treebundel-read-bare)))
   (transient-setup transient-current-command nil nil
                    :scope (treebundel-scope
@@ -906,6 +908,7 @@ Read `treebundel-scope' docstring for more information."
 Once a repository is in the bare repos collection, you can add it to a project
 with `treebundel-add-project'"
   :description "Clone new bare"
+  :key "nb"
 
   (interactive
    (list (read-string "URL: " (or (treebundel--git-url-like-p (gui-get-selection 'CLIPBOARD 'STRING))
@@ -931,6 +934,9 @@ with `treebundel-add-project'"
 (transient-define-suffix treebundel-delete-bare (bare)
   "Delete a bare repository BARE.
 Existing worktrees or uncommitted changes will prevent you from deleting."
+  :description "Delete"
+  :key "k"
+
   (interactive (list (if (and (transient-scope)
                               (treebundel-scope-bare-p (transient-scope))
                               (treebundel-scope-exists-p (transient-scope)))
@@ -954,6 +960,9 @@ Existing worktrees or uncommitted changes will prevent you from deleting."
 (transient-define-suffix treebundel-fetch-bare ()
   "Perform a git-fetch on bare repo.
 BARE is the name of the bare repo to fetch from remote."
+  :description "Fetch"
+  :key "f"
+
   (interactive)
   (when-let* ((bare (treebundel--repo-bare (treebundel-project-path)))
               (bare-path (treebundel--bare-path bare))
@@ -971,6 +980,8 @@ pattern to the project cons that are `(workspace . project)'."
                            ((> use-count 0)))
                      (propertize "Delete" 'face 'treebundel-disabled)
                    "Delete"))
+  :key "v"
+
   (interactive (list (cond ((treebundel-scope-bare-p (transient-scope))
                             (oref (transient-scope) project))
                            ((and (treebundel-scope-project-p (transient-scope)))
@@ -984,7 +995,9 @@ pattern to the project cons that are `(workspace . project)'."
   :description (lambda ()
                  (let ((use-count (length (cdr (treebundel--worktree-list (treebundel--bare-path (oref (transient-scope) project)))))))
                    (format "Projects (%s)" (propertize (format "%d" use-count) 'face 'treebundel-project))))
+  :key "P"
   :transient 'transient--do-stack
+
   (interactive (list (cond ((treebundel-scope-bare-p (transient-scope))
                             (oref (transient-scope) project))
 
@@ -1021,7 +1034,7 @@ PROMPT is the text prompt presented to the user in the minibuffer."
 
 (transient-define-prefix treebundel-project (workspace project)
   "Working with a PROJECT."
-  [("P" "Switch to other project" treebundel-switch-project)]
+  [(treebundel-switch-project)]
 
   [:description
    (lambda () (treebundel-scope-fmt (transient-scope) :project-state 'active))
@@ -1033,18 +1046,22 @@ PROMPT is the text prompt presented to the user in the minibuffer."
                                                                          (oref (transient-scope) workspace)
                                                                          (oref (transient-scope) project)))))))]
 
-  [("RET" "Open project" treebundel-open-project)
-   ("f" "Open project file" treebundel-open-file-in-project)
-   ("v" "Visit" treebundel-visit-project)
-   ("k" "Remove" treebundel-remove-project)
-   ("m" "Move" treebundel-move-project)
-   ("r" "Rename" treebundel-rename-project)]
+  [(treebundel-open-project)
+   (treebundel-open-file-in-project)
+   (treebundel-visit-project)
+   (treebundel-remove-project)
+   (treebundel-move-project)
+   (treebundel-rename-project)]
+
   (interactive (list (oref (transient-scope) workspace) (oref (transient-scope) project)))
-  (transient-setup 'treebundel-project nil nil :scope (treebundel-scope :workspace workspace project :project)))
+  (transient-setup 'treebundel-project nil nil :scope (treebundel-scope :workspace workspace :project project)))
 
 (transient-define-suffix treebundel-switch-project (workspace project)
   "Switch to PROJECT in WORKSPACE."
+  :description "Switch to other project"
+  :key "P"
   :transient 'transient--do-replace
+
   (interactive (let* ((workspace (or (oref (transient-scope) workspace) (treebundel-current-workspace))))
                  (list workspace (treebundel-read-project workspace nil nil :require-match))))
   (transient-setup 'treebundel-project nil nil :scope (treebundel-scope :workspace workspace :project project)))
@@ -1064,9 +1081,11 @@ provided project should be in workspace WORKSPACE.
 
 BRANCH is the name of the branch to be checked out for
 this project."
+  :description (lambda () (format "Add project to %s" (treebundel--fmt-workspace-project (oref (transient-scope) workspace) nil)))
+  :key "a"
   :transient 'transient--do-exit
   :if (lambda () (treebundel-scope-workspace-p (transient-scope)))
-  :description (lambda () (format "Add project to %s" (treebundel--fmt-workspace-project (oref (transient-scope) workspace) nil)))
+
   (interactive
    (when-let* ((workspace (oref (transient-scope) workspace))
                (bare (treebundel-read-bare))
@@ -1080,6 +1099,8 @@ this project."
 (transient-define-suffix treebundel-remove-project (workspace project)
   "Remove PROJECT from workspace WORKSPACE.
 There must be no changes in the project to remove it."
+  :description "Remove"
+  :key "k"
   :description (lambda ()
                  (if-let* ((workspace (oref (transient-scope) workspace))
                            (project (oref (transient-scope) project)))
@@ -1089,6 +1110,7 @@ There must be no changes in the project to remove it."
                        (format "%s %s"
                                (propertize "Remove" 'face 'treebundel-disabled)
                                (propertize "(Dirty)" 'face 'treebundel-error)))))
+
   (interactive (list (oref (transient-scope) workspace)
                      (oref (transient-scope) project)))
   (if-let* ((project-path (treebundel--project-path workspace project))
@@ -1109,6 +1131,9 @@ PROJECT is name of the project to move to a new workspace.
 
 NEW-WORKSPACE is the name of the workspace the project will be moved
 into."
+  :description "Move"
+  :key "m"
+
   (interactive
    (when-let* ((src-workspace (oref (transient-scope) workspace))
                (project (oref (transient-scope) project))
@@ -1129,7 +1154,10 @@ renamed.
 PROJECT is name of the project in WORKSPACE to be renamed.
 
 NEW-NAME is the new name PROJECT will be renamed to."
+  :description "Rename"
+  :key "r"
   :transient 'transient--do-exit
+
   (interactive (list (or (and (transient-scope) (oref (transient-scope) workspace)) (treebundel-current-workspace))
                      (or (and (transient-scope) (oref (transient-scope) project)) (treebundel-current-project))
                      (read-string "New name: " (oref (transient-scope) project))))
@@ -1141,16 +1169,22 @@ NEW-NAME is the new name PROJECT will be renamed to."
 
 (transient-define-suffix treebundel-quick-open-project (workspace project)
   "Switch to and focus a PROJECT by opening a file."
+  :description "Open other project"
+  :key "p"
   :transient 'transient--do-exit
   :if (lambda () (treebundel-scope-workspace-p (transient-scope)))
+
   (interactive (let* ((workspace (or (oref (transient-scope) workspace) (treebundel-current-workspace))))
                  (list workspace (treebundel-read-project workspace nil nil :require-match))))
   (treebundel--project-open workspace project))
 
 (transient-define-suffix treebundel-open-project (workspace project)
   "Switch to and focus a PROJECT by opening a file."
+  :description "Open project"
+  :key "RET"
   :transient 'transient--do-exit
   :if (lambda () (treebundel-scope-workspace-p (transient-scope)))
+
   (interactive (let* ((workspace (or (oref (transient-scope) workspace) (treebundel-current-workspace)))
                       (project (or (oref (transient-scope) project) (treebundel-current-project))))
                  (list workspace project)))
@@ -1158,14 +1192,20 @@ NEW-NAME is the new name PROJECT will be renamed to."
 
 (transient-define-suffix treebundel-visit-project (workspace project)
   "Open dired to PROJECT within the current workspace."
+  :description "Visit"
+  :key "v"
   :transient 'transient--do-exit
+
   (interactive (list (or (and (transient-scope) (oref (transient-scope) workspace)) (treebundel-current-workspace))
                      (or (and (transient-scope) (oref (transient-scope) project)) (treebundel-current-project))))
   (funcall-interactively #'find-file (treebundel--project-path workspace project)))
 
 (transient-define-suffix treebundel-open-file-in-project (workspace project)
   ""
+  :description "Open project file"
+  :key "f"
   :transient 'transient--do-exit
+
   (interactive (list (or (and (transient-scope) (oref (transient-scope) workspace)) (treebundel-current-workspace))
                      (or (and (transient-scope) (oref (transient-scope) project)) (treebundel-current-project))))
   (let* ((project-current-directory-override (treebundel--project-path workspace project)))
@@ -1175,17 +1215,17 @@ NEW-NAME is the new name PROJECT will be renamed to."
 
 (transient-define-prefix treebundel-workspace (workspace)
   "Working with a workspace."
-  [("W" "Switch to other workspace" treebundel-switch-workspace)]
+  [(treebundel-switch-workspace)]
 
   [:description
    (lambda () (treebundel-scope-fmt (transient-scope) :workspace-state 'active))
-   ("P" "Configure project" treebundel-switch-project :transient transient--do-stack)]
+   (treebundel-switch-project :transient transient--do-stack)]
 
   [("-f" "force" "--force")
-   ("a" "Add project" treebundel-add-project)
-   ("n" "Create empty project" treebundel-new-project-in-workspace)
-   ("k" "Delete" treebundel-delete-workspace)
-   ("m" "Rename" treebundel-rename-workspace)]
+   (treebundel-add-project)
+   (treebundel-new-project-in-workspace)
+   (treebundel-delete-workspace)
+   (treebundel-rename-workspace)]
 
   (interactive (list (or (when (treebundel-scope-workspace-p (transient-scope))
                            (oref (transient-scope) workspace))
@@ -1194,7 +1234,10 @@ NEW-NAME is the new name PROJECT will be renamed to."
 
 (transient-define-suffix treebundel-new-project-in-workspace (bare workspace project)
   ""
+  :description "Create empty project"
+  :key "np"
   :transient 'transient--do-exit
+
   (interactive (let* ((bare (treebundel--bare-read-new))
                       (workspace (or (oref (transient-scope) workspace) (treebundel-read-workspace)))
                       (project (treebundel--project-read-new workspace)))
@@ -1205,7 +1248,10 @@ NEW-NAME is the new name PROJECT will be renamed to."
 
 (transient-define-suffix treebundel-switch-workspace (workspace)
   "Switch to WORKSPACE."
+  :description "Switch to other workspace"
+  :key "W"
   :transient 'transient--do-replace
+
   (interactive (list (treebundel-read-workspace nil :require-match)))
   (transient-setup transient-current-command nil nil :scope (treebundel-scope :workspace workspace :project nil)))
 
@@ -1217,6 +1263,9 @@ current workspace, use `treebundel-open-project'.
 WORKSPACE is the name of the workspace to open.
 
 PROJECT is the name of the project within the workspace to open."
+  :description "Open in workspace"
+  :key "w"
+
   (interactive (let* ((workspace (treebundel-read-workspace nil :require-match))
                       (project (treebundel-read-project workspace nil nil :require-match)))
                  (list workspace project)))
@@ -1229,6 +1278,9 @@ This will check if all projects within the workspace are clean and if so, remove
 everything in the workspace. Anything committed is still saved in the respective
 projects' bare repository located at `treebundel-bare-dir-name' within
 `treebundel-workspace-root'."
+  :description "Delete"
+  :key "k"
+
   (interactive (list (oref (transient-scope) workspace)))
   (when-let* ((workspace (or workspace (treebundel-read-workspace "Delete workspace: " :require-match)))
               (workspace-path (treebundel-workspace-path workspace))
@@ -1251,12 +1303,18 @@ projects' bare repository located at `treebundel-bare-dir-name' within
 
 (transient-define-suffix treebundel-rename-workspace (src-workspace dst-workspace)
   "Delete workspace at SRC-WORKSPACE to DST-WORKSPACE."
+  :description "Rename"
+  :key "r"
+
   (interactive (list (oref (transient-scope) workspace)
                      (read-string (format "Rename %s to: " (treebundel--fmt-workspace (oref (transient-scope) workspace))))))
   (treebundel--workspace-move src-workspace dst-workspace))
 
 (transient-define-suffix treebundel-new-workspace (workspace)
   "Create a new workspace named WORKSPACE."
+  :description "New workspace"
+  :key "nw"
+
   (interactive (list (read-string "Workspace name: ")))
   (when (file-exists-p (treebundel-workspace-path workspace))
     (treebundel--error "Workspace by that name already exists"))
@@ -1265,7 +1323,10 @@ projects' bare repository located at `treebundel-bare-dir-name' within
 
 (transient-define-suffix treebundel-add-bare-to-workspace (bare workspace project branch)
   "Add BARE to a WORKSPACE with the name PROJECT starting at BRANCH."
+  :description "Add to workspace"
+  :key "w"
   :transient 'transient--do-exit
+
   (interactive (when (treebundel-scope-bare-p (transient-scope))
                  (list (oref (transient-scope) project)
                        (treebundel-read-workspace nil :require-match)
