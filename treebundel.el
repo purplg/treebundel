@@ -170,6 +170,11 @@ repositories are stored and worktrees created from."
   :group 'treebundel
   :type 'boolean)
 
+(defcustom treebundel-only-show-managed-p nil
+  "When t show projects that are not managed by treebundel in project list."
+  :group 'treebundel
+  :type 'boolean)
+
 ;;;;; Faces
 
 (defface treebundel-workspace '((t :inherit bold :foreground "#0098CF"))
@@ -282,7 +287,7 @@ ARGS are the arguments passed to git."
            (output (string-trim-right (buffer-string))))
        (treebundel--gitlog 'output (string-replace "%" "%%" output))
        (when (> result 0)
-         (user-error "Git command error.  See %s: %s" treebundel--gitlog-buffer output))
+         (treebundel--error "Git command error.  See %s: %s" treebundel--gitlog-buffer output))
        output)))
 
 (defmacro treebundel--git-with-repo (repo-path &rest args)
@@ -344,8 +349,8 @@ When OMIT-MAIN is non-nil, exclude the default branch."
 
 (defun treebundel-managed-p (repo-path)
   "Return t if the repo at REPO-PATH is compatible with treebundel."
-  (and (not (string= ".git" (treebundel--repo-bare repo-path)))
-       t))
+  (let ((bare (treebundel--repo-bare repo-path)))
+    (and bare (not (string= ".git" bare)) t)))
 
 (defun treebundel--update-buffer-locations (buffer-list src-prefix dst-prefix)
   "Move all buffers in BUFFER-LIST associated with SRC-PREFIX to DST-PREFIX."
@@ -639,7 +644,16 @@ REQUIRE-MATCH forces a valid workspace to be selected.  This removes
 the ability to create a workspace with a new entry."
   (let* ((candidates (treebundel--workspace-projects workspace)))
     (completing-read (or prompt (format "Project in %s" (treebundel--fmt-workspace workspace)))
-                     candidates
+                     (mapcar (lambda (candidate)
+                               (let ((project-path (treebundel--project-path workspace candidate)))
+                                 (cond ((treebundel-managed-p project-path)
+                                        (concat (treebundel--fmt-project candidate) "/"))
+
+                                       ((string= ".git" (treebundel--repo-bare project-path))
+                                        (concat candidate "/"))
+
+                                       ((concat (propertize candidate 'face 'treebundel-disabled) "/")))))
+                             candidates)
                      nil
                      require-match
                      initial)))
@@ -666,8 +680,8 @@ PROMPT is the text prompt presented to the user in the minibuffer."
   "Return a list of absolute paths to projects in WORKSPACE."
   (thread-last (directory-files (treebundel-workspace-path (or workspace (treebundel-current-workspace))) t "\\`[^\\.]")
                (seq-filter #'file-directory-p)
-               (seq-filter #'treebundel-managed-p)
-               (seq-map (lambda (path) (file-name-nondirectory path)))))
+               (seq-filter (lambda (path) (if treebundel-only-show-managed-p (treebundel-managed-p path) t)))
+               (seq-map #'file-name-nondirectory)))
 
 (defun treebundel--workspaces ()
   "Return a list of all existing workspace names."
