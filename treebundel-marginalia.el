@@ -17,20 +17,14 @@
 (require 'treebundel)
 (require 'marginalia)
 
-(setq marginalia-command-categories '((projectile-switch-to-buffer . buffer)
-                                      (persp-switch-to-buffer . buffer)
-                                      (flycheck-error-list-set-filter . builtin)
-                                      (imenu . imenu)
-                                      (recentf-open . file)
-                                      (where-is . command)
-                                      (treebundel-bare . treebundel-bare)
-                                      (treebundel-read-bare . treebundel-bare)
-                                      (treebundel-switch-bare . treebundel-bare)
-                                      (treebundel-delete-bare . treebundel-bare)
-                                      (treebundel-project . treebundel-project)
-                                      (treebundel-read-project . treebundel-project)
-                                      (treebundel-switch-project . treebundel-project)
-                                      (treebundel-switch-workspace . treebundel-workspace)))
+(defvar treebundel-marginalia-categories '((treebundel-bare . treebundel-bare)
+                                           (treebundel-read-bare . treebundel-bare)
+                                           (treebundel-switch-bare . treebundel-bare)
+                                           (treebundel-delete-bare . treebundel-bare)
+                                           (treebundel-project . treebundel-project)
+                                           (treebundel-read-project . treebundel-project)
+                                           (treebundel-switch-project . treebundel-project)
+                                           (treebundel-switch-workspace . treebundel-workspace)))
 
 (defun treebundel-marginalia--bare-annotator (bare)
   ""
@@ -80,6 +74,7 @@
 (defun treebundel-marginalia-enable ()
   "Enable the treebundel marginalia annotators for treebundel."
   (interactive)
+  (setq marginalia-command-categories (append marginalia-command-categories treebundel-marginalia-categories))
   (add-to-list 'marginalia-annotators '(treebundel-bare treebundel-marginalia--bare-annotator builtin none))
   (add-to-list 'marginalia-annotators '(treebundel-workspace
                                         treebundel-marginalia--workspace-annotator-bare-list
@@ -91,6 +86,8 @@
 (defun treebundel-marginalia-disable ()
   "Disable treebundel marginalia annotators."
   (interactive)
+  (dolist (category treebundel-marginalia-categories)
+    (setq marginalia-command-categories (delete category marginalia-command-categories)))
   (setq marginalia-annotators (delete '(treebundel-bare treebundel-marginalia--bare-annotator builtin none)
                                       marginalia-annotators))
   (setq marginalia-annotators (delete '(treebundel-workspace
